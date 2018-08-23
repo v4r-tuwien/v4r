@@ -105,7 +105,7 @@ void EPBase::setNormals(const pcl::PointCloud<pcl::Normal>::Ptr& _normals) {
 void EPBase::setIndices(const pcl::PointIndices::Ptr& _indices) {
   if (!have_cloud) {
     char* error_message = new char[200];
-    sprintf(error_message, "[%s::setNormals()]: I suggest you first set the point cloud.", ClassName.c_str());
+    sprintf(error_message, "[%s::setIndices()]: I suggest you first set the point cloud.", ClassName.c_str());
     throw std::runtime_error(error_message);
   }
 
@@ -116,7 +116,7 @@ void EPBase::setIndices(const pcl::PointIndices::Ptr& _indices) {
 void EPBase::setIndices(const std::vector<int>& _indices) {
   if (!have_cloud) {
     char* error_message = new char[200];
-    sprintf(error_message, "[%s::setNormals()]: I suggest you first set the point cloud.", ClassName.c_str());
+    sprintf(error_message, "[%s::setIndices()]: I suggest you first set the point cloud.", ClassName.c_str());
     throw std::runtime_error(error_message);
   }
 
@@ -126,8 +126,8 @@ void EPBase::setIndices(const std::vector<int>& _indices) {
 
 void EPBase::compute() {
   char* error_message = new char[200];
-  sprintf(error_message, "[%s::setNormals()]: Why do you call me? I am just the base class!.", ClassName.c_str());
+  sprintf(error_message, "[%s::setcompute()]: Why do you call me? I am just the base class!.", ClassName.c_str());
   throw std::runtime_error(error_message);
 }
 
-}  // end v4r
+}  // namespace v4r

@@ -62,13 +62,13 @@ class NguyenNoiseModelParameter {
 };
 
 /**
-        * @brief computes Kinect axial and lateral noise parameters for an organized point cloud
-        * according to Nguyen et al., 3DIMPVT 2012.
-        * It also computed depth discontinuites using PCL's organized edge detection algorithm and the distance of
-        * each pixel to these discontinuites.
-        * @author Thomas Faeulhammer, Aitor Aldoma
-        * @date December 2015
-       */
+ * @brief computes Kinect axial and lateral noise parameters for an organized point cloud
+ * according to Nguyen et al., 3DIMPVT 2012.
+ * It also computed depth discontinuites using PCL's organized edge detection algorithm and the distance of
+ * each pixel to these discontinuites.
+ * @author Thomas Faeulhammer, Aitor Aldoma
+ * @date December 2015
+ */
 template <class PointT>
 class V4R_EXPORTS NguyenNoiseModel {
  private:
@@ -116,11 +116,11 @@ class V4R_EXPORTS NguyenNoiseModel {
    * @brief compute the expected noise level for one pixel only
    * @param point for which to compute noise level
    * @param surface normal at this point
-   * @param sigma_lateral in metres
-   * @param sigma_axial in metres
+   * @param sigma_lateral in meters
+   * @param sigma_axial in meters
    * @return true if pt and normal are finite, false otherwise
    */
   static bool computeNoiseLevel(const PointT &pt, const pcl::Normal &n, float &sigma_lateral, float &sigma_axial,
                                 float focal_length = 525.f);
 };
-}
+}  // namespace v4r

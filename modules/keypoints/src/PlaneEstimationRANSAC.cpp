@@ -47,7 +47,7 @@
 
 #include "v4r/keypoints/PlaneEstimationRANSAC.h"
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -232,9 +232,9 @@ void PlaneEstimationRANSAC::estimatePlaneLS(const std::vector<Eigen::Vector3f> &
 void PlaneEstimationRANSAC::ransacPlane(const std::vector<Eigen::Vector3f> &pts, Eigen::Vector3f &pt,
                                         Eigen::Vector3f &n, std::vector<int> &inliers) {
   if (pts.size() < 3)
-    throw std::runtime_error("[PlaneEstimationRANSAC::ransacPlane] Invalide points!");
+    throw std::runtime_error("[PlaneEstimationRANSAC::ransacPlane] Invalid points!");
 
   ransac(pts, pt, n, inliers);
 }
 
-}  //-- THE END --
+}  // namespace v4r

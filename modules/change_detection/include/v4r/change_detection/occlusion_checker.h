@@ -117,6 +117,6 @@ class OcclusionChecker {
   int numberOfBins;
   float tolerance;
 };
-}
+}  // namespace v4r
 
 #endif

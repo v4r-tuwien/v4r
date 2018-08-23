@@ -61,6 +61,7 @@ class V4R_EXPORTS ESFEstimation : public GlobalEstimator<PointT> {
   using GlobalEstimator<PointT>::feature_dimensions_;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ESFEstimation() : GlobalEstimator<PointT>("esf", FeatureType::ESF, 640) {}
 
   bool compute(Eigen::MatrixXf &signature);
@@ -69,7 +70,7 @@ class V4R_EXPORTS ESFEstimation : public GlobalEstimator<PointT> {
     return false;
   }
 
-  typedef boost::shared_ptr<ESFEstimation<PointT>> Ptr;
-  typedef boost::shared_ptr<ESFEstimation<PointT> const> ConstPtr;
+  typedef std::shared_ptr<ESFEstimation<PointT>> Ptr;
+  typedef std::shared_ptr<ESFEstimation<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

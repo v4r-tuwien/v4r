@@ -45,10 +45,14 @@
  *
  */
 
+#include <glog/logging.h>
+
 #include <QApplication>
 #include "mainwindow.h"
 
 int main(int argc, char *argv[]) {
+  google::InitGoogleLogging(argv[0]);
+
   QApplication a(argc, argv);
   MainWindow w;
   w.show();

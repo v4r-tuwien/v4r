@@ -39,4 +39,4 @@ pcl::PointCloud<pcl::Normal>::Ptr NormalEstimatorPCL<PointT>::compute() {
 
 #define PCL_INSTANTIATE_NormalEstimatorPCL(T) template class V4R_EXPORTS NormalEstimatorPCL<T>;
 PCL_INSTANTIATE(NormalEstimatorPCL, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

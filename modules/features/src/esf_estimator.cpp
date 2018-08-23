@@ -29,7 +29,7 @@ bool ESFEstimation<PointT>::compute(Eigen::MatrixXf &signature) {
 
   return true;
 }
-}
+}  // namespace v4r
 
 template class V4R_EXPORTS v4r::ESFEstimation<pcl::PointXYZ>;
 template class V4R_EXPORTS v4r::ESFEstimation<pcl::PointXYZRGB>;

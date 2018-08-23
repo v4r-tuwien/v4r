@@ -457,7 +457,7 @@ void makeGaborKernel2D(cv::Mat &kernel, float &max_sum, float theta, float bandw
   theta = PI * theta / 180;
 
   float slratio = (1 / PI) * sqrt((log(2) / 2)) * ((pow(2.0, bandwidth) + 1) / (pow(2.0, bandwidth) - 1));
-  // BANDWITH = 1 will result in the slratio = 0.56
+  // BANDWIDTH = 1 will result in the slratio = 0.56
 
   // printParameter(slratio,"slratio");
 

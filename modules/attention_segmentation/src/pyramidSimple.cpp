@@ -93,4 +93,4 @@ void SimplePyramid::combinePyramid(bool standard) {
 
   calculated = true;
 }
-}
+}  // namespace v4r

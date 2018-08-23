@@ -40,8 +40,10 @@
 #ifndef EPUTILS_INCLUDE_HEADERS_HPP
 #define EPUTILS_INCLUDE_HEADERS_HPP
 
+#include <glog/logging.h>
+
 #include "v4r/attention_segmentation/algo.h"
-#include "v4r/attention_segmentation/convertions.h"
+#include "v4r/attention_segmentation/conversions.h"
 #include "v4r/attention_segmentation/normalization.h"
 #include "v4r/attention_segmentation/utils.h"
 //#include "v4r/attention_segmentation/sphereHistogram.h"

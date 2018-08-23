@@ -37,59 +37,52 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #ifndef KP_TSF_SURFEL_HH
 #define KP_TSF_SURFEL_HH
 
-#include <Eigen/Dense>
 #include <pcl/point_types.h>
 #include <v4r/core/macros.h>
+#include <Eigen/Dense>
 
-namespace v4r
-{
-
-
+namespace v4r {
 
 /**
-   * @brief The Surfel class
-   */
-class V4R_EXPORTS Surfel
-{
-public:
+ * @brief The Surfel class
+ */
+class V4R_EXPORTS Surfel {
+ public:
   Eigen::Vector3f pt;
   Eigen::Vector3f n;
   float weight;
   float radius;
   int r, g, b;
   Surfel()
-    : pt(Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN())),
-      n(Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN())),
-      weight(0), radius(0) {}
+  : pt(Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+                       std::numeric_limits<float>::quiet_NaN())),
+    n(Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+                      std::numeric_limits<float>::quiet_NaN())),
+    weight(0), radius(0) {}
   Surfel(const pcl::PointXYZRGB &_pt) : pt(_pt.getArray3fMap()), weight(1), radius(0), r(_pt.r), g(_pt.g), b(_pt.b) {
-    if (!std::isnan(pt[0]) && !std::isnan(pt[1]) &&!std::isnan(pt[2])) {
+    if (!std::isnan(pt[0]) && !std::isnan(pt[1]) && !std::isnan(pt[2])) {
       n = -pt.normalized();
-    }
-    else
-    {
-      n = Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN());
+    } else {
+      n = Eigen::Vector3f(std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+                          std::numeric_limits<float>::quiet_NaN());
       weight = 0;
     }
   }
 };
 
-
-
 /*************************** INLINE METHODES **************************/
 
-} //--END--
+}  // namespace v4r
 
 #endif
-

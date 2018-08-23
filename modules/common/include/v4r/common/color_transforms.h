@@ -57,7 +57,7 @@ namespace v4r {
 
 class V4R_EXPORTS ColorTransform {
  public:
-  typedef boost::shared_ptr<ColorTransform> Ptr;
+  typedef std::shared_ptr<ColorTransform> Ptr;
 
   virtual ~ColorTransform() {}
 
@@ -91,7 +91,7 @@ class V4R_EXPORTS ColorTransform {
 
 class V4R_EXPORTS RGB2GrayScale : public ColorTransform {
  public:
-  typedef boost::shared_ptr<RGB2GrayScale> Ptr;
+  typedef std::shared_ptr<RGB2GrayScale> Ptr;
 
   size_t getOutputNumColorCompenents() const {
     return 1;
@@ -103,4 +103,4 @@ class V4R_EXPORTS RGB2GrayScale : public ColorTransform {
     return c;
   }
 };
-}
+}  // namespace v4r

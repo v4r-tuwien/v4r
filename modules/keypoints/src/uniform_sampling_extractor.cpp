@@ -25,4 +25,4 @@ void UniformSamplingExtractor<PointT>::compute() {
 
 template class V4R_EXPORTS UniformSamplingExtractor<pcl::PointXYZ>;
 template class V4R_EXPORTS UniformSamplingExtractor<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

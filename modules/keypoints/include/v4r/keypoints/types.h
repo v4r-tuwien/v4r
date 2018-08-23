@@ -45,6 +45,8 @@
  *
  */
 #pragma once
+#include <v4r/core/macros.h>
+#include <iostream>
 
 namespace v4r {
 enum KeypointType {
@@ -53,4 +55,7 @@ enum KeypointType {
   NARF = 0x04,             // 00000100
   HARRIS3D = 0x08          // 00000100
 };
-}
+
+V4R_EXPORTS std::istream& operator>>(std::istream& in, KeypointType& style);
+V4R_EXPORTS std::ostream& operator<<(std::ostream& out, const KeypointType& style);
+}  // namespace v4r

@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary depth and standart deviation.
+ * @brief Class to calculate boundary depth and standard deviation.
  */
 
 #ifndef BOUNDARY_RELATIONS_MEANDEPTH_H
@@ -58,7 +58,7 @@ class V4R_EXPORTS BoundaryRelationsMeanDepth : public BoundaryRelationsBase {
  protected:
  private:
  public:
-  typedef boost::shared_ptr<BoundaryRelationsMeanDepth> Ptr;
+  typedef std::shared_ptr<BoundaryRelationsMeanDepth> Ptr;
 
   BoundaryRelationsMeanDepth();
   ~BoundaryRelationsMeanDepth();

@@ -43,7 +43,7 @@
 // opencv library
 #include <opencv2/opencv.hpp>
 
-// standart libraries
+// standard libraries
 #include <stdio.h>
 #include <algorithm>
 #include <vector>

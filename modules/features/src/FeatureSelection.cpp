@@ -183,4 +183,4 @@ void FeatureSelection::compute(std::vector<cv::KeyPoint> &keys, cv::Mat &descrip
       keys[pts_clusters[i][j]].response = -1;
   }*/
 }
-}
+}  // namespace v4r

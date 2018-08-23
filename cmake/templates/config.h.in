@@ -1,0 +1,71 @@
+/***********************************************************************************************************************
+ *                                          Configuration of the V4R library                                           *
+ *                                           (automatically generated file)                                            *
+ ***********************************************************************************************************************/
+
+// This file provides facilities to check the state (enabled/disabled) of V4R modules and third-party dependencies.
+// Both compile- and runtime checks are supported.
+
+// Runtime checks
+// --------------
+//
+// Use v4r::have function.
+//
+// Example:
+//
+//   if (v4r::have("v4r_features"))
+//     std::cout << "Features module is enabled!" << std::endl;
+//
+
+// Compile-time checks
+// -------------------
+//
+// Use (1) v4r::have() function or (2) HAVE_XXX macros.
+//
+// 1. v4r::have() function can be used for compile-time checks because it is marked as constexpr.
+//
+// Example:
+//
+//   static_assert(v4r::have("v4r_features"), "Features module is required!");
+//
+// 2. HAVE_XXX macro is defined for every V4R module and third-party dependency; the difference between enabled and
+// disabled state is the value of the macro (1 or 0 respectively). The XXX stands for uppercase name of the V4R module
+// (including V4R_ prefix) or dependency.
+//
+// Example:
+//
+//    #include <v4r/config.h>
+//    #if HAVE_V4R_COMMON
+//         // ... do things
+//    #endif
+//
+// Note: it is not sufficient to have #ifdef check because the macro is always defined!
+
+#pragma once
+
+#include <string>
+
+namespace v4r {
+
+/// Helper constexpr function to check equality of two C-style strings.
+constexpr bool stringsEqual(char const* one, char const* two) {
+  return (*one && *two) ? (*one == *two && stringsEqual(one + 1, two + 1)) : (!*one && !*two);
+}
+
+/// Check if a given third-party dependency or V4R module is enabled.
+/// \param[in] what lowercase name of the module/dependency to check
+constexpr bool have(const char* what) {
+  return 0@V4R_HAVE_CHECKS@;
+}
+
+inline bool
+have(const std::string& what) {
+  return have(what.c_str());
+}
+
+}  // namespace v4r
+
+// V4R modules and submodules
+@V4R_MODULE_DEFINITIONS@
+// Third-party dependencies
+@V4R_3P_DEFINITIONS@

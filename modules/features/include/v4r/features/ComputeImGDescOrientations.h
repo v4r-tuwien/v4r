@@ -81,12 +81,12 @@ class V4R_EXPORTS ComputeImGDescOrientations {
   void compute(const cv::Mat_<unsigned char> &image, std::vector<cv::KeyPoint> &keys);
   // void compute(const cv::Mat_<unsigned char> &image, std::vector<AffKeypoint> &keys);
 
-  typedef SmartPtr<::v4r::ComputeImGDescOrientations> Ptr;
-  typedef SmartPtr<::v4r::ComputeImGDescOrientations const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ComputeImGDescOrientations> Ptr;
+  typedef std::shared_ptr<::v4r::ComputeImGDescOrientations const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

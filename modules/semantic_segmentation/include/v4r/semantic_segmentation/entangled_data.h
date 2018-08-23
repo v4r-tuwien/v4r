@@ -219,4 +219,4 @@ class V4R_EXPORTS EntangledForestData {
   void GenerateBags(std::mt19937 *randomGenerator, double baggingRatio, int trees, bool tryUniformBags);
   void LoadBag(int bagidx);
 };
-}
+}  // namespace v4r

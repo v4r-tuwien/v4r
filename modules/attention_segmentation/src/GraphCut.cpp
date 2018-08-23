@@ -93,8 +93,7 @@ bool GraphCut::init() {
   }
 
   if (relations.size() < 1) {
-    printf("[GraphCut::init] Warning: No relations available!\n");
-    // return false;
+    LOG(WARNING) << "No relations available!";
   }
 
   if (createAllRelations) {
@@ -129,15 +128,9 @@ bool GraphCut::init() {
   }
 
   std::vector<gc::Edge> e;
-
   Graph graph(surfaces, relations);
 
-  std::cerr << "graph initialized" << std::endl;
-
   graph.BuildFromSVM(e, num_edges, surfaces_reindex2);
-
-  std::cerr << "graph created" << std::endl;
-
   edges = new gc::Edge[num_edges];
   for (unsigned i = 0; i < num_edges; i++)
     edges[i] = e[i];
@@ -173,24 +166,19 @@ bool smallerRelations(const v4r::Relation &a, const v4r::Relation &b) {
  */
 void GraphCut::process() {
   if (!initialized) {
-    printf("[GraphCut::process] Error: Graph is not initialized!\n");
-    return;
+    throw std::runtime_error("[GraphCut::process] Error: Graph is not initialized!");
   }
 
   if (GC_DEBUG)
     printf("[GraphCut::process] Start processing.\n");
 
   // sort edges by weight
-  std::cerr << "before sorting" << std::endl;
   std::sort(edges, edges + num_edges, smallerEdge);
-  std::cerr << "after sorting" << std::endl;
 
   // init thresholds
   float *threshold = new float[num_edges];
   for (unsigned i = 0; i < num_edges; i++)
     threshold[i] = THRESHOLD(1, THRESHOLD_CONSTANT);
-
-  std::cerr << "after threshold initialization" << std::endl;
 
   if (GC_DEBUG)
     printf("THRESHOLD: %4.3f\n", threshold[0]);
@@ -212,7 +200,7 @@ void GraphCut::process() {
       printf("\nstart with edge %u: ", i);
 
     gc::Edge *pedge = &edges[i];
-    int a = u->find(pedge->a);  // components conected by this edge
+    int a = u->find(pedge->a);  // components connected by this edge
     int b = u->find(pedge->b);
     if (GC_DEBUG)
       printf("node: %u-%u / universe: %u-%u: ", pedge->a, pedge->b, a, b);
@@ -269,7 +257,7 @@ void GraphCut::process() {
 
   for (unsigned int i = 0; i < graphCutGroups.size(); i++)
     for (unsigned int j = 0; j < graphCutGroups[i].size(); j++) {
-      printf("[GraphCut::process] Surface %u is in groud %u:\n", graphCutGroups[i][j], i);
+      VLOG(1) << "Surface " << graphCutGroups[i][j] << " is in group " << i;
       surfaces[graphCutGroups[i][j]]->label = i;
     }
 
@@ -302,30 +290,18 @@ void GraphCut::process2() {
     throw std::runtime_error(error_message);
   }
 
-  //   std::vector<v4r::Relation>::iterator itr = relations.begin();
-  //   while(itr != relations.end())
-  //   {
-  //     if(itr->valid)
-  //     {
-  //       itr++;
-  //     }
-  //     else
-  //     {
-  //       itr = relations.erase(itr,itr+1);
-  //     }
-  //   }
-
   if (relations.size() < 1) {
-    printf("[GraphCut::init] Warning: No relations available!\n");
-    // return false;
+    LOG(WARNING) << "No relations available!";
   }
 
   // sort edges by weight
   std::sort(relations.begin(), relations.end(), smallerRelations);
   std::vector<bool> used_relations(relations.size(), false);
 
-  for (unsigned int i = 0; i < relations.size(); ++i) {
-    //     printf("%d--%d\n",relations.at(i).id_0,relations.at(i).id_1);
+  if (VLOG_IS_ON(2)) {
+    for (unsigned int i = 0; i < relations.size(); ++i) {
+      VLOG(2) << relations.at(i).id_0 << "--" << relations.at(i).id_1;
+    }
   }
 
   std::vector<std::vector<int>> universe(surfaces.size());
@@ -342,17 +318,11 @@ void GraphCut::process2() {
     if (used_relations.at(r_idx))
       continue;
 
-    //     printf("Processing relation %d\n",r_idx);
-
-    // if probability that patches are disconnected by relation is lower than constant, than connect pathes
+    // if probability that patches are disconnected by relation is lower than constant, than connect paths
     if (((relations.at(r_idx).rel_probability[0]) <= (threshold.at(relations.at(r_idx).id_0))) &&
         ((relations.at(r_idx).rel_probability[0]) <= (threshold.at(relations.at(r_idx).id_1)))) {
-      //       printf("Relation will be connected\n");
-
       int id_0 = relations.at(r_idx).id_0;
       int id_1 = relations.at(r_idx).id_1;
-
-      //       printf("id0 = %d; id1 = %d\n",id_0,id_1);
 
       // calculate the size of each universe
       int uni0_size = 0;
@@ -364,20 +334,14 @@ void GraphCut::process2() {
         uni1_size += surfaces.at(universe.at(id_1).at(i))->indices.size();
       }
 
-      //       printf("Size of universe 0 -- %d\n",uni0_size);
-      //       printf("Size of universe 1 -- %d\n",uni1_size);
-
       float w_uni0 = ((float)uni0_size) / ((float)uni0_size + (float)uni1_size);
       float w_uni1 = ((float)uni1_size) / ((float)uni0_size + (float)uni1_size);
 
       // add one part of the universe to another
       if (uni0_size > uni1_size) {
-        //         printf("Universe 1 will be added to universe 0\n");
-
         // id_1 --> id_0
         for (unsigned int i = 0; i < universe.at(id_1).size(); ++i) {
           universe.at(id_0).push_back(universe.at(id_1).at(i));
-          //           printf("adding surface %d\n",universe.at(id_1).at(i));
         }
         universe.at(id_1).clear();
         threshold.at(id_0) =
@@ -387,8 +351,6 @@ void GraphCut::process2() {
         for (unsigned int i = 0; i < relations.size(); ++i) {
           if (used_relations.at(i))
             continue;
-
-          //           printf("looking at relation %d (%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
 
           if ((relations.at(i).id_0 == id_0) && (relations.at(i).id_1 != id_1)) {
             int new_id = relations.at(i).id_1;
@@ -403,9 +365,6 @@ void GraphCut::process2() {
                     w_uni1 * relations.at(j).rel_probability[0] + w_uni0 * relations.at(i).rel_probability[0];
                 relations.at(i).rel_probability[1] = 1 - relations.at(j).rel_probability[0];
                 used_relations.at(j) = true;
-
-                //                 printf("relation %d (%d--%d) is eliminated and will be added to relation %d
-                //                 (%d--%d)\n",j,relations.at(j).id_0,relations.at(j).id_1,i,relations.at(i).id_0,relations.at(i).id_1);
                 break;
               }
             }
@@ -422,9 +381,6 @@ void GraphCut::process2() {
                     w_uni1 * relations.at(j).rel_probability[0] + w_uni0 * relations.at(i).rel_probability[0];
                 relations.at(i).rel_probability[1] = 1 - relations.at(j).rel_probability[0];
                 used_relations.at(j) = true;
-
-                //                 printf("relation %d (%d--%d) is eliminated and will be added to relation %d
-                //                 (%d--%d)\n",j,relations.at(j).id_0,relations.at(j).id_1,i,relations.at(i).id_0,relations.at(i).id_1);
                 break;
               }
             }
@@ -436,25 +392,16 @@ void GraphCut::process2() {
             continue;
 
           if (relations.at(i).id_0 == id_1) {
-            //             printf("relation %d (%d--%d) was moved to relation
-            //             ",i,relations.at(i).id_0,relations.at(i).id_1);
             relations.at(i).id_0 = id_0;
-            //             printf("(%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
           } else if (relations.at(i).id_1 == id_1) {
-            //             printf("relation %d (%d--%d) was moved to relation
-            //             ",i,relations.at(i).id_0,relations.at(i).id_1);
             relations.at(i).id_1 = id_0;
-            //             printf("(%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
           }
         }
 
       } else {
-        //         printf("Universe 0 will be added to universe 1\n");
-
         // id_0 --> id_1
         for (unsigned int i = 0; i < universe.at(id_0).size(); ++i) {
           universe.at(id_1).push_back(universe.at(id_0).at(i));
-          //           printf("adding surface %d\n",universe.at(id_0).at(i));
         }
         universe.at(id_0).clear();
         threshold.at(id_1) =
@@ -464,8 +411,6 @@ void GraphCut::process2() {
         for (unsigned int i = 0; i < relations.size(); ++i) {
           if (used_relations.at(i))
             continue;
-
-          //           printf("looking at relation %d (%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
 
           if ((relations.at(i).id_0 == id_1) && (relations.at(i).id_1 != id_0)) {
             int new_id = relations.at(i).id_1;
@@ -480,9 +425,6 @@ void GraphCut::process2() {
                     w_uni1 * relations.at(j).rel_probability[0] + w_uni0 * relations.at(i).rel_probability[0];
                 relations.at(i).rel_probability[1] = 1 - relations.at(j).rel_probability[0];
                 used_relations.at(j) = true;
-
-                //                 printf("relation %d (%d--%d) is eliminated and will be added to relation %d
-                //                 (%d--%d)\n",j,relations.at(j).id_0,relations.at(j).id_1,i,relations.at(i).id_0,relations.at(i).id_1);
                 break;
               }
             }
@@ -499,9 +441,6 @@ void GraphCut::process2() {
                     w_uni1 * relations.at(j).rel_probability[0] + w_uni0 * relations.at(i).rel_probability[0];
                 relations.at(i).rel_probability[1] = 1 - relations.at(j).rel_probability[0];
                 used_relations.at(j) = true;
-
-                //                 printf("relation %d (%d--%d) is eliminated and will be added to relation %d
-                //                 (%d--%d)\n",j,relations.at(j).id_0,relations.at(j).id_1,i,relations.at(i).id_0,relations.at(i).id_1);
                 break;
               }
             }
@@ -513,24 +452,14 @@ void GraphCut::process2() {
             continue;
 
           if (relations.at(i).id_0 == id_0) {
-            //             printf("relation %d (%d--%d) was moved to relation
-            //             ",i,relations.at(i).id_0,relations.at(i).id_1);
             relations.at(i).id_0 = id_1;
-            //             printf("(%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
           } else if (relations.at(i).id_1 == id_0) {
-            //             printf("relation %d (%d--%d) was moved to relation
-            //             ",i,relations.at(i).id_0,relations.at(i).id_1);
             relations.at(i).id_1 = id_1;
-            //             printf("(%d--%d)\n",i,relations.at(i).id_0,relations.at(i).id_1);
           }
         }
       }
     }
-
-    //     printf("Finished relation!\n");
   }
-
-  printf("Wow, we are here!\n");
 
   std::vector<int> universe_number(universe.size(), -1);
   int current_uni_number = 0;
@@ -541,13 +470,9 @@ void GraphCut::process2() {
     }
   }
 
-  //   printf("And here!\n");
-
   for (unsigned int i = 0; i < surfaces.size(); ++i) {
     surfaces.at(i)->label = -1;
   }
-
-  //   printf("And here too!\n");
 
   for (unsigned int i = 0; i < universe.size(); ++i) {
     for (unsigned int j = 0; j < universe.at(i).size(); ++j) {
@@ -556,4 +481,4 @@ void GraphCut::process2() {
     }
   }
 }
-}
+}  // namespace gc

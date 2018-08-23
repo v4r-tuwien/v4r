@@ -18,6 +18,9 @@ enum class ObjRecoVisLayoutStyle {
   INTERMEDIATE  // show input, processed, and verified objects
 };
 
+std::istream &operator>>(std::istream &in, ObjRecoVisLayoutStyle &cm);
+std::ostream &operator<<(std::ostream &out, const ObjRecoVisLayoutStyle &cm);
+
 /**
  * @brief Visualization framework for object recognition
  * @author Thomas Faeulhammer
@@ -26,6 +29,8 @@ enum class ObjRecoVisLayoutStyle {
 template <typename PointT>
 class V4R_EXPORTS ObjectRecognitionVisualizer {
  private:
+  enum class KP_VIS_STATE { NOTHING, OBJECT_SPECIFIC_COLOR, CORR_SPECIFIC_COLOR };
+
   typename pcl::PointCloud<PointT>::ConstPtr cloud_;            ///< input cloud
   typename pcl::PointCloud<PointT>::ConstPtr processed_cloud_;  ///< input cloud
   typename pcl::PointCloud<pcl::Normal>::ConstPtr normals_;     ///< input normals
@@ -35,9 +40,12 @@ class V4R_EXPORTS ObjectRecognitionVisualizer {
   //    generated object hypotheses
   //    std::vector< typename ObjectHypothesis<PointT>::Ptr > verified_object_hypotheses_; ///< verified object
   //    hypotheses
-  mutable boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_;
+  mutable pcl::visualization::PCLVisualizer::Ptr vis_;
   mutable int vp1a_, vp2_, vp3_, vp1b_, vp2b_;
-  mutable std::vector<std::string> coordinate_axis_ids_;
+  mutable std::vector<std::pair<std::string, int>> coordinate_axis_ids_;  ///< variable which keeps track of coordinate
+                                                                          ///< axis and in which viewpoint they are
+                                                                          ///< visualized (needed to remove them
+                                                                          ///< properly)
 
   typename Source<PointT>::ConstPtr m_db_;                                      ///< model data base
   std::map<std::string, typename LocalObjectModel::ConstPtr> model_keypoints_;  ///< pointer to local model database
@@ -52,45 +60,33 @@ class V4R_EXPORTS ObjectRecognitionVisualizer {
 
   void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event) const;
   void pointPickingEventOccured(const pcl::visualization::PointPickingEvent &event) const;
-  void flipOpacity(const std::string &cloud_name, double max_opacity = 1.) const;
+
+  void updateExtendedVisualization() const;
 
   int model_resolution_mm_;  ///< resolution of the visualized object model in mm
 
   mutable pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_;
 
+  mutable KP_VIS_STATE visualization_status = KP_VIS_STATE::NOTHING;
+  mutable bool scene_overlay_;  ///< defines whether or not scene should be overlaid onto visualization windows
+  mutable bool visualize_correspondence_lines_;
+  mutable bool visualize_co_axes_;
+
   /**
    * @brief The Line class is a utility class to visualize and toggle the correspondences between model and scene
    * keypoints
    */
-  class Line {
-   private:
-    bool is_visible_;
-    pcl::visualization::PCLVisualizer::Ptr visLine_;
-
-   public:
+  struct Line {
     PointT p_, q_;
     double r_, g_, b_;
     std::string id_;
     int viewport_;
 
-    Line(pcl::visualization::PCLVisualizer::Ptr vis, const PointT &p, const PointT &q, double r, double g, double b,
-         const std::string &id, int viewport = 0)
-    : is_visible_(false), visLine_(vis), p_(p), q_(q), r_(r), g_(g), b_(b), id_(id), viewport_(viewport) {}
-
-    void operator()() {
-      if (!is_visible_) {
-        visLine_->addLine(p_, q_, r_, g_, b_, id_, viewport_);
-        is_visible_ = true;
-        ;
-      } else {
-        visLine_->removeShape(id_, viewport_);
-        visLine_->removeShape(id_);
-        is_visible_ = false;
-      }
-    }
+    Line(const PointT &p, const PointT &q, double r, double g, double b, const std::string &id)
+    : p_(p), q_(q), r_(r), g_(g), b_(b), id_(id) {}
   };
-  mutable std::vector<Line> corrs_;
-  mutable std::vector<Line> corrs2_;
+  mutable std::vector<Line> corrs_hypothesis_specific_color_;
+  mutable std::vector<Line> corrs_corr_specific_color_;
 
   /**
    * @brief setupLayout sets up the layout of the visualization
@@ -101,9 +97,11 @@ class V4R_EXPORTS ObjectRecognitionVisualizer {
  public:
   ObjectRecognitionVisualizer(const PCLVisualizationParams::ConstPtr &vis_param,
                               ObjRecoVisLayoutStyle layout = ObjRecoVisLayoutStyle::FULL)
-  : vis_param_(vis_param), layout_(layout) {}
+  : vis_param_(vis_param), layout_(layout), scene_overlay_(true), visualize_correspondence_lines_(false),
+    visualize_co_axes_(true) {}
 
-  ObjectRecognitionVisualizer(ObjRecoVisLayoutStyle layout = ObjRecoVisLayoutStyle::FULL) : layout_(layout) {
+  ObjectRecognitionVisualizer(ObjRecoVisLayoutStyle layout = ObjRecoVisLayoutStyle::FULL)
+  : layout_(layout), scene_overlay_(true), visualize_correspondence_lines_(false), visualize_co_axes_(true) {
     PCLVisualizationParams::Ptr vis_param(new PCLVisualizationParams());
     vis_param_ = vis_param;
   }
@@ -188,7 +186,7 @@ class V4R_EXPORTS ObjectRecognitionVisualizer {
     m_db_ = m_db;
   }
 
-  typedef boost::shared_ptr<ObjectRecognitionVisualizer<PointT>> Ptr;
-  typedef boost::shared_ptr<ObjectRecognitionVisualizer<PointT> const> ConstPtr;
+  typedef std::shared_ptr<ObjectRecognitionVisualizer<PointT>> Ptr;
+  typedef std::shared_ptr<ObjectRecognitionVisualizer<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

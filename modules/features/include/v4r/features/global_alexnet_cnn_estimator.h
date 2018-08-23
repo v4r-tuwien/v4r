@@ -92,19 +92,22 @@ class V4R_EXPORTS CNN_Feat_ExtractorParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("CNN parameters\n=====================");
-    desc.add_options()("help,h", "produce help message")(
-        "cnn_net", po::value<std::string>(&feature_extraction_proto_)->required(), "Definition of CNN (.prototxt)")(
-        "cnn_pretrained_net", po::value<std::string>(&pretrained_binary_proto_)->required(),
-        "Trained weights (.caffemodel)")("cnn_input_mean_file", po::value<std::string>(&input_mean_file_)->required(),
-                                         "mean pixel values (.binaryproto)")(
-        "cnn_device_name", po::value<std::string>(&device_name_)->default_value(device_name_), "")(
-        "cnn_output_layer_name", po::value<std::string>(&output_layer_name_)->default_value(output_layer_name_), "")(
-        "cnn_device_id", po::value<int>(&device_id_)->default_value(device_id_), "")(
-        "cnn_image_height", po::value<size_t>(&image_height_)->default_value(image_height_), "")(
-        "cnn_remove_background", po::value<bool>(&remove_background_)->default_value(remove_background_),
-        "if true, removes background for pixels not representing the object")(
-        "cnn_margin", po::value<int>(&margin_)->default_value(margin_),
-        "margin in pixel added to each side of the object's bounding box");
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("cnn_net", po::value<std::string>(&feature_extraction_proto_)->required(),
+                       "Definition of CNN (.prototxt)");
+    desc.add_options()("cnn_pretrained_net", po::value<std::string>(&pretrained_binary_proto_)->required(),
+                       "Trained weights (.caffemodel)");
+    desc.add_options()("cnn_input_mean_file", po::value<std::string>(&input_mean_file_)->required(),
+                       "mean pixel values (.binaryproto)");
+    desc.add_options()("cnn_device_name", po::value<std::string>(&device_name_)->default_value(device_name_), "");
+    desc.add_options()("cnn_output_layer_name",
+                       po::value<std::string>(&output_layer_name_)->default_value(output_layer_name_), "");
+    desc.add_options()("cnn_device_id", po::value<int>(&device_id_)->default_value(device_id_), "");
+    desc.add_options()("cnn_image_height", po::value<size_t>(&image_height_)->default_value(image_height_), "");
+    desc.add_options()("cnn_remove_background", po::value<bool>(&remove_background_)->default_value(remove_background_),
+                       "if true, removes background for pixels not representing the object");
+    desc.add_options()("cnn_margin", po::value<int>(&margin_)->default_value(margin_),
+                       "margin in pixel added to each side of the object's bounding box");
     po::variables_map vm;
     po::parsed_options parsed =
         po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
@@ -141,7 +144,7 @@ class V4R_EXPORTS CNN_Feat_Extractor : public GlobalEstimator<PointT> {
   CNN_Feat_ExtractorParameter param_;
 
  private:
-  boost::shared_ptr<caffe::Net<Dtype>> net_;
+  std::shared_ptr<caffe::Net<Dtype>> net_;
   bool init_;
   cv::Mat mean_;
   cv::Size input_geometry_;
@@ -153,6 +156,7 @@ class V4R_EXPORTS CNN_Feat_Extractor : public GlobalEstimator<PointT> {
   int init();
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   CNN_Feat_Extractor(const CNN_Feat_ExtractorParameter &p = CNN_Feat_ExtractorParameter(),
                      const std::string &descr_name = "alexnet", size_t descr_type = FeatureType::ALEXNET,
                      size_t feature_dimensions = 4096)
@@ -166,7 +170,7 @@ class V4R_EXPORTS CNN_Feat_Extractor : public GlobalEstimator<PointT> {
     return false;
   }
 
-  typedef boost::shared_ptr<CNN_Feat_Extractor<PointT, Dtype>> Ptr;
-  typedef boost::shared_ptr<CNN_Feat_Extractor<PointT, Dtype> const> ConstPtr;
+  typedef std::shared_ptr<CNN_Feat_Extractor<PointT, Dtype>> Ptr;
+  typedef std::shared_ptr<CNN_Feat_Extractor<PointT, Dtype> const> ConstPtr;
 };
-}
+}  // namespace v4r

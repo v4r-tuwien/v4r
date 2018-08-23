@@ -13,7 +13,7 @@ if(BUILD_EVALUATION_TOOLS)
 
 endif()
 
-if (INSTALL_C_EVALUATION_TOOLS AND NOT WIN32)
+if (INSTALL_C_EVALUATION_TOOLS)
   file(GLOB C_SAMPLES *.c *.cpp *.jpg *.png *.data makefile.* build_all.sh *.dsp *.cmd )
   install(FILES ${C_SAMPLES}
           DESTINATION ${V4R_SAMPLES_SRC_INSTALL_PATH}/cpp

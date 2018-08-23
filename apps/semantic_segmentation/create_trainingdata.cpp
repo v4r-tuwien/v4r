@@ -62,7 +62,6 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -317,7 +316,7 @@ static void saveLabels(string filename, std::vector<int>& labels) {
 }
 
 template <typename PointT>
-static void getInlierIndices(const boost::shared_ptr<pcl::PointCloud<PointT>>& cloud, int meanK, double stddevMulThresh,
+static void getInlierIndices(const typename pcl::PointCloud<PointT>::Ptr& cloud, int meanK, double stddevMulThresh,
                              pcl::IndicesPtr inlier_indices) {
   cout << "Calculating statistical outliers..." << endl;
 
@@ -359,9 +358,8 @@ static void getInlierIndices(const boost::shared_ptr<pcl::PointCloud<PointT>>& c
 }
 
 template <typename PointT>
-static void applyBilateralFilter(const boost::shared_ptr<pcl::PointCloud<PointT>>& inputcloud,
-                                 pcl::IndicesConstPtr indices, double sigmaS, double sigmaR,
-                                 boost::shared_ptr<pcl::PointCloud<PointT>>& outputcloud) {
+static void applyBilateralFilter(const typename pcl::PointCloud<PointT>::Ptr& inputcloud, pcl::IndicesConstPtr indices,
+                                 double sigmaS, double sigmaR, typename pcl::PointCloud<PointT>::Ptr& outputcloud) {
   cout << "Apply bilateral filter..." << endl;
   pcl::FastBilateralFilterOMP<PointT> bf;
   bf.setInputCloud(inputcloud);
@@ -372,8 +370,8 @@ static void applyBilateralFilter(const boost::shared_ptr<pcl::PointCloud<PointT>
 }
 
 template <typename PointT>
-static void removeOutliers(const boost::shared_ptr<pcl::PointCloud<PointT>>& inputcloud, pcl::IndicesConstPtr indices,
-                           boost::shared_ptr<pcl::PointCloud<PointT>>& outputcloud) {
+static void removeOutliers(const typename pcl::PointCloud<PointT>::Ptr& inputcloud, pcl::IndicesConstPtr indices,
+                           typename pcl::PointCloud<PointT>::Ptr& outputcloud) {
   pcl::ExtractIndices<PointT> extract;
   extract.setInputCloud(inputcloud);
   extract.setIndices(indices);
@@ -521,7 +519,8 @@ int main(int argc, char** argv) {
 
     // load pointcloud
     string cloudstr = cloudinputdir + "/" + inputFiles[i] + ".pcd";
-    PointCloud<PointXYZRGB>::Ptr cloud(new PointCloud<PointXYZRGB>());
+    typedef PointXYZRGB PointT;
+    PointCloud<PointT>::Ptr cloud(new PointCloud<PointT>());
     pcl::io::loadPCDFile(cloudstr, *cloud);
 
     // edit for paper to generate 2D images of the results
@@ -539,7 +538,7 @@ int main(int argc, char** argv) {
     if (outlierfilter) {
       // Statistical outlier removal
       // only get indices to remove later, after bilateral filter
-      getInlierIndices(cloud, 50, 2.0, inliers);
+      getInlierIndices<PointT>(cloud, 50, 2.0, inliers);
     } else {
       inliers->resize(cloud->points.size());
       for (unsigned int j = 0; j < cloud->points.size(); ++j) {
@@ -551,7 +550,7 @@ int main(int argc, char** argv) {
 
     // smoothing using bilateral filter
     if (bilateralfilter) {
-      applyBilateralFilter(cloud, inliers, 10.0f, 0.05f, cloud);
+      applyBilateralFilter<PointT>(cloud, inliers, 10.0f, 0.05f, cloud);
     }
 
     ptime time_prepend(microsec_clock::local_time());
@@ -560,8 +559,8 @@ int main(int argc, char** argv) {
 
     if (outlierfilter) {
       // finally remove statistical outliers
-      removeOutliers(cloud, inliers, cloud);
-      removeOutliers(lblcloud, inliers, lblcloud);
+      removeOutliers<PointT>(cloud, inliers, cloud);
+      removeOutliers<PointXYZL>(lblcloud, inliers, lblcloud);
     }
 
     Eigen::Matrix3f rotationMatrix;

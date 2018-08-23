@@ -17,7 +17,7 @@ namespace po = boost::program_options;
 
 typedef pcl::PointXYZRGB PointT;
 typedef v4r::Model<PointT> ModelT;
-typedef boost::shared_ptr<ModelT> ModelTPtr;
+typedef v4r::Model<PointT>::Ptr ModelTPtr;
 
 bool isInsideOfView(ModelTPtr model, Eigen::Matrix4f& model_pose);
 
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
       "test_dir,t", po::value<std::string>(&test_dir)->required(),
       "Directory with test scenes stored as point clouds (.pcd). The camera pose is taken directly from the pcd header "
       "fields \"sensor_orientation_\" and \"sensor_origin_\" (if the test directory contains subdirectories, each "
-      "subdirectory is considered as seperate sequence for multiview recognition)")(
+      "subdirectory is considered as separate sequence for multiview recognition)")(
       "visualize,v", po::bool_switch(&visualize), "visualize recognition results")(
       "out_dir,o", po::value<std::string>(&out_dir)->default_value(out_dir),
       "Output directory where recognition results will be stored.");

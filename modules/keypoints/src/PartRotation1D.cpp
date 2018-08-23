@@ -153,4 +153,4 @@ void PartRotation1D::getDeltaPose(Eigen::Matrix4f &delta_pose) {
 
   delta_pose = T * delta_pose * inv_T;
 }
-}
+}  // namespace v4r

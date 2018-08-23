@@ -77,7 +77,7 @@ std::vector<unsigned int> ClassificationData::NewBag(float baggingRatio) {
 
   labelWeights.clear();
 
-  // calculate label weights for inbalanced datasets
+  // calculate label weights for imbalanced datasets
   for (unsigned int i = 0; i < availableLabels.size(); ++i) {
     double n = double(std::min(pointsPerLabel[availableLabels[i]], maxPpLabel));
     double N = double(nPoints);

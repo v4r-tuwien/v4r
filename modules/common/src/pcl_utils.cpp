@@ -5,18 +5,17 @@ namespace v4r {
 
 template <typename PointT>
 void setCloudPose(const Eigen::Matrix4f &trans, pcl::PointCloud<PointT> &cloud) {
-  cloud.sensor_origin_[0] = trans(0, 3);
-  cloud.sensor_origin_[1] = trans(1, 3);
-  cloud.sensor_origin_[2] = trans(2, 3);
+  cloud.sensor_origin_ = trans.block<4, 1>(0, 3);
   Eigen::Matrix3f rotation = trans.block<3, 3>(0, 0);
   Eigen::Quaternionf q(rotation);
+  q.normalize();
   cloud.sensor_orientation_ = q;
 }
 
 #define PCL_INSTANTIATE_setCloudPose(T) \
   template V4R_EXPORTS void setCloudPose<T>(const Eigen::Matrix4f &, pcl::PointCloud<T> &);
 PCL_INSTANTIATE(setCloudPose, PCL_XYZ_POINT_TYPES(pcl::Normal))
-}
+}  // namespace v4r
 
 namespace pcl {
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,4 +141,4 @@ PCL_INSTANTIATE(copyPointCloud, PCL_XYZ_POINT_TYPES(Normal))
   template V4R_EXPORTS void copyPointCloud<T>(const PointCloud<T> &, const std::vector<size_t> &, PointCloud<T> &);
 PCL_INSTANTIATE(copyPointCloud, PCL_XYZ_POINT_TYPES(Normal))
 #undef PCL_INSTANTIATE_copyPointCloud
-}
+}  // namespace pcl

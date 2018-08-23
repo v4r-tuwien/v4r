@@ -49,11 +49,11 @@
 #define KP_CONVERT_CLOUDTOIMAGE_HPP
 
 #include <float.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <v4r/core/macros.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-//#include <pcl/point_cloud.h>
-//#include <pcl/point_types.h>
 
 namespace v4r {
 
@@ -92,6 +92,6 @@ inline void setImage(const cv::Mat &image, pcl::PointCloud<pcl::PointXYZRGB> &cl
   }
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

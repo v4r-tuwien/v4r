@@ -185,4 +185,4 @@ void ConnectedComponentsSegmenter<PointT>::segment() {
 
 #define PCL_INSTANTIATE_ConnectedComponentsSegmenter(T) template class V4R_EXPORTS ConnectedComponentsSegmenter<T>;
 PCL_INSTANTIATE(ConnectedComponentsSegmenter, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

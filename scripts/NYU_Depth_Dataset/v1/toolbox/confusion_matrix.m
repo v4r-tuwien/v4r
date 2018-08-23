@@ -12,7 +12,7 @@ function C = confusion_matrix(labels, predictions, numClasses)
 %   predictions - a vector of discrete integer predictions. The smallest
 %                 prediction should be no smaller than 1.
 %
-% Ouputs:
+% Outputs:
 %   C - the confusion matrix.
 
 error(nargchk(2, 3, nargin));

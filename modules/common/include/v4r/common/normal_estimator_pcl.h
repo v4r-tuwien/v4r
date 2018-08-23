@@ -63,25 +63,26 @@ class V4R_EXPORTS NormalEstimatorPCLParameter {
   NormalEstimatorPCLParameter(float radius = 0.02f, bool use_omp = true) : radius_(radius), use_omp_(use_omp) {}
 
   /**
-*@brief init parameters
-*@param command_line_arguments (according to Boost program options library)
-*@return unused parameters (given parameters that were not used in this initialization call)
-*/
+   *@brief init parameters
+   *@param command_line_arguments (according to Boost program options library)
+   *@return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(int argc, char **argv) {
     std::vector<std::string> arguments(argv + 1, argv + argc);
     return init(arguments);
   }
 
   /**
-*@brief init parameters
-*@param command_line_arguments (according to Boost program options library)
-*@return unused parameters (given parameters that were not used in this initialization call)
-*/
+   *@brief init parameters
+   *@param command_line_arguments (according to Boost program options library)
+   *@return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Surface Normal Estimator Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "normals_radius", po::value<float>(&radius_)->default_value(radius_), "support radius for computation")(
-        "normals_use_omp", po::value<bool>(&use_omp_)->default_value(use_omp_), "if true, uses openmp.");
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("normals_radius", po::value<float>(&radius_)->default_value(radius_),
+                       "support radius for computation");
+    desc.add_options()("normals_use_omp", po::value<bool>(&use_omp_)->default_value(use_omp_), "if true, uses openmp.");
     po::variables_map vm;
     po::parsed_options parsed =
         po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
@@ -113,15 +114,15 @@ class V4R_EXPORTS NormalEstimatorPCL : public NormalEstimator<PointT> {
  public:
   NormalEstimatorPCL(const NormalEstimatorPCLParameter &p = NormalEstimatorPCLParameter()) : param_(p) {}
 
-  ~NormalEstimatorPCL() {}
+  ~NormalEstimatorPCL() = default;
 
-  pcl::PointCloud<pcl::Normal>::Ptr compute();
+  pcl::PointCloud<pcl::Normal>::Ptr compute() override;
 
-  int getNormalEstimatorType() const {
+  NormalEstimatorType getNormalEstimatorType() const override {
     return NormalEstimatorType::PCL_INTEGRAL_NORMAL;
   }
 
-  typedef boost::shared_ptr<NormalEstimatorPCL> Ptr;
-  typedef boost::shared_ptr<NormalEstimatorPCL const> ConstPtr;
+  typedef std::shared_ptr<NormalEstimatorPCL> Ptr;
+  typedef std::shared_ptr<NormalEstimatorPCL const> ConstPtr;
 };
-}
+}  // namespace v4r

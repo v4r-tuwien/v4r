@@ -17,7 +17,7 @@ void MultiRecognitionPipeline<PointT>::doInit(const bf::path &trained_dir, bool 
 }
 
 template <typename PointT>
-void MultiRecognitionPipeline<PointT>::do_recognize() {
+void MultiRecognitionPipeline<PointT>::do_recognize(const std::vector<std::string> &model_ids_to_search) {
   omp_init_lock(&rec_lock_);
 
   //#pragma omp parallel for schedule(dynamic)
@@ -29,7 +29,7 @@ void MultiRecognitionPipeline<PointT>::do_recognize() {
     if (table_plane_set_)
       r->setTablePlane(table_plane_);
 
-    r->recognize();
+    r->recognize(model_ids_to_search);
 
     std::vector<ObjectHypothesesGroup> oh_tmp = r->getObjectHypothesis();
     omp_set_lock(&rec_lock_);
@@ -48,4 +48,4 @@ void MultiRecognitionPipeline<PointT>::do_recognize() {
 template class V4R_EXPORTS MultiRecognitionPipeline<pcl::PointXYZRGB>;
 // template class V4R_EXPORTS MultiRecognitionPipeline<pcl::PointXYZ>;    // maybe this doesn't work because of the
 // specialized template in the initialization function (constructor)
-}
+}  // namespace v4r

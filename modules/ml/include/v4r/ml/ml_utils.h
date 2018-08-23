@@ -28,4 +28,4 @@ void shuffleTrainingData(Eigen::MatrixXf &data, Eigen::VectorXi &target);
  */
 Eigen::MatrixXi computeConfusionMatrix(const Eigen::VectorXi &actual_label, const Eigen::VectorXi &predicted_label,
                                        size_t num_classes);
-}
+}  // namespace v4r

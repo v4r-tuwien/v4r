@@ -64,4 +64,4 @@ Visualizer3D& Visualizer3D::keepOnlyClouds(int clouds_to_preserve) {
   reverse(all_identifiers.begin(), all_identifiers.end());
   return *this;
 }
-}
+}  // namespace v4r

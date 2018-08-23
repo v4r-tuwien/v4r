@@ -383,6 +383,6 @@ inline float distanceNCCb(const unsigned char *d1, const unsigned char *d2, unsi
   return dist;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

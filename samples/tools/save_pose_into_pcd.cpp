@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   bool invert_pose = false;
   bool use_indices = false;
   po::options_description desc(
-      "Save camera pose given by seperate pose file directly into header of .pcd "
+      "Save camera pose given by separate pose file directly into header of .pcd "
       "file\n======================================\n**Allowed options");
   desc.add_options()("help,h", "produce help message")("input_dir,i", po::value<std::string>(&input_dir)->required(),
                                                        "directory containing both .pcd and pose files")(
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 
         v4r::setCloudPose(global_trans, *cloud);
         v4r::io::createDirForFileIfNotExist(out_fn);
-        pcl::io::savePCDFileBinary(out_fn, *cloud);
+        pcl::io::savePCDFileBinaryCompressed(out_fn, *cloud);
       } else
         std::cerr << "Pose file " << full_pose_path << " does not exist." << std::endl;
     }

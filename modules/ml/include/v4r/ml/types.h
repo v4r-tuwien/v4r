@@ -46,12 +46,17 @@
  */
 
 #pragma once
+#include <v4r/core/macros.h>
+#include <iostream>
 
 namespace v4r {
-enum ClassifierType {
-  KNN = 0x01,  // 00000001
-  SVM = 0x02,  // 00000010
-  CNN = 0x04   // 00000100
-               //            RandomForest  = 0x08 // 00001000
+enum class ClassifierType {
+  KNN,
+  SVM,
+  CNN
+  //            RandomForest
 };
-}
+
+V4R_EXPORTS std::istream& operator>>(std::istream& in, ClassifierType& ct);
+V4R_EXPORTS std::ostream& operator<<(std::ostream& out, const ClassifierType& ct);
+}  // namespace v4r

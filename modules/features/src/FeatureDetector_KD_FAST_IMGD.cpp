@@ -57,11 +57,9 @@ namespace v4r {
 
 using namespace std;
 
-/************************************************************************************
- * Constructor/Destructor
- */
 FeatureDetector_KD_FAST_IMGD::FeatureDetector_KD_FAST_IMGD(const Parameter &_p)
-: FeatureDetector(KD_FAST_IMGD), param(_p) {
+: FeatureDetector(FeatureDetector::Type::KD_FAST_IMGD), param(_p) {
+  descr_name_ = "fast_imgd";
 // orb = new cv::ORB(10000, 1.2, 6, 13, 0, 2, cv::ORB::HARRIS_SCORE, 13); //31
 // orb = new cv::ORB(1000, 1.44, 2, 17, 0, 2, cv::ORB::HARRIS_SCORE, 17);
 #ifdef HAVE_OCV_2
@@ -79,36 +77,36 @@ FeatureDetector_KD_FAST_IMGD::FeatureDetector_KD_FAST_IMGD(const Parameter &_p)
 
 FeatureDetector_KD_FAST_IMGD::~FeatureDetector_KD_FAST_IMGD() {}
 
-/***************************************************************************************/
-
-/**
- * detect
- */
-void FeatureDetector_KD_FAST_IMGD::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+void FeatureDetector_KD_FAST_IMGD::detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                                    cv::Mat &descriptors, const cv::Mat &object_mask) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
+
+  if (!object_mask.empty())
+    std::cout << "Object mask for FAST currently not implemented!" << std::endl;
 
 #ifndef HAVE_OCV_2
   cv::ocl::setUseOpenCL(false);
 #endif
 
-  orb->detect(im_gray, keys);
-
-  imGDesc->compute(im_gray, keys, descriptors);
+  orb->detect(im_gray_, keys);
+  imGDesc->compute(im_gray_, keys, descriptors);
+  computeKeypointIndices(im_gray_, keys);
 }
 
-/**
- * detect
- */
-void FeatureDetector_KD_FAST_IMGD::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys) {
+void FeatureDetector_KD_FAST_IMGD::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                          const cv::Mat &object_mask) {
   keys.clear();
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
+
+  if (!object_mask.empty())
+    std::cout << "Object mask for Harris Detection currently not implemented!" << std::endl;
 
 #ifndef HAVE_OCV_2
   cv::ocl::setUseOpenCL(false);
@@ -126,7 +124,7 @@ void FeatureDetector_KD_FAST_IMGD::detect(const cv::Mat &image, std::vector<cv::
       for (int u = 0; u < param.tiles; u++) {
         getExpandedRect(u, v, image.rows, image.cols, rect);
 
-        orb->detect(im_gray(rect), tmp_keys);
+        orb->detect(im_gray_(rect), tmp_keys);
 
         pt_offs = cv::Point2f(rect.x, rect.y);
 
@@ -138,24 +136,26 @@ void FeatureDetector_KD_FAST_IMGD::detect(const cv::Mat &image, std::vector<cv::
       }
     }
   } else
-    orb->detect(im_gray, keys);
+    orb->detect(im_gray_, keys);
+
+  computeKeypointIndices(im_gray_, keys);
 }
 
 /**
  * detect
  */
-void FeatureDetector_KD_FAST_IMGD::extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+void FeatureDetector_KD_FAST_IMGD::compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
                                            cv::Mat &descriptors) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
 #ifndef HAVE_OCV_2
   cv::ocl::setUseOpenCL(false);
 #endif
 
-  imGDesc->compute(im_gray, keys, descriptors);
+  imGDesc->compute(im_gray_, keys, descriptors);
 
   if (param.do_feature_selection) {
     fs->dbg = image;
@@ -164,4 +164,4 @@ void FeatureDetector_KD_FAST_IMGD::extract(const cv::Mat &image, std::vector<cv:
     // cout<<"[FeatureDetector_KD_FAST_IMGD::extract] num selected: "<<keys.size()<<", "<<descriptors.rows<<endl;
   }
 }
-}
+}  // namespace v4r

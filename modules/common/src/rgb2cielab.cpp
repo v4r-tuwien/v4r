@@ -117,4 +117,4 @@ void RGB2CIELAB::do_inverse_conversion(const Eigen::VectorXf &converted_color, u
 
 // template V4R_EXPORTS void RGB2CIELAB::do_conversion<pcl::PointXYZRGB>(const typename
 // pcl::PointCloud<pcl::PointXYZRGB> &, Eigen::MatrixXf &, int);
-}
+}  // namespace v4r

@@ -45,21 +45,20 @@
  *
  */
 
-#include <v4r/io/filesystem.h>
-#include <v4r/recognition/IMKRecognizer.h>
-#include <v4r/recognition/IMKRecognizerIO.h>
-#include <v4r/keypoints/impl/PoseIO.hpp>
-#include <v4r/keypoints/impl/invPose.hpp>
-#include <v4r/reconstruction/impl/projectPointToImage.hpp>
-//#include "v4r/KeypointTools/ScopeTime.hpp"
 #include <pcl/common/time.h>
 #include <pcl/filters/filter.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+#include <v4r/io/filesystem.h>
+#include <v4r/recognition/IMKRecognizer.h>
+#include <v4r/recognition/IMKRecognizerIO.h>
 #include <algorithm>
 #include <opencv2/highgui/highgui.hpp>
 #include <v4r/common/impl/Vector.hpp>
+#include <v4r/keypoints/impl/PoseIO.hpp>
+#include <v4r/keypoints/impl/invPose.hpp>
 #include <v4r/keypoints/impl/warpPatchHomography.hpp>
+#include <v4r/reconstruction/impl/projectPointToImage.hpp>
 
 //#define DEBUG_AR_GUI
 
@@ -363,7 +362,7 @@ void IMKRecognizer::createObjectModel(const unsigned &idx) {
     cv::split(im_lab, im_channels);
 
     detector->detect(im_channels[0], keys);
-    descEstimator->extract(im_channels[0], keys, descs);
+    descEstimator->compute(im_channels[0], keys, descs);
 
     int tmp_nb = key_cnt;
 
@@ -522,7 +521,7 @@ void IMKRecognizer::poseEstimation(
     const std::vector<cv::Mat_<unsigned char>> &_im_channels, const std::vector<std::string> &_object_names,
     const std::vector<IMKView> &views, const std::vector<cv::KeyPoint> &_keys, const cv::Mat &_descs,
     const std::vector<std::vector<cv::DMatch>> &_matches,
-    const std::vector<boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &_clusters,
+    const std::vector<std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &_clusters,
     std::vector<v4r::triple<std::string, double, Eigen::Matrix4f>> &objects,
     const pcl::PointCloud<pcl::PointXYZRGB> &_cloud) {
   (void)_descs;
@@ -615,9 +614,9 @@ void IMKRecognizer::recognize(const cv::Mat &_image,
   }
 
   // get matches
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - keypoint detection");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - keypoint detection");
     detector->detect(im_channels[0], keys);
-    descEstimator->extract(im_channels[0], keys, descs);
+    descEstimator->compute(im_channels[0], keys, descs);
   }
 
 #ifdef DEBUG_AR_GUI
@@ -625,15 +624,15 @@ void IMKRecognizer::recognize(const cv::Mat &_image,
   votesClustering.dbg = dbg;
 #endif
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - matching");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - matching");
     cbMatcher->queryMatches(descs, matches, false);
   }
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - clustering");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - clustering");
     votesClustering.operate(object_names, object_models, keys, matches, clusters);
   }
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - pnp pose estimation");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - pnp pose estimation");
     poseEstimation(im_channels, object_names, object_models, keys, descs, matches, clusters, objects,
                    pcl::PointCloud<pcl::PointXYZRGB>());
   }
@@ -661,9 +660,9 @@ void IMKRecognizer::recognize(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud,
   }
 
   // get matches
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - keypoint detection");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - keypoint detection");
     detector->detect(im_channels[0], keys);
-    descEstimator->extract(im_channels[0], keys, descs);
+    descEstimator->compute(im_channels[0], keys, descs);
   }
 
 #ifdef DEBUG_AR_GUI
@@ -671,15 +670,15 @@ void IMKRecognizer::recognize(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud,
   votesClustering.dbg = dbg;
 #endif
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - matching");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - matching");
     cbMatcher->queryMatches(descs, matches, false);
   }
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - clustering");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - clustering");
     votesClustering.operate(object_names, object_models, keys, matches, clusters);
   }
 
-  {  // kp::ScopeTime t("IMKRecognizer::recognize - pnp pose estimation");
+  {  // pcl::ScopeTime t("IMKRecognizer::recognize - pnp pose estimation");
     poseEstimation(im_channels, object_names, object_models, keys, descs, matches, clusters, objects, _cloud);
   }
 
@@ -752,4 +751,4 @@ void IMKRecognizer::setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat 
 
   pnp.setCameraParameter(intrinsic, dist_coeffs);
 }
-}
+}  // namespace v4r

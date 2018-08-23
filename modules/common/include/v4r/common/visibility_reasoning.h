@@ -45,10 +45,10 @@
  *
  */
 
-#ifndef V4R_REGISTRATION_VISIBILITY_REASONING_H_
-#define V4R_REGISTRATION_VISIBILITY_REASONING_H_
+#pragma once
 
 #include <pcl/common/common.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/core/macros.h>
 
 namespace v4r {
@@ -62,17 +62,13 @@ namespace v4r {
 template <typename PointT>
 class V4R_EXPORTS VisibilityReasoning {
   typedef typename pcl::PointCloud<PointT>::Ptr PointCloudPtr;
-  float focal_length_;
-  float cx_;
-  float cy_;
+  Intrinsics cam_;
   float tss_;
   int fsv_used_;
 
  public:
-  VisibilityReasoning(float fc, float cx, float cy) {
-    focal_length_ = fc;
-    cx_ = cx;
-    cy_ = cy;
+  VisibilityReasoning(const Intrinsics &cam) {
+    cam_ = cam;
     tss_ = 0.01f;
     fsv_used_ = 0;
   }
@@ -111,5 +107,4 @@ class V4R_EXPORTS VisibilityReasoning {
                                 const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
                                 typename pcl::PointCloud<PointT>::Ptr &range_image);
 };
-}
-#endif
+}  // namespace v4r

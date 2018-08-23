@@ -193,7 +193,7 @@ struct NurbsDataCurve2d {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-}
-}
+}  // namespace on_nurbs
+}  // namespace pcl
 
 #endif

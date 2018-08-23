@@ -67,7 +67,7 @@ class V4R_EXPORTS CvGabor {
 
  protected:
   /// iMu ... The orientations which is iMu*PI.8
-  /// iNu ... The scale can be from -5 to infinit
+  /// iNu ... The scale can be from -5 to infinite
 
   double Sigma;  /// dSigma ... The Sigma value of gabor, normally set to 2*PI
   double F;      /// The spatial frequence , normally is sqrt(2)

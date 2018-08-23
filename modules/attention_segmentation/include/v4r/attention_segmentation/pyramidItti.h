@@ -49,7 +49,7 @@ class V4R_EXPORTS IttiPyramid : public BasePyramid {
  public:
   IttiPyramid();
   virtual ~IttiPyramid();
-  typedef boost::shared_ptr<IttiPyramid> Ptr;
+  typedef std::shared_ptr<IttiPyramid> Ptr;
 
   void setLowestC(int lowest_c_);
   int getLowestC();
@@ -85,5 +85,5 @@ class V4R_EXPORTS IttiPyramid : public BasePyramid {
 
   virtual void checkLevels();
 };
-}
+}  // namespace v4r
 #endif  // PYRAMID_ITTI_HPP

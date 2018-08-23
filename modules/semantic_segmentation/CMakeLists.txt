@@ -1,2 +1,4 @@
-set(the_description "Semantic Segmentation")
-v4r_define_module(semantic_segmentation REQUIRED v4r_core pcl boost eigen opencv)
+v4r_add_module(
+  DESCRIPTION "Semantic Segmentation"
+  REQUIRED v4r_core pcl boost eigen opencv
+)

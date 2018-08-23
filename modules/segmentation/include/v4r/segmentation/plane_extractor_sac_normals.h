@@ -74,12 +74,12 @@ class V4R_EXPORTS SACNormalsPlaneExtractor : public PlaneExtractor<PointT> {
     downsample_leaf_ = 0.005f;
   }
 
-  virtual void compute();
-  virtual bool getRequiresNormals() const {
+  virtual void compute() override;
+  virtual bool getRequiresNormals() const override {
     return true;
   }
 
-  typedef boost::shared_ptr<SACNormalsPlaneExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<SACNormalsPlaneExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<SACNormalsPlaneExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<SACNormalsPlaneExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

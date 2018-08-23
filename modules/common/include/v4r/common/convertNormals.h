@@ -81,5 +81,5 @@ inline void convertNormals(const pcl::PointCloud<pcl::Normal> &pcl_normals,
   }
 }
 
-}  //--END--
+}  // namespace v4r
 #endif

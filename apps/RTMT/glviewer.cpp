@@ -115,14 +115,14 @@ void GLViewer::new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_cloud, c
   m_image = _image;
 }
 
-void GLViewer::update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud) {
+void GLViewer::update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud) {
   oc_mutex.lock();
   oc_cloud = *_oc_cloud;
   oc_mutex.unlock();
   // cout<<"[GLViewer::update_model_cloud] "<<oc_cloud.size()<<endl;
 }
 
-void GLViewer::update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory) {
+void GLViewer::update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory) {
   cam_mutex.lock();
   cam_trajectory = *_cam_trajectory;
   cam_mutex.unlock();

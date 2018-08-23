@@ -40,7 +40,7 @@ GlobalConcatEstimator<PointT>::GlobalConcatEstimator(std::vector<std::string> &b
     need_normals_ |= ourcvfh_estimator_->needNormals();
     VLOG(1) << "Adding OURCVFH descriptor";
   }
-#ifdef HAVE_CAFFE
+#if HAVE_CAFFE
   if (param_.feature_type & FeatureType::ALEXNET) {
     CNN_Feat_ExtractorParameter cnnparam;
     cnnparam.init(boost_command_line_arguments);
@@ -71,7 +71,7 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
     esf_estimator_->compute(signature_esf);
 
     CHECK(num_signatures == 0 || num_signatures == signature_esf.rows())
-        << "Cannot concatenate features with a diferent number of feature vectors.";
+        << "Cannot concatenate features with a different number of feature vectors.";
 
     num_signatures = signature_esf.rows();
   }
@@ -83,7 +83,7 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
     simple_shape_estimator_->compute(signature_simple_shape);
 
     CHECK(num_signatures == 0 || num_signatures == signature_simple_shape.rows())
-        << "Cannot concatenate features with a diferent number of feature vectors.";
+        << "Cannot concatenate features with a different number of feature vectors.";
 
     num_signatures = signature_simple_shape.rows();
   }
@@ -95,7 +95,7 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
     color_estimator_->compute(signature_color);
 
     CHECK(num_signatures == 0 || num_signatures == signature_color.rows())
-        << "Cannot concatenate features with a diferent number of feature vectors.";
+        << "Cannot concatenate features with a different number of feature vectors.";
 
     num_signatures = signature_color.rows();
   }
@@ -108,12 +108,12 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
     transforms_ = ourcvfh_estimator_->getTransforms();
 
     CHECK(num_signatures == 0 || num_signatures == signature_ourcvfh.rows())
-        << "Cannot concatenate features with a diferent number of feature vectors.";
+        << "Cannot concatenate features with a different number of feature vectors.";
 
     num_signatures = signature_ourcvfh.rows();
   }
 
-#ifdef HAVE_CAFFE
+#if HAVE_CAFFE
   if (cnn_feat_estimator_) {
     cnn_feat_estimator_->setInputCloud(cloud_);
     cnn_feat_estimator_->setNormals(normals_);
@@ -121,7 +121,7 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
     cnn_feat_estimator_->compute(signature_cnn);
 
     CHECK(num_signatures == 0 || num_signatures == signature_cnn.rows())
-        << "Cannot concatenate features with a diferent number of feature vectors.";
+        << "Cannot concatenate features with a different number of feature vectors.";
 
     num_signatures = signature_cnn.rows();
   }
@@ -141,4 +141,4 @@ bool GlobalConcatEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
 }
 
 template class V4R_EXPORTS GlobalConcatEstimator<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

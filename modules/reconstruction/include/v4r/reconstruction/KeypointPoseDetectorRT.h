@@ -52,13 +52,13 @@
 #include <v4r/features/FeatureDetectorHeaders.h>
 #include <v4r/keypoints/RigidTransformationRANSAC.h>
 #include <Eigen/Dense>
+#include <boost/make_shared.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
 #include <string>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
 namespace v4r {
@@ -102,22 +102,22 @@ class V4R_EXPORTS KeypointPoseDetectorRT {
  public:
   cv::Mat dbg;
 
-  KeypointPoseDetectorRT(const Parameter &p = Parameter(),
-                         const v4r::FeatureDetector::Ptr &_detector = v4r::FeatureDetector::Ptr(),
-                         const v4r::FeatureDetector::Ptr &_descEstimator = new v4r::FeatureDetector_KD_FAST_IMGD(
-                             v4r::FeatureDetector_KD_FAST_IMGD::Parameter(1000, 1.44, 2, 17)));
+  KeypointPoseDetectorRT(const Parameter &p = Parameter(), const v4r::FeatureDetector::Ptr &_detector = nullptr,
+                         const v4r::FeatureDetector::Ptr &_descEstimator = std::make_shared<v4r::FeatureDetector>(
+                             v4r::FeatureDetector_KD_FAST_IMGD(v4r::FeatureDetector_KD_FAST_IMGD::Parameter(
+                                 1000, 1.44, 2, 17))));  /// TODO: Make this nicer
   ~KeypointPoseDetectorRT();
 
   double detect(const cv::Mat &image, const v4r::DataMatrix2D<Eigen::Vector3f> &cloud, Eigen::Matrix4f &pose);
 
   void setModel(const ObjectView::Ptr &_model);
 
-  typedef SmartPtr<::v4r::KeypointPoseDetectorRT> Ptr;
-  typedef SmartPtr<::v4r::KeypointPoseDetectorRT const> ConstPtr;
+  typedef std::shared_ptr<::v4r::KeypointPoseDetectorRT> Ptr;
+  typedef std::shared_ptr<::v4r::KeypointPoseDetectorRT const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

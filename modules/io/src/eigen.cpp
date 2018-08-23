@@ -25,24 +25,24 @@ bool writeMatrixToFile(const boost::filesystem::path &path, const Eigen::Matrix4
   return true;
 }
 
-Eigen::Matrix4f readMatrixFromFile(const boost::filesystem::path &path, int padding) {
+Eigen::Matrix4f readMatrixFromFile(const boost::filesystem::path &path, size_t padding) {
   CHECK(boost::filesystem::exists(path) || boost::filesystem::is_regular_file(path))
       << "Given file path " << path.string() << " to read matrix does not exist!";
 
   std::ifstream in(path.string().c_str());
 
-  char linebuf[1024];
-  in.getline(linebuf, 1024);
-  std::string line(linebuf);
-  std::vector<std::string> strs_2;
-  boost::split(strs_2, line, boost::is_any_of(" "));
+  std::vector<float> vals;
+  float val;
+  while (in >> val)
+    vals.push_back(val);
+  in.close();
+
+  CHECK(vals.size() == 16 + padding) << "input file " << path << " is not a 4x4 matrix with " << padding << " padding.";
 
   Eigen::Matrix4f matrix;
   for (int i = 0; i < 16; i++)
-    matrix(i / 4, i % 4) = static_cast<float>(atof(strs_2[padding + i].c_str()));
-
-  in.close();
+    matrix(i / 4, i % 4) = vals[padding + i];
   return matrix;
 }
-}
-}
+}  // namespace io
+}  // namespace v4r

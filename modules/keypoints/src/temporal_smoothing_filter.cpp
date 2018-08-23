@@ -313,7 +313,7 @@ bool TemporalSmoothingFilter::needReinit(const std::vector<cv::Point2f> &points)
 //    for (unsigned i=0; i<sf_cloud.data.size(); i++)
 //      sf_cloud.data[i].cnt = 0;
 
-//    // tranform tmp_cloud to current sf_cloud
+//    // transform tmp_cloud to current sf_cloud
 //    for (int v=0; v<tmp_cloud.rows; v++)
 //    {
 //      for (int u=0; u<tmp_cloud.cols; u++)
@@ -412,7 +412,7 @@ void TemporalSmoothingFilter::addCloud(const pcl::PointCloud<pcl::PointXYZRGB> &
       ref_sf.data[i].pt[2] = 0.;
     }
 
-    // tranform ref_tmp to current ref_sf
+    // transform ref_tmp to current ref_sf
     for (int v = 0; v < ref_tmp.rows; v++) {
       for (int u = 0; u < ref_tmp.cols; u++) {
         const Surfel &s = ref_tmp(v, u);
@@ -660,7 +660,7 @@ void TemporalSmoothingFilter::filter(const pcl::PointCloud<pcl::PointXYZRGB> &cl
 
   shm.lock();
 
-  cv::cvtColor(image, shm.gray, CV_RGB2GRAY);
+  cv::cvtColor(image, shm.gray, cv::COLOR_RGB2GRAY);
   shm.cloud = cloud;
 
   if (shm.prev_gray.empty()) {
@@ -750,4 +750,4 @@ void TemporalSmoothingFilter::setCameraParameter(const cv::Mat &_intrinsic) {
 
   reset();
 }
-}
+}  // namespace v4r

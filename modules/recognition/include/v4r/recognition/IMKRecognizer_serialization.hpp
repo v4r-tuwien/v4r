@@ -76,7 +76,7 @@ void serialize(Archive &ar, v4r::IMKView &view, const unsigned int version) {
   ar &view.weight_mask;
   ar &view.conf_desc;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 #endif

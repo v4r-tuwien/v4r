@@ -70,6 +70,6 @@ class V4R_EXPORTS ColorSHOTLocalEstimation : public LocalEstimator<PointInT, Fea
     return true;
   }
 };
-}
+}  // namespace v4r
 
 #endif /* REC_FRAMEWORK_COLORSHOT_LOCAL_ESTIMATOR_H_ */

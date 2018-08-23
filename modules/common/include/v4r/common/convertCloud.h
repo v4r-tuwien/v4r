@@ -268,6 +268,6 @@ inline void convertCloud(const Eigen::Matrix3Xf &matrix, pcl::PointCloud<pcl::No
   }
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

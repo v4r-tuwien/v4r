@@ -63,7 +63,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 
 namespace v4r {
 
@@ -165,7 +164,7 @@ class V4R_EXPORTS TemporalSmoothingFilter {
   int sf_width, sf_height;
 
   // ---- dbg draw ----
-  // SmartPtr<TomGine::tgTomGineThread> tgwin2;
+  // std::shared_ptr<TomGine::tgTomGineThread> tgwin2;
   // std::vector<Eigen::Vector3f> cams;
   // ---- end dbg ----
 
@@ -236,8 +235,8 @@ class V4R_EXPORTS TemporalSmoothingFilter {
     param = p;
   }
 
-  typedef SmartPtr<::v4r::TemporalSmoothingFilter> Ptr;
-  typedef SmartPtr<::v4r::TemporalSmoothingFilter const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TemporalSmoothingFilter> Ptr;
+  typedef std::shared_ptr<::v4r::TemporalSmoothingFilter const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -257,6 +256,6 @@ inline bool TemporalSmoothingFilter::intersectPlaneLine(const Eigen::Vector3f &p
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

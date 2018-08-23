@@ -23,36 +23,23 @@ All include statement are made with <chevron_brackets>, e.g.:
 #include <pcl/module_name/file_name.h>
 #incluce <pcl/module_name/impl/file_name.hpp>
 ```
-Also keep the list of includes clean and orderly by first including system level, then external libraries, then v4r internal. 
-I.e. as a general rule: the more general include files go first. Sort includes within a group alphabetically. 
+Also keep the list of includes clean and orderly by first including system level, then external libraries, then v4r internal.
+I.e. as a general rule: the more general include files go first. Sort includes within a group alphabetically.
 
 ## 1.4. Defines & Macros & Include guards
 
-Macros should all be *ALL_CAPITALS_AND_UNDERSCORED*. 
-To avoid the problem of double inclusion of header files, guard each header file with a `#pragma once` statement placed just past the MIT license.
+Macros should all be *ALL_CAPITALS_AND_UNDERSCORED*.
+To avoid the problem of double inclusion of header files, guard each header file with a `#pragma once` statement placed just past the license.
 ```cpp
 // the license
 #pragma once
 // the code
-```
-You might still encounter include guards in existing files which names are mapped from their include name, e.g.: v4r/filters/bilateral.h becomes V4R_FILTERS_BILATERAL_H_.
-```cpp
-// the license
-
-#ifndef V4R_MODULE_NAME_FILE_NAME_H_
-#define V4R_MODULE_NAME_FILE_NAME_H_
-
-// the code
-
-#endif
-```
 
 ## 1.5. Namespaces
 Put all your code into the namespace *v4r* and avoid using sub-namespaces whenever possible.
 
 ```cpp
-namespace v4r
-{
+namespace v4r {
     ...
 }
 ```
@@ -101,7 +88,7 @@ int example_int_;
 
 # 2. Indentation and Formatting
 
-V4R uses the [**Google style guide**](https://google.github.io/styleguide/cppguide.html) (with some minor allowed modifations stated in [.clang-format](../.clang-format)). To apply the style guide in your IDE, please do the following:
+V4R uses the [**Google style guide**](https://google.github.io/styleguide/cppguide.html) (with some minor allowed modifations stated in [.clang-format](../.clang-format)). To apply the style guide in your IDE, please make sure you are using clang v5.0 and do the following:
 ## CLion:
 You can use External Tools in CLion.
 
@@ -120,17 +107,15 @@ Now, with your file open, you can go to `Tools->External tools` and run the conf
 You can also set a custom keymap to it, just search the name of your external tool in the Settings menu.
 ## QtCreator:
 Use the beautifier plugin (should be integrated in QtCreator 3.*.*). To enable it, go to "Help -> About plugins..." and there check "Beautifier" box in "C++" group.
-Then set the beautifier tool to use the Google style. Go to "Tools -> Options -> Beautifier", then go to Clang Format  and select "Use predefined style: Google". OK
+Then set the beautifier tool to use the Google style. Go to "Tools -> Options -> Beautifier", then go to Clang Format  and select "Use predefined style: FILE". OK
 
 ## Terminal
-To re-format exisiting files, you can use `clang-format` (install via aptitude) from the terminal. Just run `clang-format -i style=file yourfile.cpp`. 
-This command will look for a `.clang-format` in the directory of `yourfile.cpp` and iteratively check for this style file in `/..` if it does not find one. 
-To do this recursively for all source files in the current directory, run
+To re-format existing files, you can use V4R `clang-format` script. Just go to your V4R root directory and run
 ```
-find . -iname *.h -o -iname *.cpp -o -iname *.hpp | xargs clang-format -i -style=file
-``` 
+./scripts/dev/clang-format-all apps/ modules/ samples/
+```
 
-If this does not work, just apply the normal Google style `clang-format -i style=google yourfile.cpp`.
+Note that this requires clang-format version 5 to be installed.
 
 # 3. Structuring
 ## 3.1. Classes and API
@@ -157,10 +142,10 @@ For the compute, filter, segment, etc. type methods the following rules apply:
 To allow clients of your class to immediately see which variable can be altered and which are used for read only access, define input arguments *const*. The same applies for member functions which do not change member variables.
 
 ## 3.3 Do not clutter header files
-To reduce compile time amongst others, put your definitions into seperate .cpp or .hpp files. Define functions inline in the header only when they are small, say, 10 lines or fewer.
+To reduce compile time amongst others, put your definitions into separate .cpp or .hpp files. Define functions inline in the header only when they are small, say, 10 lines or fewer.
 
 ## 3.4 Fix warnings
-To keep the compiler output non-verbose and reduce potential conflicts, avoid warnings produced by the compiler. If you encounter warnings from other parts in the library, either try to fix them directly or report them using the issue tracker.
+To keep the compiler output non-verbose and reduce potential conflicts, our CI server will throw errors for warnings. Therefore, please fix all your warnings before committing your files.
 
 ## 3.5 Check input range and handle exceptions
 To avoid confusing runtime errors and undefined behaviour, check the input to your interfaces for potential conflicts and provide meaningful error messages. If possible, try to catch these exceptions and return in a well-defined state.
@@ -168,5 +153,5 @@ To avoid confusing runtime errors and undefined behaviour, check the input to yo
 ## 3.6 Document
 V4R uses [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) for documentation of classes and interfaces. Any code in V4R must be documented using Doxygen format.
 
-## 3.7 Template your classes/functions whenever appropriate  
+## 3.7 Template your classes/functions whenever appropriate
 As many classes and functions in V4R depend on e.g. templated point clouds, allow your classes to accommodate with the various types by using template classes and functions.

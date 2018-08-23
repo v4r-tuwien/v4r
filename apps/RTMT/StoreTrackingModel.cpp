@@ -143,7 +143,7 @@ void StoreTrackingModel::cam_params_changed(const RGBDCameraParameter &_cam_para
 void StoreTrackingModel::storeTrackingModel(
     const std::string &_folder, const std::string &_objectname,
     const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-    const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
+    const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
     const std::vector<cv::Mat_<unsigned char>> &_masks, const Eigen::Matrix4f &_object_base_transform) {
   object_base_transform = _object_base_transform;
 
@@ -232,7 +232,7 @@ void StoreTrackingModel::createTrackingModel() {
     v4r::convertImage(*clouds->at(i).second, image);
 
     if (image.type() != CV_8U)
-      cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+      cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
     else
       im_gray = image;
 
@@ -307,7 +307,7 @@ void StoreTrackingModel::addObjectView(const v4r::DataMatrix2D<Eigen::Vector3f> 
 
   // detect keypoints
   keyDet->detect(im, keys);
-  keyDesc->extract(im, keys, descs);
+  keyDesc->compute(im, keys, descs);
 
   for (unsigned i = 0; i < keys.size(); i++) {
     cv::KeyPoint &key = keys[i];

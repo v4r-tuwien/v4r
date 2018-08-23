@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- *  Copyright (C) 2012  
+ *  Copyright (C) 2012
  *    Andreas Richtsfeld, Johann Prankl, Thomas Mörwald
  *    Automation and Control Institute
  *    Vienna University of Technology
@@ -23,12 +23,6 @@
  *  along with this program.  If not, see http://www.gnu.org/licenses/
  */
 
-
 #include "v4r/attention_segmentation/ZAdaptiveNormals.h"
 
-namespace v4r
-{
-
-
-} //namespace v4r 
-
+namespace v4r {}  // namespace v4r

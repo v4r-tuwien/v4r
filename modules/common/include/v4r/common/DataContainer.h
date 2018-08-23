@@ -50,10 +50,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -73,10 +73,10 @@ class V4R_EXPORTS DataContainer {
   };
   virtual ~DataContainer(){};
 
-  typedef SmartPtr<::v4r::DataContainer> Ptr;
-  typedef SmartPtr<::v4r::DataContainer const> ConstPtr;
+  typedef std::shared_ptr<::v4r::DataContainer> Ptr;
+  typedef std::shared_ptr<::v4r::DataContainer const> ConstPtr;
 };
 
-}  //--END--
+}  // namespace v4r
 
 #endif

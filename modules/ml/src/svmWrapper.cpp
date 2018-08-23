@@ -5,6 +5,9 @@
 #include <v4r/ml/svmWrapper.h>
 #include <fstream>
 
+namespace bf = boost::filesystem;
+namespace po = boost::program_options;
+
 namespace v4r {
 
 void svmClassifier::predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &predicted_label) const {
@@ -38,7 +41,7 @@ void svmClassifier::predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &
       try {
         prob_estimates = new double[svm_mod_->nr_class];
       } catch (std::bad_alloc &) {
-        std::cerr << "Error allocating memory " << std::endl;
+        LOG(ERROR) << "Error allocating memory!";
       }
 
       double bla = svm_predict_probability(svm_mod_, svm_n_test, prob_estimates);
@@ -128,9 +131,9 @@ void svmClassifier::train(const Eigen::MatrixXf &training_data, const Eigen::Vec
       for (int i = 0; i < training_label.rows(); i++) {
         int label = training_label(i);
         if (label > (int)labels.size() + 1)
-          std::cerr << "Training labels are not sorted. Take care with unsorted training labels when using "
-                       "probabilities. The order will then correspond to the time of occurence in the training labels."
-                    << std::endl;
+          LOG(ERROR)
+              << "Training labels are not sorted. Take care with unsorted training labels when using "
+                 "probabilities. The order will then correspond to the time of occurrence in the training labels.";
         labels.insert(label);
       }
 
@@ -146,7 +149,7 @@ void svmClassifier::train(const Eigen::MatrixXf &training_data, const Eigen::Vec
           param_.svm_.gamma = gamma;
 
           if ((param_.svm_.kernel_type == ::LINEAR) && (gamma > param_.cross_validation_range_gamma_[0])) {
-            VLOG(1) << "skipping remaing gamma values as linear kernel does not use gamma.";
+            VLOG(1) << "skipping remaining gamma values as linear kernel does not use gamma.";
             break;
           }
 
@@ -197,7 +200,7 @@ void svmClassifier::train(const Eigen::MatrixXf &training_data, const Eigen::Vec
   //    delete svm_prob;
 }
 
-void svmClassifier::saveModel(const std::string &filename) const {
+void svmClassifier::saveModel(const bf::path &filename) const {
   try {
     ::svm_save_model(filename.c_str(), svm_mod_);
   } catch (std::exception &e) {
@@ -205,11 +208,11 @@ void svmClassifier::saveModel(const std::string &filename) const {
   }
 }
 
-void svmClassifier::loadModel(const std::string &filename) {
+void svmClassifier::loadModel(const bf::path &filename) {
   if (!v4r::io::existsFile(filename))
-    throw std::runtime_error("Given config file " + filename + " does not exist! Current working directory is " +
-                             boost::filesystem::current_path().string() + ".");
+    LOG(ERROR) << "Given config file " << filename.string() << " does not exist! Current working directory is "
+               << boost::filesystem::current_path().string() << ".";
 
   svm_mod_ = ::svm_load_model(filename.c_str());
 }
-}
+}  // namespace v4r

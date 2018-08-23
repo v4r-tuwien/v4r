@@ -91,6 +91,6 @@ class V4R_EXPORTS ClusteringRNN : public Clustering {
 };
 
 /************************** INLINE METHODES ******************************/
-}
+}  // namespace v4r
 
 #endif

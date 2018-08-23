@@ -49,8 +49,7 @@
 #include "Camera.h"
 
 #include <GL/gl.h>
-#include <stdio.h>
-#include <iostream>
+#include <cstdio>
 
 #define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
@@ -133,8 +132,8 @@ void Camera::SetPerspective(float fx, float fy, float cx, float cy, float width,
 
 void Camera::SetOrtho(float width, float height, float near, float far) {
   m_intrinsic = glm::mat4(1.0f);
-  m_intrinsic[0][0] = 2.0f / float(width);
-  m_intrinsic[1][1] = 2.0f / float(height);
+  m_intrinsic[0][0] = 2.0f / width;
+  m_intrinsic[1][1] = 2.0f / height;
   m_intrinsic[2][2] = -2.0f / (far - near);
   m_intrinsic[3][0] = -1.0f;
   m_intrinsic[3][1] = -1.0f;

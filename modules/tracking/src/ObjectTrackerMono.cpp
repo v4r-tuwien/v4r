@@ -207,7 +207,7 @@ bool ObjectTrackerMono::track(const cv::Mat &image, Eigen::Matrix4f &pose, doubl
 
   //::ScopeTime t("tracking");
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(im_gray);
 
@@ -322,9 +322,9 @@ void ObjectTrackerMono::setObjectModel(const Object::Ptr &_model) {
       dcoeffs = cv::Mat_<double>::zeros(1, 5);
       dcoeffs(0, 0) = _param[4];
       dcoeffs(0, 1) = _param[5];
-      dcoeffs(0, 5) = _param[6];
+      dcoeffs(0, 4) = _param[6];
       dcoeffs(0, 2) = _param[7];
-      dcoeffs(0, 4) = _param[8];
+      dcoeffs(0, 3) = _param[8];
     }
 
     if (_param.size() == 4 || _param.size() == 9) {
@@ -341,4 +341,4 @@ void ObjectTrackerMono::setObjectModel(const Object::Ptr &_model) {
     kpRecognizer->setModel(model);
   }
 }
-}
+}  // namespace v4r

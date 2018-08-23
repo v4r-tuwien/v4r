@@ -52,6 +52,7 @@
 #include <QMutex>
 #include <QObject>
 #include <QThread>
+
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/octree/octree.h>
@@ -86,7 +87,7 @@ class ObjectSegmentation : public QThread {
 
   void setData(
       const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-      const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds);
+      const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds);
   const std::vector<cv::Mat_<unsigned char>> &getMasks() {
     return masks;
   }
@@ -119,7 +120,7 @@ class ObjectSegmentation : public QThread {
 
  signals:
   void new_image(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &_cloud, const cv::Mat_<cv::Vec3b> &image);
-  void update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
+  void update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
   void printStatus(const std::string &_txt);
   void update_visualization();
   void set_object_base_transform(const Eigen::Matrix4f &_object_base_transform);
@@ -140,7 +141,7 @@ class ObjectSegmentation : public QThread {
   double max_point_dist;
 
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> cameras;
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
   std::vector<pcl::PointCloud<pcl::Normal>::ConstPtr> normals;
   std::vector<cv::Mat_<int>> labels;
   std::vector<cv::Mat_<unsigned char>> masks;
@@ -150,7 +151,7 @@ class ObjectSegmentation : public QThread {
   cv::Mat_<cv::Vec3b> image;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud1, tmp_cloud2;
 
-  boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
+  std::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
 
   pcl::octree::OctreePointCloudVoxelCentroid<
       pcl::PointXYZRGB, pcl::octree::OctreeVoxelCentroidContainerXYZRGB<pcl::PointXYZRGB>>::Ptr octree;

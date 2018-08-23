@@ -1,0 +1,163 @@
+#!/bin/bash
+
+# Based on:
+#   * Main idea
+#     https://github.com/riboseinc/rnp/blob/master/git-hooks/pre-commit.sh
+#   * Picking up personal pre-commit hooks
+#     https://gist.github.com/mpdaugherty/357538
+#   * Handling partially staged files
+#     https://stackoverflow.com/a/26685296/1525865
+
+# Check if the developer has his own pre-commit hook
+CMD_NAME=`basename $0`
+SCRIPT_NAME=$GIT_DIR/scripts/dev/hooks/personal/$CMD_NAME
+if [ -f $SCRIPT_NAME ]
+then
+  # If so, run it. $@ passes all the command line arguments passed to this function
+  # If the personal hook fails, fail this one as well
+  if ! $SCRIPT_NAME $@
+  then
+    echo "User hook '$CMD_NAME' failed"
+    exit 1
+  fi
+fi
+
+set -eEu
+
+# Clang-format version that we use
+CLANG_FORMAT_VERSION="5.0"
+
+PATCHFILE=$(mktemp -t git-clang-format.XXXXXX.patch)
+DOCKER_CONTAINER_NAME="clang-format-$(date +%s)"
+DOCKER_IMAGE_NAME="taketwo/clang"
+USE_DOCKER="no"
+
+# Check if appropriate version of clang-format is installed
+for EXE in clang-format clang-format-$CLANG_FORMAT_VERSION; do
+  if hash $EXE 2>/dev/null; then
+    if $EXE -version | grep -Fq "$CLANG_FORMAT_VERSION"; then
+      CLANG_FORMAT=$EXE
+      break
+    fi
+  fi
+done
+
+# If not, then check if Docker is available
+if [[ -z ${CLANG_FORMAT+x} ]]; then
+  if hash docker 2>/dev/null; then
+    USE_DOCKER="yes"
+    CLANG_FORMAT="docker exec $DOCKER_CONTAINER_NAME clang-format"
+    docker run --rm --name "$DOCKER_CONTAINER_NAME" -t -d -v "$(git rev-parse --show-toplevel)":/v4r -w /v4r $DOCKER_IMAGE_NAME tail -f /dev/null >/dev/null 2>&1
+  else
+    echo "Neither docker, nor a suitable version of clang-format are installed."
+    echo "Unable to format the source code."
+    exit 1;
+  fi
+fi
+
+apply_patch() {
+  local patchfile=$1
+  git apply --index "$patchfile"
+  rm -f "$patchfile"
+  exit 0
+}
+
+stash() {
+  STASHED=false
+  if git status --porcelain | egrep --silent '^(\?\?|.[DM])'; then
+    # There are unstaged changes or untracked files
+    DIRTY=true
+    # Remember files which were added or renamed and then deleted, since the
+    # stash and read-tree won't restore these.
+    # We're using -z here to get around the difficulty of parsing
+    # - renames (-> appears in the string);
+    # - files with spaces or doublequotes (which are doublequoted, but not when
+    #   untracked for unknown reasons).
+    # We're not trying to store the string with NULs in it in a variable,
+    # because you can't do that in a shell script.
+    TO_DELETE="$(git status -z | egrep -z '^[AR]D' | cut -z -c 4- | tr '\0' '\n')"
+  else
+    DIRTY=false
+  fi
+  if $DIRTY; then
+    # Tidy up the working tree
+    git stash --quiet --keep-index --include-untracked
+    local retcode=$?
+    # Abort if this failed
+    if [ $retcode -ne 0 ]; then
+      exit $retcode
+    fi
+    STASHED=true
+  fi
+}
+
+unstash() {
+  if $STASHED; then
+    STASHED=false
+    # Restore the working tree and index
+    git stash --quiet && git stash pop --quiet stash@{1} && git read-tree stash && git stash drop --quiet
+    local retcode=$?
+    # Delete any files which had unstaged deletions
+    echo "$TO_DELETE" | grep -v "^$" | while read file; do
+      rm "$file"
+    done
+    # Abort if this failed
+    if [ $retcode -ne 0 ]; then
+      exit $retcode
+    fi
+  fi
+}
+
+cleanup() {
+  ec=$?
+  unstash
+  if [ $USE_DOCKER == "yes" ]; then
+    docker kill "$DOCKER_CONTAINER_NAME" >/dev/null 2>&1 || true
+  fi
+  if [ $ec -ne 0 ]; then
+    echo Aborted.
+  fi
+  exit $ec
+}
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+  against=HEAD
+else
+  # Initial commit: diff against an empty tree object
+  against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+exec 1>&2
+trap "cleanup" SIGHUP SIGINT SIGTERM EXIT ERR
+
+stash
+git diff-index --cached --diff-filter=ACMR --name-only $against -- | grep "\.[ch]$" | while read -r file;
+do
+  echo "formatting file $file"
+  $CLANG_FORMAT -style=file "$file" |     \
+    diff -u "$file" - |                     \
+    sed -e "1s|--- |--- a/|" -e "2s|+++ -|+++ b/$file|" >> "$PATCHFILE"
+
+  # cat is just here to ignore the exit status of diff
+  $CLANG_FORMAT -style=file "$file" | diff -u "$file" - | cat
+done
+unstash
+
+if [ ! -s "$PATCHFILE" ]; then
+  rm -f "$PATCHFILE"
+  exit 0
+fi
+
+echo
+echo Formatting changes requested.
+echo "See $PATCHFILE"
+echo
+
+if ! git apply --index --check "$PATCHFILE"; then
+  echo You may have unstaged changes to files that require formatting updates.
+  echo It is not safe for this pre-commit hook to apply the patch automatically.
+  exit 1
+fi
+
+apply_patch "$PATCHFILE"

@@ -121,7 +121,7 @@ class V4R_EXPORTS IMKOptimizeModel {
 
   std::string base_dir;
   std::vector<std::string> object_names;
-  std::vector<std::vector<boost::shared_ptr<View>>> object_views;
+  std::vector<std::vector<std::shared_ptr<View>>> object_views;
 
   v4r::FeatureDetector::Ptr detector;
   v4r::FeatureDetector::Ptr descEstimator;
@@ -156,12 +156,12 @@ class V4R_EXPORTS IMKOptimizeModel {
 
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
 
-  typedef boost::shared_ptr<::v4r::IMKOptimizeModel> Ptr;
-  typedef boost::shared_ptr<::v4r::IMKOptimizeModel const> ConstPtr;
+  typedef std::shared_ptr<::v4r::IMKOptimizeModel> Ptr;
+  typedef std::shared_ptr<::v4r::IMKOptimizeModel const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

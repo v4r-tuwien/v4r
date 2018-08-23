@@ -7,7 +7,6 @@ if(NOT V4R_DEPENDENCIES_FOUND)
 endif()
 
 v4r_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
-v4r_include_modules(${OR_DEPS})
 
 #add_definitions(-std=c++0x)
 add_definitions(-DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)

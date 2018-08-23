@@ -75,6 +75,8 @@
 #include <QGraphicsView>
 #endif
 
+#include <v4r/common/intrinsics.h>
+
 class GLGraphicsView : public QGraphicsView {
   Q_OBJECT
 
@@ -123,6 +125,8 @@ class GLViewer : public QGLWidget {
   void selectROI(bool enable);
   void resetView(float fw = 0.);
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
  signals:
   void segment_image(int x, int y);
   void select_roi(int x, int y);
@@ -132,11 +136,11 @@ class GLViewer : public QGLWidget {
 
   void new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_cloud, const cv::Mat_<cv::Vec3b> &_image);
   void update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &_cloud);
-  void update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
+  void update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
   void update_visualization();
   void update_boundingbox(const std::vector<Eigen::Vector3f> &edges, const Eigen::Matrix4f &pose);
 
-  void cam_params_changed(const RGBDCameraParameter &_cam_params);
+  void cam_params_changed(const v4r::Intrinsics &camera_params);
 
   void mouse_moved(QMouseEvent *event);
   void mouse_pressed(QMouseEvent *event);
@@ -166,9 +170,6 @@ class GLViewer : public QGLWidget {
   Eigen::Vector4f pt00, pt0x, pt0y, pt0z;
   Eigen::Vector4f pt10, pt1x, pt1y, pt1z;
 
-  size_t m_width;
-  size_t m_height;
-
   float m_point_size;
 
   QPoint m_last_point_2d;
@@ -197,7 +198,7 @@ class GLViewer : public QGLWidget {
 
   GLuint m_texture_id;
 
-  RGBDCameraParameter cam_params;
+  v4r::Intrinsics camera_params_;
 
  protected:
   // Qt mouse events

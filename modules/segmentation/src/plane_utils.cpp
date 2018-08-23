@@ -1,5 +1,6 @@
 #include <v4r/segmentation/plane_utils.h>
 
+#include <glog/logging.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/point_cloud.h>
 #include <pcl/search/kdtree.h>
@@ -43,7 +44,7 @@ V4R_EXPORTS std::vector<int> get_largest_connected_inliers(const pcl::PointCloud
                                                            const std::vector<int> &indices, float cluster_tolerance,
                                                            int min_cluster_size) {
   if (indices.empty()) {
-    std::cerr << "Given indices for connected components segmentation are emtpy!" << std::endl;
+    LOG(ERROR) << "Given indices for connected components segmentation are empty!";
     return indices;
   }
 
@@ -82,7 +83,7 @@ V4R_EXPORTS void visualizePlane(const typename pcl::PointCloud<PointT>::ConstPtr
   typename pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
   pcl::copyPointCloud(*cloud, *plane_cloud);
 
-  std::vector<int> plane_inliers = get_all_plane_inliers(*cloud, plane, inlier_threshold);
+  const std::vector<int> plane_inliers = get_all_plane_inliers(*cloud, plane, inlier_threshold);
 
   for (pcl::PointXYZRGB &p : plane_cloud->points)
     p.r = p.g = p.b = 0.f;
@@ -180,4 +181,4 @@ PCL_INSTANTIATE(visualizePlane, PCL_XYZ_POINT_TYPES)
       const pcl::PointCloud<T>::ConstPtr &,     \
       const std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>> &, float, const std::string &);
 PCL_INSTANTIATE(visualizePlanes, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

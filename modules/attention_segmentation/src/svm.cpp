@@ -1510,7 +1510,7 @@ static decision_function svm_train_one(const svm_problem *prob, const svm_parame
   return f;
 }
 
-// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+// Platt's binary SVM Probabilistic Output: an improvement from Lin et al.
 static void sigmoid_train(int l, const double *dec_values, const double *labels, double &A, double &B) {
   double prior1 = 0, prior0 = 0;
   int i;
@@ -2814,4 +2814,4 @@ void svm_set_print_string_function(void (*print_func)(const char *)) {
   else
     svm_print_string = print_func;
 }
-}
+}  // namespace svm

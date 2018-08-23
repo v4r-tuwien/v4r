@@ -55,7 +55,6 @@
 #include <fstream>
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 
 #include <v4r/core/macros.h>
 #include <v4r/features/FeatureDetector_KD_FAST_IMGD.h>
@@ -175,12 +174,12 @@ class V4R_EXPORTS KeypointSlamRGBD2 {
     om->setMinDistAddProjections(dist);
   }
 
-  typedef SmartPtr<::v4r::KeypointSlamRGBD2> Ptr;
-  typedef SmartPtr<::v4r::KeypointSlamRGBD2 const> ConstPtr;
+  typedef std::shared_ptr<::v4r::KeypointSlamRGBD2> Ptr;
+  typedef std::shared_ptr<::v4r::KeypointSlamRGBD2 const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

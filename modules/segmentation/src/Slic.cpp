@@ -481,4 +481,4 @@ void Slic::segmentSuperpixelNumber(const cv::Mat_<cv::Vec3b> &im_rgb, cv::Mat_<i
   const int superpixelsize = 0.5 + double(im_rgb.rows * im_rgb.cols) / double(K);
   segmentSuperpixelSize(im_rgb, labels, numlabels, superpixelsize, compactness);
 }
-}
+}  // namespace v4r

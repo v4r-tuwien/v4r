@@ -92,7 +92,7 @@ class SparseMat {
   /** \brief Print indices and values of non-zero entries. */
   void print();
 };
-}
-}
+}  // namespace on_nurbs
+}  // namespace pcl
 
 #endif /* SPARSEMAT_H_ */

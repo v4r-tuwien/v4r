@@ -102,8 +102,6 @@ void ClusterNormalsToPlanes::countNeighbours(std::vector<std::vector<int>> &reas
 
       for (int i = 0; i < 8; ++i) {
         int j = (i + 1) % 8;
-        //         int j = i+1;
-        //         if(j > 7) j=0;
         if (neighbors[i] && neighbors[j]) {
           nnb_counter += nnb_inc;
         }
@@ -146,9 +144,9 @@ bool ClusterNormalsToPlanes::reasignPoints(std::vector<std::vector<int>> &reassi
         if ((row < 0) || (row >= height) || (col < 0) || (col >= width))
           continue;
 
-        int surounding[surfaces.size()];
+        int surrounding[surfaces.size()];
         for (unsigned int s = 0; s < surfaces.size(); s++) {
-          surounding[s] = 0;
+          surrounding[s] = 0;
         }
 
         for (int v = row - 1; v <= row + 1; v++) {
@@ -167,7 +165,7 @@ bool ClusterNormalsToPlanes::reasignPoints(std::vector<std::vector<int>> &reassi
             float dist = (cloud->points.at(idx).getVector3fMap() - cloud->points.at(a_idx).getVector3fMap()).norm();
 
             if (dist < param.ra_dist) {
-              surounding[patches(v, u) - 1]++;
+              surrounding[patches(v, u) - 1]++;
             }
           }
         }
@@ -178,8 +176,8 @@ bool ClusterNormalsToPlanes::reasignPoints(std::vector<std::vector<int>> &reassi
         int max_neighbors = 0;
         int most_id = 0;
         for (unsigned int nr = 0; nr < surfaces.size(); nr++) {
-          if (max_neighbors < surounding[nr]) {
-            max_neighbors = surounding[nr];
+          if (max_neighbors < surrounding[nr]) {
+            max_neighbors = surrounding[nr];
             most_id = nr;
           }
         }
@@ -248,7 +246,7 @@ void ClusterNormalsToPlanes::singlePixelCheck() {
 }
 
 void ClusterNormalsToPlanes::pixelCheck() {
-  printf("[ClusterNormalsToPlanes::pixelCheck()]: Surfaces before deletion: %lu\n", surfaces.size());
+  VLOG(1) << "Surfaces before deletion: " << surfaces.size();
 
   std::vector<std::vector<int>> reassign_idxs;
   mask.clear();  // move pixel only once
@@ -272,7 +270,7 @@ void ClusterNormalsToPlanes::pixelCheck() {
   singlePixelCheck();
   deleteEmptyPlanes();
 
-  printf("[ClusterNormalsToPlanes::pixelCheck()] Surfaces after deletion: %lu\n", surfaces.size());
+  VLOG(1) << "Surfaces after deletion: " << surfaces.size();
 }
 
 /**
@@ -339,8 +337,6 @@ void ClusterNormalsToPlanes::calculateCloudAdaptiveParameters() {
   p_adaptive_cosThrAngleNC.resize(width * height, 0);
   p_adaptive_inlDist.resize(width * height, 0);
 
-//   FILE *f = fopen("adaptive.txt", "w");
-
 #pragma omp parallel for
   for (unsigned int i = 0; i < cloud->points.size(); i++) {
     if (isNaN(cloud->points.at(i))) {
@@ -349,31 +345,17 @@ void ClusterNormalsToPlanes::calculateCloudAdaptiveParameters() {
     Eigen::Vector3f curPt = cloud->points.at(i).getVector3fMap();
     // @ep: why do we divide in two subcases?
     // z coordinate
-
     p_adaptive_inlDist.at(i) = param.omega_c + param.omega_g * curPt[2];
 
     if (curPt[2] <= param.d_c) {
       p_adaptive_cosThrAngleNC.at(i) = std::cos(param.epsilon_c);
-      // 	fprintf(f,"* %d: %f,%f,%f -- %f %f (%f,%f,%f,%f,%f)
-      // \n",i,curPt[0],curPt[1],curPt[2],p_adaptive_cosThrAngleNC[i],p_adaptive_inlDist[i],
-      // 	                                      param.epsilon_c,
-      // param.epsilon_g,param.omega_c,param.omega_g,param.d_c);
     } else {
       float temp1 = (curPt[2] - param.d_c);
       float temp2 = param.epsilon_g * temp1;
       float temp3 = param.epsilon_c + temp2;
       p_adaptive_cosThrAngleNC[i] = std::cos(temp3);
-      //         fprintf(f,"# %d: %f,%f,%f -- %f (%f,%f,%f) %f (%f,%f,%f,%f,%f)
-      //         \n",i,curPt[0],curPt[1],curPt[2],p_adaptive_cosThrAngleNC[i],
-      // 	                                      temp1, temp2, temp3, p_adaptive_inlDist[i],
-      // 	                                      param.epsilon_c,
-      // param.epsilon_g,param.omega_c,param.omega_g,param.d_c);
     }
   }
-
-  //   fclose(f);
-
-  //   printCloudAdaptiveParams("adaptive.txt");
 }
 
 void ClusterNormalsToPlanes::printCloudAdaptiveParams(std::string file_name) {
@@ -391,8 +373,6 @@ void ClusterNormalsToPlanes::printCloudAdaptiveParams(std::string file_name) {
  * ClusterNormals
  */
 void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl::Normal &normal, bool rest) {
-  //   FILE *f = fopen("clusterNormals_fromIdx.txt", "w");
-
   pts.clear();
 
   normal = normals->points.at(idx);
@@ -403,9 +383,6 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
   // point is not useful anymore
   mask.at(idx) = false;
   pts.push_back(idx);
-
-  //   fprintf(f,"start from index %d\n", idx);
-
   int queue_idx = 0;
   std::vector<int> queue;
   queue.reserve(width * height);
@@ -417,23 +394,6 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
     // extract current index
     idx = queue.at(queue_idx);
     queue_idx++;
-
-    //     fprintf(f,"current index %d\n",idx);
-
-    //     int x = X(idx);
-    //     int y = Y(idx);
-
-    //     int dx[4] = {-1,1,0,0};
-    //     int dy[4] = {0,0,1,-1};
-
-    //     for (int v = y-1; v <= y+1; v++)
-    //     {
-    //       for (int u = x-1; u <= x+1; u++)
-    //       {
-    //       for (int j = 0; j < 4; j++)
-    //       {
-    //         int v = y + dy[j];
-    // 	int u = x + dx[j];
 
     std::vector<int> n4ind;
     if (rest) {
@@ -462,8 +422,6 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
 
       idx = getIdx(u, v);
 
-      // 	fprintf(f,"current sub index %d\n",idx);
-
       // not valid or not used point
       if (!(mask.at(idx)))
         continue;
@@ -481,40 +439,13 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
           newInlDist = p_adaptive_inlDist.at(idx);
         }
 
-        //           fprintf(f,"newCosThrAngleNC = %f,newInlDist = %f\n",newCosThrAngleNC,newInlDist);
-
-        float currentCos = normal.normal[0] * n[0] + normal.normal[1] * n[1] +
-                           normal.normal[2] * n[2];  // normal.getNormalVector3fMap().dot(n);
-        //
-        //           Dot3(&normal.normal[0], n)
-        //          inline T1 Dot3(const T1 v1[3], const T2 v2[3])
-        //          {
-        //          return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
-        //          }
+        float currentCos = normal.normal[0] * n[0] + normal.normal[1] * n[1] + normal.normal[2] * n[2];
 
         EIGEN_ALIGN16 Eigen::Vector3f currentPoint = cloud->points.at(idx).getVector3fMap();
         float pd_p0 = currentPoint[0] - pt[0];
         float pd_p1 = currentPoint[1] - pt[1];
         float pd_p2 = currentPoint[2] - pt[2];
-        float currentDist =
-            fabs(pd_p0 * normal.normal[0] + pd_p1 * normal.normal[1] +
-                 pd_p2 * normal.normal[2]);  // fabs(normal.getNormalVector3fMap().dot(currentPoint - pt));
-
-        // 	  fprintf(f,"currentCos = %f,currentDist = %f\n",currentCos,currentDist);
-
-        // 	  fabs(Plane::NormalPointDist(&pt[0], &normal.normal[0], &cloud.points[idx].x))
-        // 	  inline T1 Plane::NormalPointDist(const T1 p[3], const T2 n[3], T3 pd[3])
-        // 	  {
-        //
-        // 	    T1 t[3];
-        //
-        // 	    t[0] = pd[0] - p[0];
-        // 	    t[1] = pd[1] - p[1];
-        // 	    t[2] = pd[2] - p[2];
-        //
-        // 	    return t[0]*n[0] + t[1]*n[1] + t[2]*n[2];
-        //
-        // 	  }
+        float currentDist = fabs(pd_p0 * normal.normal[0] + pd_p1 * normal.normal[1] + pd_p2 * normal.normal[2]);
 
         // we can add this point to the plane
         if ((currentCos > newCosThrAngleNC) && (currentDist < newInlDist)) {
@@ -523,34 +454,13 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
           // update average normal
           // all points already in the plane have equal value into the plane
           // new normal = (number of points * current average normal + normal from the new point)/(number of points + 1)
-
           normal.normal[0] = normal.normal[0] * pts.size();
           normal.normal[1] = normal.normal[1] * pts.size();
           normal.normal[2] = normal.normal[2] * pts.size();
 
-          // 	    Mul3(&normal.normal[0], pts.size(), &normal.normal[0]);
-          // 	    inline void Mul3(const T1 v[3], T2 s, T3 r[3])
-          // 	    {
-          // 	      r[0] = v[0]*s;
-          // 	      r[1] = v[1]*s;
-          // 	      r[2] = v[2]*s;
-          // 	    }
-
           normal.normal[0] = normal.normal[0] + n[0];
           normal.normal[1] = normal.normal[1] + n[1];
           normal.normal[2] = normal.normal[2] + n[2];
-
-          // 	    Add3(&normal.normal[0], &normals.points[idx].normal[0], &normal.normal[0]);
-          // 	    inline void Add3(const T1 v1[3], const T2 v2[3], T3 r[3])
-          // 	    {
-          // 	      r[0] = v1[0]+v2[0];
-          // 	      r[1] = v1[1]+v2[1];
-          // 	      r[2] = v1[2]+v2[2];
-          // 	    }
-
-          // 	    normal.getNormalVector3fMap() = ((pts.size())*normal.getNormalVector3fMap() + n) /
-          // ((float)pts.size() + 1.0f);
-          //             normal.getNormalVector3fMap().normalize();
 
           pt = pt * pts.size();
           pt += cloud->points[idx].getVector3fMap();
@@ -562,29 +472,21 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
           pts.push_back(idx);
           queue.push_back(idx);
 
-          // 	    Mul3(&normal.normal[0], 1./(float)pts.size(), &normal.normal[0]);
           normal.normal[0] = normal.normal[0] / ((float)pts.size());
           normal.normal[1] = normal.normal[1] / ((float)pts.size());
           normal.normal[2] = normal.normal[2] / ((float)pts.size());
 
           pt /= ((float)pts.size());
           normal.getNormalVector3fMap().normalize();
-
-          // 	    fprintf(f,"normal = %f,%f,%f pt =
-          // %f,%f,%f\n",normal.normal[0],normal.normal[1],normal.normal[2],pt[0],pt[1],pt[2]);
         }
       } else {
         mask.at(idx) = false;
 
         // update normal
-        // 	  Mul3(&normal.normal[0], pts.size(), &normal.normal[0]);
-        // normal.getNormalVector3fMap() = ((pts.size())*normal.getNormalVector3fMap() + n) / ((float)pts.size() +
-        // 1.0f);
-        // normal.getNormalVector3fMap().normalize();
         normal.normal[0] = normal.normal[0] * pts.size();
         normal.normal[1] = normal.normal[1] * pts.size();
         normal.normal[2] = normal.normal[2] * pts.size();
-        //        Add3(&normal.normal[0], &normals.points[idx].normal[0], &normal.normal[0]);
+
         normal.normal[0] = normal.normal[0] + normals->points[idx].normal[0];
         normal.normal[1] = normal.normal[1] + normals->points[idx].normal[1];
         normal.normal[2] = normal.normal[2] + normals->points[idx].normal[2];
@@ -592,17 +494,13 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
         pts.push_back(idx);
         queue.push_back(idx);
 
-        // Mul3(&normal.normal[0], 1./(float)pts.size(), &normal.normal[0]);
         normal.normal[0] = normal.normal[0] / pts.size();
         normal.normal[1] = normal.normal[1] / pts.size();
         normal.normal[2] = normal.normal[2] / pts.size();
         normal.getNormalVector3fMap().normalize();
       }
     }
-    //     }
   }
-
-  //   fclose(f);
 
   if (rest)
     return;
@@ -621,39 +519,13 @@ void ClusterNormalsToPlanes::clusterNormals(int idx, std::vector<int> &pts, pcl:
         newInlDist = p_adaptive_inlDist.at(idx);
       }
 
-      float currentCos = normal.normal[0] * n[0] + normal.normal[1] * n[1] +
-                         normal.normal[2] * n[2];  // normal.getNormalVector3fMap().dot(n);
-      //
-      //    Dot3(&normal.normal[0], n)
-      //    inline T1 Dot3(const T1 v1[3], const T2 v2[3])
-      //    {
-      //    return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
-      //    }
+      float currentCos = normal.normal[0] * n[0] + normal.normal[1] * n[1] + normal.normal[2] * n[2];
 
       EIGEN_ALIGN16 Eigen::Vector3f currentPoint = cloud->points.at(*itr).getVector3fMap();
       float pd_p0 = currentPoint[0] - pt[0];
       float pd_p1 = currentPoint[1] - pt[1];
       float pd_p2 = currentPoint[2] - pt[2];
-      float currentDist =
-          fabs(pd_p0 * normal.normal[0] + pd_p1 * normal.normal[1] +
-               pd_p2 * normal.normal[2]);  // fabs(normal.getNormalVector3fMap().dot(currentPoint - pt));
-      // fabs(Plane::NormalPointDist(&pt[0], &normal.normal[0], &cloud.points[pts[i]].x)) > newInlDist)
-
-      // 	  fprintf(f,"currentCos = %f,currentDist = %f\n",currentCos,currentDist);
-
-      // 	  fabs(Plane::NormalPointDist(&pt[0], &normal.normal[0], &cloud.points[idx].x))
-      // 	  inline T1 Plane::NormalPointDist(const T1 p[3], const T2 n[3], T3 pd[3])
-      // 	  {
-      //
-      // 	    T1 t[3];
-      //
-      // 	    t[0] = pd[0] - p[0];
-      // 	    t[1] = pd[1] - p[1];
-      // 	    t[2] = pd[2] - p[2];
-      //
-      // 	    return t[0]*n[0] + t[1]*n[1] + t[2]*n[2];
-      //
-      // 	  }
+      float currentDist = fabs(pd_p0 * normal.normal[0] + pd_p1 * normal.normal[1] + pd_p2 * normal.normal[2]);
 
       // @ep: why is it && and not || ???
       if ((currentCos < newCosThrAngleNC) && (currentDist > newInlDist)) {
@@ -702,8 +574,6 @@ void ClusterNormalsToPlanes::printSrtCurvature(std::string file_name) {
 }
 
 void ClusterNormalsToPlanes::printClusteredIndices(std::string file_name, int idx, std::vector<int> pts) {
-  //   std::sort(pts.begin(),pts.end());
-
   FILE *f = fopen(file_name.c_str(), "a");
 
   fprintf(f, "%d: ", idx);
@@ -759,49 +629,19 @@ void ClusterNormalsToPlanes::clusterNormals() {
     if (curv > 19)
       curv = 19;
 
+    if (curv < 0) {
+      curv = 0;
+      mask.at(idx) = false;
+      continue;
+    }
+
     srt_curvature.at(curv).push_back(idx);
   }
-
-  // //   FILE *f = fopen("srt_curvature.txt", "w");
-  //
-  //   for(unsigned i=0; i< srt_curvature.size(); i++)
-  //   {
-  // //     fprintf(f,"cleaning %d...\n",i);
-  //     srt_curvature[i].clear();
-  //   }
-  //   for(int idx=0; idx< (int) normals->points.size(); idx++) {
-  // //     fprintf(f,"index %d...\n",idx);
-  //     if(normals->points[idx].curvature == 0.0) {
-  // //       fprintf(f,"curvature 0.0...\n");
-  //       if (mask[idx])
-  //       {
-  //         srt_curvature[0].push_back(idx);
-  // // 	fprintf(f,"valid point, adding index to group 0...\n");
-  //       }
-  //     }
-  //     else {
-  //       double curvature = normals->points[idx].curvature*1000;
-  //       unsigned curv = (unsigned) curvature;
-  //       if(curv > 19)
-  //         curv = 19;
-  // //       fprintf(f,"curvature group %d...\n",curvature);
-  //       if (mask[idx])
-  //       {
-  //         srt_curvature[curv].push_back(idx);
-  // // 	fprintf(f,"valid point, adding index to group %d...\n",curv);
-  //       }
-  //     }
-  //   }
-  //
-  // //   fclose(f);
-
-  //   printSrtCurvature("srt_curvature.txt");
 
   pcl::Normal normal;
   SurfaceModel::Ptr plane;
 
   // cluster points
-  //   int plane_count = 0;
   bool morePlanes = true;
   while (morePlanes) {
     morePlanes = false;
@@ -819,11 +659,6 @@ void ClusterNormalsToPlanes::clusterNormals() {
 
         // collect all points into plane->indices from the point with index idx, normal is the plane normal
         clusterNormals(idx, plane->indices, normal);
-
-        // 	printClusteredIndices("clustered_indices.txt",idx,plane->indices);
-        // 	plane_count++;
-        // 	if(plane_count >= 4)
-        // 	  exit(0);
 
         // plane has more than minimum required number of points
         if (((int)plane->indices.size()) >= param.minPoints) {
@@ -844,8 +679,6 @@ void ClusterNormalsToPlanes::clusterNormals() {
     }
   }
 
-  //   exit(0);
-
   // cluster rest of unclustered point cloud in 2D
   for (int v = 0; v < (int)height; v++) {
     for (int u = 0; u < (int)width; u++) {
@@ -855,7 +688,6 @@ void ClusterNormalsToPlanes::clusterNormals() {
         plane.reset(new SurfaceModel());
         plane->type = -1;  // No model
         clusterNormals(idx, plane->indices, normal, true);
-        // 	printClusteredIndices("clustered_indices.txt",idx,plane->indices);
         plane->coeffs.resize(3);
         plane->coeffs[0] = normal.normal[0];
         plane->coeffs[1] = normal.normal[1];
@@ -866,8 +698,6 @@ void ClusterNormalsToPlanes::clusterNormals() {
       }
     }
   }
-
-  //   exit(0);
 }
 
 /**
@@ -900,9 +730,7 @@ void ClusterNormalsToPlanes::computeLeastSquarePlanes() {
       } else {
         if (surfaces.at(i)->indices.size() < 50)  /// HACK !!!
           surfaces.at(i)->type = -1;              // TODO Disable invalid planes
-
-        printf("[ClusterNormalsToPlanes::computeLeastSquarePlanes()][Warning]: Problematic plane found: %u\n",
-               i);  //,ClassName.c_str());
+        LOG(WARNING) << "Problematic plane found: " << i;
       }
     }
   }
@@ -996,17 +824,11 @@ void ClusterNormalsToPlanes::compute() {
   if (pixel_check)
     pixelCheck();
 
-  //   printClusters("clusters.txt");
-  //   exit(0);
-
   pruneSurfaces();
 
   computeLeastSquarePlanes();
 
   addNormals();
-
-  //   print("clusters.txt");
-  //   exit(0);
 }
 
 void ClusterNormalsToPlanes::printClusters(std::string file_name) {
@@ -1061,4 +883,4 @@ void ClusterNormalsToPlanes::showSurfaces(cv::Mat &kImage) {
   }
 }
 
-}  //-- THE END --
+}  // namespace v4r

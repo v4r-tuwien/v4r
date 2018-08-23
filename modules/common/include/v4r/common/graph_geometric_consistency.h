@@ -45,19 +45,17 @@
 #include <pcl/point_types.h>
 #include <pcl/recognition/cg/correspondence_grouping.h>
 #include <v4r/core/macros.h>
+#include <boost/format.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/adjacency_matrix.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/undirected_graph.hpp>
-
-#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 
 namespace v4r {
-class V4R_EXPORTS GraphGeometricConsistencyGroupingParameter {
- public:
+struct V4R_EXPORTS GraphGeometricConsistencyGroupingParameter {
   size_t gc_threshold_;  ///< Minimum cluster size. At least 3 correspondences are needed to compute the 6DOF pose
   float gc_size_;  ///< Resolution of the consensus set used to cluster correspondences together. If the difference in
                    /// distance between model keypoints and scene keypoints of a pair of correspondence is greater than
@@ -84,73 +82,11 @@ class V4R_EXPORTS GraphGeometricConsistencyGroupingParameter {
     max_time_allowed_cliques_comptutation_(100.), ransac_threshold_(0.015f), prune_(false), prune_by_CC_(false) {}
 
   /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
-  std::vector<std::string> init(int argc, char **argv) {
-    std::vector<std::string> arguments(argv + 1, argv + argc);
-    return init(arguments);
-  }
-
-  /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
-  std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
-    po::options_description desc("Graph Geometric Consistency Grouping Parameters\n=====================");
-    desc.add_options()("help,h", "produce help message");
-    desc.add_options()("cg_size_thresh,c", po::value<size_t>(&gc_threshold_)->default_value(gc_threshold_),
-                       "Minimum cluster size. At least 3 correspondences are needed to compute the 6DOF pose ");
-    desc.add_options()(
-        "cg_size", po::value<float>(&gc_size_)->default_value(gc_size_, boost::str(boost::format("%.2e") % gc_size_)),
-        "Resolution of the consensus set used to cluster correspondences together ");
-    desc.add_options()(
-        "cg_thres_dot_distance",
-        po::value<float>(&thres_dot_distance_)
-            ->default_value(thres_dot_distance_, boost::str(boost::format("%.2e") % thres_dot_distance_)),
-        " ");
-    desc.add_options()("cg_use_graph", po::value<bool>(&use_graph_)->default_value(use_graph_), " ");
-    desc.add_options()(
-        "cg_dist_for_clutter_factor",
-        po::value<float>(&dist_for_cluster_factor_)
-            ->default_value(dist_for_cluster_factor_, boost::str(boost::format("%.2e") % dist_for_cluster_factor_)),
-        " ");
-    desc.add_options()("cg_max_taken_correspondences",
-                       po::value<size_t>(&max_taken_correspondence_)->default_value(max_taken_correspondence_), " ");
-    desc.add_options()("cg_cliques_big_to_small",
-                       po::value<bool>(&cliques_big_to_small_)->default_value(cliques_big_to_small_), " ");
-    desc.add_options()("cg_check_normals_orientation",
-                       po::value<bool>(&check_normals_orientation_)->default_value(check_normals_orientation_), " ");
-    desc.add_options()(
-        "cg_max_time_for_cliques_computation", po::value<double>(&max_time_allowed_cliques_comptutation_)
-                                                   ->default_value(max_time_allowed_cliques_comptutation_, "100.0"),
-        " if grouping correspondences takes more processing time in milliseconds than this defined value, "
-        "correspondences will be no longer computed by this graph based approach but by the simpler greedy "
-        "correspondence grouping algorithm");
-    desc.add_options()("cg_ransac_threshold",
-                       po::value<float>(&ransac_threshold_)
-                           ->default_value(ransac_threshold_, boost::str(boost::format("%.2e") % ransac_threshold_)),
-                       " ");
-    desc.add_options()("cg_prune", po::value<bool>(&prune_)->default_value(prune_), " ");
-    desc.add_options()("cg_prune_by_CC", po::value<bool>(&prune_by_CC_)->default_value(prune_by_CC_), " ");
-    po::variables_map vm;
-    po::parsed_options parsed =
-        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
-    po::store(parsed, vm);
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      to_pass_further.push_back("-h");
-    }
-    try {
-      po::notify(vm);
-    } catch (std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-    }
-    return to_pass_further;
-  }
+   * @brief init parameters
+   * @param command_line_arguments (according to Boost program options library)
+   * @param section_name section name of program options
+   */
+  void init(boost::program_options::options_description &desc, const std::string &section_name = "cg");
 };
 
 template <typename PointModelT, typename PointSceneT>
@@ -178,10 +114,10 @@ class V4R_EXPORTS GraphGeometricConsistencyGrouping : public pcl::Correspondence
 
   /** \brief Cluster the input correspondences in order to distinguish between different instances of the model into the
    * scene.
-      *
-      * \param[out] model_instances a vector containing the clustered correspondences for each model found on the scene.
-      * \return true if the clustering had been successful or false if errors have occurred.
-      */
+   *
+   * \param[out] model_instances a vector containing the clustered correspondences for each model found on the scene.
+   * \return true if the clustering had been successful or false if errors have occurred.
+   */
   void clusterCorrespondences(std::vector<pcl::Correspondences> &model_instances);
 
   /*void visualizeCorrespondences(const pcl::Correspondences & correspondences);
@@ -189,6 +125,7 @@ class V4R_EXPORTS GraphGeometricConsistencyGrouping : public pcl::Correspondence
     void visualizeGraph(GraphGGCG & g, std::string title="Correspondence Graph");*/
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GraphGeometricConsistencyGroupingParameter param_;
 
   typedef pcl::PointCloud<PointModelT> PointCloud;
@@ -220,23 +157,23 @@ class V4R_EXPORTS GraphGeometricConsistencyGrouping : public pcl::Correspondence
   }
 
   /** \brief The main function, recognizes instances of the model into the scene set by the user.
-      *
-      * \param[out] transformations a vector containing one transformation matrix for each instance of the model
+   *
+   * \param[out] transformations a vector containing one transformation matrix for each instance of the model
    * recognized into the scene.
-      *
-      * \return true if the recognition had been successful or false if errors have occurred.
-      */
+   *
+   * \return true if the recognition had been successful or false if errors have occurred.
+   */
   bool recognize(std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &transformations);
 
   /** \brief The main function, recognizes instances of the model into the scene set by the user.
-      *
-      * \param[out] transformations a vector containing one transformation matrix for each instance of the model
+   *
+   * \param[out] transformations a vector containing one transformation matrix for each instance of the model
    * recognized into the scene.
-      * \param[out] clustered_corrs a vector containing the correspondences for each instance of the model found within
+   * \param[out] clustered_corrs a vector containing the correspondences for each instance of the model found within
    * the input data (the same output of clusterCorrespondences).
-      *
-      * \return true if the recognition had been successful or false if errors have occurred.
-      */
+   *
+   * \return true if the recognition had been successful or false if errors have occurred.
+   */
   bool recognize(std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &transformations,
                  std::vector<pcl::Correspondences> &clustered_corrs);
 
@@ -257,8 +194,7 @@ class V4R_EXPORTS GraphGeometricConsistencyGrouping : public pcl::Correspondence
   //        visualize_graph_ = vis;
   //    }
 
- public:
-  typedef boost::shared_ptr<GraphGeometricConsistencyGrouping<PointModelT, PointSceneT>> Ptr;
-  typedef boost::shared_ptr<const GraphGeometricConsistencyGrouping<PointModelT, PointSceneT>> ConstPtr;
+  typedef std::shared_ptr<GraphGeometricConsistencyGrouping<PointModelT, PointSceneT>> Ptr;
+  typedef std::shared_ptr<const GraphGeometricConsistencyGrouping<PointModelT, PointSceneT>> ConstPtr;
 };
-}
+}  // namespace v4r

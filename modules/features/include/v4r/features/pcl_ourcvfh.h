@@ -63,8 +63,8 @@ namespace v4r {
 template <typename PointInT, typename PointNT, typename PointOutT = pcl::VFHSignature308>
 class V4R_EXPORTS OURCVFHEstimation : public pcl::FeatureFromNormals<PointInT, PointNT, PointOutT> {
  public:
-  typedef boost::shared_ptr<OURCVFHEstimation<PointInT, PointNT, PointOutT>> Ptr;
-  typedef boost::shared_ptr<const OURCVFHEstimation<PointInT, PointNT, PointOutT>> ConstPtr;
+  typedef std::shared_ptr<OURCVFHEstimation<PointInT, PointNT, PointOutT>> Ptr;
+  typedef std::shared_ptr<const OURCVFHEstimation<PointInT, PointNT, PointOutT>> ConstPtr;
   using pcl::Feature<PointInT, PointOutT>::feature_name_;
   using pcl::Feature<PointInT, PointOutT>::getClassName;
   using pcl::Feature<PointInT, PointOutT>::indices_;
@@ -224,7 +224,7 @@ class V4R_EXPORTS OURCVFHEstimation : public pcl::FeatureFromNormals<PointInT, P
     min_points_ = min;
   }
 
-  /** \brief Sets wether if the signatures should be normalized or not
+  /** \brief Sets whether if the signatures should be normalized or not
    * \param[in] normalize true if normalization is required, false otherwise
    */
   inline void setNormalizeBins(bool normalize) {
@@ -298,7 +298,7 @@ class V4R_EXPORTS OURCVFHEstimation : public pcl::FeatureFromNormals<PointInT, P
    */
   float leaf_size_;
 
-  /** \brief Wether to normalize the signatures or not. Default: false. */
+  /** \brief Whether to normalize the signatures or not. Default: false. */
   bool normalize_bins_;
 
   /** \brief Curvature threshold for removing normals. */
@@ -366,6 +366,6 @@ class V4R_EXPORTS OURCVFHEstimation : public pcl::FeatureFromNormals<PointInT, P
   /** \brief Mapping from clusters to OUR-CVFH descriptors */
   std::vector<short> cluster_axes_;
 };
-}
+}  // namespace v4r
 
 #endif  //#ifndef PCL_FEATURES_VFH_H_

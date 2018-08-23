@@ -96,6 +96,24 @@ class V4R_EXPORTS IssKeypointExtractorParameter  // see PCL documentation for fu
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("ISS Keypoint Extractor Parameter\n=====================\n");
+    init(desc);
+    po::variables_map vm;
+    po::parsed_options parsed =
+        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
+    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
+    po::store(parsed, vm);
+    if (vm.count("help")) {
+      std::cout << desc << std::endl;
+      to_pass_further.push_back("-h");
+    }
+    try {
+      po::notify(vm);
+    } catch (std::exception &e) {
+      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
+    }
+    return to_pass_further;
+  }
+  void init(boost::program_options::options_description &desc) {
     desc.add_options()("help,h", "produce help message");
     desc.add_options()("iss_salient_radius", po::value<double>(&salient_radius_)->default_value(salient_radius_),
                        "Set the radius of the spherical neighborhood used to compute the scatter matrix.");
@@ -123,21 +141,6 @@ class V4R_EXPORTS IssKeypointExtractorParameter  // see PCL documentation for fu
     desc.add_options()("iss_threads", po::value<int>(&threads_)->default_value(threads_), "number of threads");
     desc.add_options()("iss_angle_thresh_deg", po::value<float>(&angle_thresh_deg_)->default_value(angle_thresh_deg_),
                        "Set the decision boundary (angle threshold) that marks points as boundary or regular.");
-    po::variables_map vm;
-    po::parsed_options parsed =
-        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
-    po::store(parsed, vm);
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      to_pass_further.push_back("-h");
-    }
-    try {
-      po::notify(vm);
-    } catch (std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-    }
-    return to_pass_further;
   }
 };
 
@@ -170,7 +173,7 @@ class V4R_EXPORTS IssKeypointExtractor : public KeypointExtractor<PointT> {
     return "iss";
   }
 
-  typedef boost::shared_ptr<IssKeypointExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<IssKeypointExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<IssKeypointExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<IssKeypointExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

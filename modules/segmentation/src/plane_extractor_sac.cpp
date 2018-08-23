@@ -12,18 +12,17 @@ namespace v4r {
 
 template <typename PointT>
 void SACPlaneExtractor<PointT>::compute() {
-  CHECK(cloud_) << "Input cloud is not organized!";
+  CHECK(cloud_) << "Input cloud is not set!";
 
   all_planes_.clear();
-  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  pcl::SACSegmentation<PointT> seg;
   seg.setOptimizeCoefficients(true);
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
   seg.setMaxIterations(param_.max_iterations_);
   seg.setDistanceThreshold(param_.distance_threshold_);
 
-  typename pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::copyPointCloud(*cloud_, *filtered_cloud);
+  typename pcl::PointCloud<PointT>::Ptr filtered_cloud(new pcl::PointCloud<PointT>(*cloud_));
 
   do {
     // Segment the largest planar component from the remaining cloud
@@ -39,13 +38,12 @@ void SACPlaneExtractor<PointT>::compute() {
                                           coefficients->values[3]));
 
     for (int idx : inliers->indices) {
-      pcl::PointXYZ &p = filtered_cloud->points[idx];
+      PointT &p = filtered_cloud->points[idx];
       p.x = p.y = p.z = std::numeric_limits<float>::quiet_NaN();
     }
-
   } while (param_.compute_all_planes_);
 }
 
 #define PCL_INSTANTIATE_SACPlaneExtractor(T) template class V4R_EXPORTS SACPlaneExtractor<T>;
 PCL_INSTANTIATE(SACPlaneExtractor, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

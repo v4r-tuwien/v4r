@@ -33,7 +33,6 @@
 #include <string.h>
 #include <time.h>
 #include <algorithm>
-#include <algorithm>
 #include <boost/format.hpp>
 #include <boost/random.hpp>
 #include <fstream>
@@ -96,6 +95,6 @@ class V4R_EXPORTS ClassificationData {
   unsigned int LoadFromDirectory(std::string directory, std::vector<int> labelIDs);
   virtual ~ClassificationData();
 };
-}
-}
+}  // namespace RandomForest
+}  // namespace v4r
 #endif  // CLASSIFICATIONDATA_H

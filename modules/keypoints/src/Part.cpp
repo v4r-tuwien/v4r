@@ -72,4 +72,4 @@ Part::~Part() {}
 void Part::updatePose(const Eigen::Matrix4f &_pose) {
   pose = _pose;
 }
-}
+}  // namespace v4r

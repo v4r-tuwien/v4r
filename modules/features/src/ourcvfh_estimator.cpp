@@ -79,4 +79,4 @@ bool OURCVFHEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
 
 template class V4R_EXPORTS OURCVFHEstimator<pcl::PointXYZ>;
 template class V4R_EXPORTS OURCVFHEstimator<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

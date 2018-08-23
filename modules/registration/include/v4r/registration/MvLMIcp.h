@@ -45,10 +45,10 @@ class V4R_EXPORTS MvLMIcp {
 
   float normal_dot_;
   // octrees for the clouds...
-  std::vector<boost::shared_ptr<typename pcl::octree::OctreePointCloudSearch<PointT>>> octrees_;
+  std::vector<std::shared_ptr<typename pcl::octree::OctreePointCloudSearch<PointT>>> octrees_;
 
   // distance transforms...
-  std::vector<boost::shared_ptr<typename distance_field::PropagationDistanceField<PointT>>> distance_transforms_;
+  std::vector<std::shared_ptr<typename distance_field::PropagationDistanceField<PointT>>> distance_transforms_;
 
   std::vector<std::vector<float>> weights_;
 
@@ -93,6 +93,6 @@ class V4R_EXPORTS MvLMIcp {
     return final_poses_;
   }
 };
-}
-}
+}  // namespace Registration
+}  // namespace v4r
 #endif

@@ -48,15 +48,15 @@ namespace v4r {
 V4R_EXPORTS void filterGaussian(cv::Mat &input, cv::Mat &output, cv::Mat &mask);
 V4R_EXPORTS void buildDepthPyramid(cv::Mat &image, std::vector<cv::Mat> &pyramid, cv::Mat &mask,
                                    unsigned int levelNumber);
-V4R_EXPORTS void createPointCloudPyramid(std::vector<cv::Mat> &pyramidX, std::vector<cv::Mat> &pyramidY,
-                                         std::vector<cv::Mat> &pyramidZ, std::vector<cv::Mat> &pyramidIndices,
-                                         std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &pyramidCloud);
+V4R_EXPORTS int createPointCloudPyramid(std::vector<cv::Mat> &pyramidX, std::vector<cv::Mat> &pyramidY,
+                                        std::vector<cv::Mat> &pyramidZ, std::vector<cv::Mat> &pyramidIndices,
+                                        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &pyramidCloud);
 V4R_EXPORTS void createNormalPyramid(std::vector<cv::Mat> &pyramidNx, std::vector<cv::Mat> &pyramidNy,
                                      std::vector<cv::Mat> &pyramidNz, std::vector<cv::Mat> &pyramidIndices,
                                      std::vector<pcl::PointCloud<pcl::Normal>::Ptr> &pyramidNormal);
 V4R_EXPORTS void createIndicesPyramid(std::vector<cv::Mat> &pyramidIndices,
                                       std::vector<pcl::PointIndices::Ptr> &pyramidIndiceSets);
-V4R_EXPORTS void upscaleImage(cv::Mat &input, cv::Mat &output);
+V4R_EXPORTS void upscaleImage(cv::Mat &input, cv::Mat &output, unsigned int width, unsigned int height);
 V4R_EXPORTS void downscaleImage(cv::Mat &input, cv::Mat &output, unsigned int width, unsigned int height);
 V4R_EXPORTS void scaleImage(std::vector<cv::Mat> &inputPyramid, cv::Mat &input, cv::Mat &output, int inLevel,
                             int outLevel);

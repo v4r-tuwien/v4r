@@ -276,8 +276,8 @@ DepthmapRenderer::DepthmapRenderer(int resx, int resy) {
                 EmitVertex();\n\
                 //calc triangle surface area\n\
                 float A= length(cross(p1.xyz/p1.w-p3.xyz/p3.w,p2.xyz/p2.w-p3.xyz/p3.w))*0.5;//calculation of the surface area of this triangle\n\
-                vec3 a=vec3((pp2.x-pp1.x)*float(viewportRes.x),(pp2.y-pp1.y)*float(viewportRes.y),0)*0.5;//calculate pixel coordiante vectors for triangle edge\n\
-                vec3 b=vec3((pp3.x-pp1.x)*float(viewportRes.x),(pp3.y-pp1.y)*float(viewportRes.y),0)*0.5;//calculate pixel coordiante vectors for triangle edge\n\
+                vec3 a=vec3((pp2.x-pp1.x)*float(viewportRes.x),(pp2.y-pp1.y)*float(viewportRes.y),0)*0.5;//calculate pixel coordinate vectors for triangle edge\n\
+                vec3 b=vec3((pp3.x-pp1.x)*float(viewportRes.x),(pp3.y-pp1.y)*float(viewportRes.y),0)*0.5;//calculate pixel coordinate vectors for triangle edge\n\
                 float Apix=length(cross(a,b))*0.5;//calculate pixelwise surface area\n\
                 AnPixCnt[ind]=vec2(A,Apix);\n\
             }";
@@ -384,7 +384,7 @@ DepthmapRenderer::DepthmapRenderer(int resx, int resy) {
   normalAttribute = glGetAttribLocation(shaderProgram, "normal");
 
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured during setting up the shader (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred during setting up the shader (" << err << ")" << std::endl;
 
   // generate framebuffer:
   glGenFramebuffers(1, &FBO);
@@ -447,7 +447,7 @@ DepthmapRenderer::DepthmapRenderer(int resx, int resy) {
   glGenVertexArrays(1, &VAO);
 
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "An OpenGL error occured during initialization (" << err << ")" << std::endl;
+    std::cerr << "An OpenGL error occurred during initialization (" << err << ")" << std::endl;
 
   // There is no geometry defined yet!
   VBO = 0;
@@ -536,7 +536,7 @@ void DepthmapRenderer::setIntrinsics(float fx, float fy, float cx, float cy) {
 void DepthmapRenderer::setModel(DepthmapRendererModel *_model) {
   GLuint err;
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured before uploading the model (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred before uploading the model (" << err << ")" << std::endl;
 
   if (this->model != 0) {
   }
@@ -563,7 +563,7 @@ void DepthmapRenderer::setModel(DepthmapRendererModel *_model) {
                         (void *)(sizeof(glm::vec4) + sizeof(glm::vec2)));
 
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured while uploading the model (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred while uploading the model (" << err << ")" << std::endl;
 
   glBindVertexArray(0);
 
@@ -625,7 +625,8 @@ void DepthmapRenderer::setCamPose(const Eigen::Matrix4f &_pose) {
 cv::Mat DepthmapRenderer::renderDepthmap(float &visible, cv::Mat &color, cv::Mat &normal) const {
   GLuint err;
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured before setting up the rendering (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred before setting up the rendering (" << err << " / "
+              << gluErrorString(err) << ")" << std::endl;
 
   // load shader:
   glUseProgram(shaderProgram);
@@ -680,7 +681,7 @@ cv::Mat DepthmapRenderer::renderDepthmap(float &visible, cv::Mat &color, cv::Mat
   glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured setting up the rendering (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred setting up the rendering (" << err << ")" << std::endl;
 
   for (size_t i = 0; i < model->meshes.size(); i++) {
     // disable culling (Off by default but this would be the right moment)
@@ -697,7 +698,7 @@ cv::Mat DepthmapRenderer::renderDepthmap(float &visible, cv::Mat &color, cv::Mat
         (void *)(sizeof(unsigned int) * model->meshes[i].beginIndex));  // element array buffer offset (bytes)
 
     if ((err = glGetError()) != GL_NO_ERROR)
-      std::cerr << "A terrible OpenGL error occured during rendering mesh " << i << "(" << err << ")" << std::endl;
+      std::cerr << "A terrible OpenGL error occurred during rendering mesh " << i << "(" << err << ")" << std::endl;
   }
   if (model->meshes.size() == 0) {
     // if the model got loaded from the pcl library.
@@ -709,7 +710,7 @@ cv::Mat DepthmapRenderer::renderDepthmap(float &visible, cv::Mat &color, cv::Mat
                    model->getIndexCount(),  // count
                    GL_UNSIGNED_INT,         // type
                    (void *)0                // element array buffer offset
-                   );
+    );
   }
 
   glFinish();
@@ -782,7 +783,7 @@ cv::Mat DepthmapRenderer::renderDepthmap(float &visible, cv::Mat &color, cv::Mat
   visible = visibleArea / fullArea;
 
   if ((err = glGetError()) != GL_NO_ERROR)
-    std::cerr << "A terrible OpenGL error occured during rendering (" << err << ")" << std::endl;
+    std::cerr << "A terrible OpenGL error occurred during rendering (" << err << ")" << std::endl;
 
   delete[] facePixelCount;
   delete[] faceSurfaceArea;
@@ -920,4 +921,4 @@ pcl::PointCloud<pcl::PointXYZRGBNormal> DepthmapRenderer::renderPointcloudColorN
 
   return cloud;
 }
-}
+}  // namespace v4r

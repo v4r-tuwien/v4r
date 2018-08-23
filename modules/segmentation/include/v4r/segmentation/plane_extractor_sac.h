@@ -61,12 +61,12 @@ class V4R_EXPORTS SACPlaneExtractor : public PlaneExtractor<PointT> {
  public:
   SACPlaneExtractor(const PlaneExtractorParameter &p = PlaneExtractorParameter()) : PlaneExtractor<PointT>(p) {}
 
-  virtual void compute();
-  virtual bool getRequiresNormals() const {
+  virtual void compute() override;
+  virtual bool getRequiresNormals() const override {
     return false;
   }
 
-  typedef boost::shared_ptr<SACPlaneExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<SACPlaneExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<SACPlaneExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<SACPlaneExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary curvature and standart deviation.
+ * @brief Class to calculate boundary curvature and standard deviation.
  */
 
 #include "v4r/attention_segmentation/BoundaryRelationsMeanCurvature.h"
@@ -60,26 +60,22 @@ BoundaryRelationsMeanCurvature::~BoundaryRelationsMeanCurvature() {}
 v4r::meanVal BoundaryRelationsMeanCurvature::compute() {
   //@ep: TODO check reconditions
   if (!have_cloud) {
-    printf("[BoundaryRelationsMeanCurvature::compute] Error: No input cloud set.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanCurvature::compute] no input cloud set.");
   }
 
   if (!have_normals) {
-    printf("[BoundaryRelationsMeanCurvature::compute] Error: No input normals.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanCurvature::compute] no normals set.");
   }
 
   if (!have_boundary) {
-    printf("[BoundaryRelationsMeanCurvature::compute] Error: No input border.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanCurvature::compute] no input border set.");
   }
 
   v4r::meanVal meanCurvature;
 
   if (boundary.size() <= 0) {
-    printf(
-        "[BoundaryRelationsMeanCurvature::compute] Warning: Boundary size is 0. This means that constants are "
-        "different everywhere!\n");
+    LOG(WARNING) << "Boundary size is 0. This means that constants "
+                    "are different everywhere!";
     meanCurvature.mean = 0;
     meanCurvature.stddev = 0;
     return meanCurvature;
@@ -111,12 +107,6 @@ v4r::meanVal BoundaryRelationsMeanCurvature::compute() {
     p1n[1] = normals->points.at(boundary.at(i).idx2).normal_y;
     p1n[2] = normals->points.at(boundary.at(i).idx2).normal_z;
 
-    //     cv::Vec3f pp;
-    //     pp[0] = p1.x - p2.x;
-    //     pp[1] = p1.y - p2.y;
-    //     pp[2] = p1.z - p2.z;
-    //     cv::Vec3f pp_dir = cv::normalize(pp);
-
     //@ep: BUG this section is wrong, see above
     cv::Vec3f pp;
     if (boundary.at(i).direction == 0) {
@@ -143,7 +133,6 @@ v4r::meanVal BoundaryRelationsMeanCurvature::compute() {
     pp_dir = -pp_dir;  // invert direction between points
     double a_p1_pp = acos(p1n.ddot(pp_dir));
 
-    // double curvature = fabs(a_p0_pp + a_p1_pp - M_PI);
     //@ep: BUG the next line is wrong, see above
     double curvature = a_p0_pp + a_p1_pp - M_PI;
 
@@ -152,28 +141,15 @@ v4r::meanVal BoundaryRelationsMeanCurvature::compute() {
   }
 
   // normalize curvature sum and calculate curvature variance
-  //@ep: this shoule be separate function in the utils
+  //@ep: this should be separate function in the utils
   if (boundaryLength > 0) {
-    //     FILE *f = std::fopen("curvature.txt", "a");
-
-    //     fprintf(f,"%d;",boundaryLength);
-
     totalCurvature /= boundaryLength;
     for (unsigned i = 0; i < valuesCurvature.size(); i++) {
-      //@ep: BUG why is it standart deviation???
+      //@ep: BUG why is it standard deviation???
       totalCurvatureStdDev += fabs(valuesCurvature.at(i) - totalCurvature);
-      //       fprintf(f,"%d,",valuesCurvature.at(i));
     }
-    //@ep: BUG I have commented it to be consistent with the old code, because there it is devided by the length of the
-    // 2D neighbours, not 3D
-    // totalCurvatureStdDev /= boundaryLength;
-
-    //    fprintf(f,"\n");
-    //    fclose(f);
   } else {
-    std::printf(
-        "[BoundaryRelationsMeanCurvature::compute] Warning: Number of valid points is zero: totalCurvature: %4.3f\n",
-        totalCurvature);
+    LOG(WARNING) << "Number of valid points is zero: totalCurvature: " << totalCurvature;
     totalCurvature = 0.;
     totalCurvatureStdDev = 0.;
   }
@@ -184,4 +160,4 @@ v4r::meanVal BoundaryRelationsMeanCurvature::compute() {
   return meanCurvature;
 }
 
-}  // end surface
+}  // namespace v4r

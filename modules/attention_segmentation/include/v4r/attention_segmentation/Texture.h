@@ -71,7 +71,7 @@ class V4R_EXPORTS Texture {
   double textureRate;  ///< Texture rate for each surface
 
  public:
-  typedef boost::shared_ptr<Texture> Ptr;
+  typedef std::shared_ptr<Texture> Ptr;
 
   Texture();
   ~Texture();
@@ -100,6 +100,6 @@ class V4R_EXPORTS Texture {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

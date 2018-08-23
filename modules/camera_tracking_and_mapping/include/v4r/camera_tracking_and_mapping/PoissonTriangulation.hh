@@ -37,33 +37,35 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #include <pcl/surface/poisson.h>
 #include <v4r/core/macros.h>
 
-namespace v4r
-{
+namespace v4r {
 
-class V4R_EXPORTS PoissonTriangulation
-{
-private:
-    int depth;
-    int samplesPerNode;
-    bool cropModel;
-public:
-    PoissonTriangulation(int depth, int samplesPerNode, bool cropModel);
+class V4R_EXPORTS PoissonTriangulation {
+ private:
+  int depth;
+  int samplesPerNode;
+  bool cropModel;
 
-    void reconstruct(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr input, pcl::PolygonMesh &mesh);
+ public:
+  PoissonTriangulation(int depth, int samplesPerNode, bool cropModel);
 
-    void setParameter(int _depth, int _samples_per_node, bool _crop_model) { depth=_depth; samplesPerNode=_samples_per_node; cropModel=_crop_model; }
+  void reconstruct(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr input, pcl::PolygonMesh &mesh);
+
+  void setParameter(int _depth, int _samples_per_node, bool _crop_model) {
+    depth = _depth;
+    samplesPerNode = _samples_per_node;
+    cropModel = _crop_model;
+  }
 };
 
-}
+}  // namespace v4r

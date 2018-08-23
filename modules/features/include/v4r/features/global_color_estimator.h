@@ -87,9 +87,10 @@ class V4R_EXPORTS GlobalColorEstimatorParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Global Color Feature Estimator Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "global_color_num_bins", po::value<size_t>(&num_bins)->default_value(num_bins),
-        "number of bins for each color chanel to create color histogram.")(
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("global_color_num_bins", po::value<size_t>(&num_bins)->default_value(num_bins),
+                       "number of bins for each color chanel to create color histogram.");
+    desc.add_options()(
         "global_color_std_dev_multiplier", po::value<float>(&std_dev_multiplier_)->default_value(std_dev_multiplier_),
         "multiplication factor of the standard deviation of the color channel for minimum and maximum range of color "
         "histogram.");
@@ -129,18 +130,19 @@ class V4R_EXPORTS GlobalColorEstimator : public GlobalEstimator<PointT> {
   //    RGB2CIELAB::Ptr color_transf_;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GlobalColorEstimator(const GlobalColorEstimatorParameter &p = GlobalColorEstimatorParameter())
   : GlobalEstimator<PointT>("global_color", FeatureType::GLOBAL_COLOR), param_(p) {
     feature_dimensions_ = 3 * param_.num_bins;
   }
 
-  bool compute(Eigen::MatrixXf &signature);
+  bool compute(Eigen::MatrixXf &signature) override;
 
-  bool needNormals() const {
+  bool needNormals() const override {
     return false;
   }
 
-  typedef boost::shared_ptr<GlobalColorEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<GlobalColorEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<GlobalColorEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<GlobalColorEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -47,22 +47,33 @@
 
 #include <v4r/features/FeatureDetector_KD_ORB.h>
 
-#if CV_MAJOR_VERSION < 3
-#define HAVE_OCV_2
-#endif
-
 namespace v4r {
 
-using namespace std;
+void FeatureDetector_KD_ORB::Parameter::init(boost::program_options::options_description &desc,
+                                             const std::string &section_name) {
+  desc.add_options()((section_name + ".nfeatures").c_str(), po::value<int>(&nfeatures)->default_value(nfeatures),
+                     "The maximum number of features to retain.");
+  desc.add_options()(
+      (section_name + ".scaleFactor").c_str(), po::value<float>(&scaleFactor)->default_value(scaleFactor),
+      "Pyramid decimation ratio, greater than 1. scaleFactor==2 means the classical pyramid, where each next level has "
+      "4x less pixels than the previous, but such a big scale factor will degrade feature matching scores "
+      "dramatically. On the other hand, too close to 1 scale factor will mean that to cover certain scale range you "
+      "will need more pyramid levels and so the speed will suffer.");
+  desc.add_options()((section_name + ".nlevels").c_str(), po::value<int>(&nlevels)->default_value(nlevels),
+                     "The number of pyramid levels. The smallest level will have linear size equal to "
+                     "input_image_linear_size/pow(scaleFactor, nlevels).");
+  desc.add_options()((section_name + ".patchSize").c_str(), po::value<int>(&patchSize)->default_value(patchSize),
+                     "\tsize of the patch used by the oriented BRIEF descriptor. Of course, on smaller pyramid layers "
+                     "the perceived image area covered by a feature will be larger.");
+}
 
-/************************************************************************************
- * Constructor/Destructor
- */
-FeatureDetector_KD_ORB::FeatureDetector_KD_ORB(const Parameter &_p) : FeatureDetector(KD_ORB), param(_p) {
-// orb = new cv::ORB(10000, 1.2, 6, 13, 0, 2, cv::ORB::HARRIS_SCORE, 13); //31
-// orb = new cv::ORB(1000, 1.44, 2, 17, 0, 2, cv::ORB::HARRIS_SCORE, 17);
+FeatureDetector_KD_ORB::FeatureDetector_KD_ORB(const Parameter &_p)
+: FeatureDetector(FeatureDetector::Type::KD_ORB), param(_p) {
+  descr_name_ = "orb";
+  // orb = new cv::ORB(10000, 1.2, 6, 13, 0, 2, cv::ORB::HARRIS_SCORE, 13); //31
+  // orb = new cv::ORB(1000, 1.44, 2, 17, 0, 2, cv::ORB::HARRIS_SCORE, 17);
 
-#ifdef HAVE_OCV_2
+#if CV_MAJOR_VERSION < 3
   orb = new cv::ORB(param.nfeatures, param.scaleFactor, param.nlevels, param.patchSize, 0, 2, cv::ORB::HARRIS_SCORE,
                     param.patchSize);
 #else
@@ -73,50 +84,41 @@ FeatureDetector_KD_ORB::FeatureDetector_KD_ORB(const Parameter &_p) : FeatureDet
 
 FeatureDetector_KD_ORB::~FeatureDetector_KD_ORB() {}
 
-/***************************************************************************************/
-
-/**
- * detect
- * descriptors is a cv::Mat_<unsigned char>
- */
-void FeatureDetector_KD_ORB::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+void FeatureDetector_KD_ORB::detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                              cv::Mat &descriptors, const cv::Mat &object_mask) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
-#ifdef HAVE_OCV_2
-  (*orb)(im_gray, cv::Mat(), keys, descriptors);
+#if CV_MAJOR_VERSION < 3
+  (*orb)(im_gray_, object_mask, keys, descriptors);
 #else
-  orb->detectAndCompute(im_gray, cv::Mat(), keys, descriptors);
+  orb->detectAndCompute(im_gray_, object_mask, keys, descriptors);
+#endif
+  computeKeypointIndices(im_gray_, keys);
+}
+
+void FeatureDetector_KD_ORB::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, const cv::Mat &object_mask) {
+  if (image.type() != CV_8U)
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
+  else
+    im_gray_ = image;
+
+  orb->detect(im_gray_, keys, object_mask);
+  computeKeypointIndices(im_gray_, keys);
+}
+
+void FeatureDetector_KD_ORB::compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+  if (image.type() != CV_8U)
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
+  else
+    im_gray_ = image;
+
+#if CV_MAJOR_VERSION < 3
+  (*orb)(im_gray_, cv::Mat(), keys, descriptors, true);
+#else
+  orb->detectAndCompute(im_gray_, cv::Mat(), keys, descriptors, true);
 #endif
 }
-
-/**
- * detect
- */
-void FeatureDetector_KD_ORB::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys) {
-  if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
-  else
-    im_gray = image;
-
-  orb->detect(im_gray, keys);
-}
-
-/**
- * detect
- */
-void FeatureDetector_KD_ORB::extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
-  if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
-  else
-    im_gray = image;
-
-#ifdef HAVE_OCV_2
-  (*orb)(im_gray, cv::Mat(), keys, descriptors, true);
-#else
-  orb->detectAndCompute(im_gray, cv::Mat(), keys, descriptors, true);
-#endif
-}
-}
+}  // namespace v4r

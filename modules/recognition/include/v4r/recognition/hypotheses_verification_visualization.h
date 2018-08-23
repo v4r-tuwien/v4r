@@ -73,13 +73,13 @@ class V4R_EXPORTS HV_ModelVisualizer {
   PCLVisualizationParams::ConstPtr vis_param_;
 
  public:
-  HV_ModelVisualizer(const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>())
+  HV_ModelVisualizer(const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>())
   : vis_param_(vis_params) {}
 
   void visualize(const HypothesisVerification<PointT> *hv, const HVRecognitionModel<PointT> &rm);
 
-  typedef boost::shared_ptr<HV_ModelVisualizer<PointT>> Ptr;
-  typedef boost::shared_ptr<HV_ModelVisualizer<PointT> const> ConstPtr;
+  typedef std::shared_ptr<HV_ModelVisualizer<PointT>> Ptr;
+  typedef std::shared_ptr<HV_ModelVisualizer<PointT> const> ConstPtr;
 };
 
 template <typename PointT>
@@ -92,15 +92,19 @@ class V4R_EXPORTS HV_CuesVisualizer {
 
   PCLVisualizationParams::ConstPtr vis_param_;
 
+  void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
+                             const HypothesisVerification<PointT> *hv) const;
+
+  boost::dynamic_bitset<> active_solution_;  ///< for keyboard callback
+
  public:
-  HV_CuesVisualizer(const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>())
+  HV_CuesVisualizer(const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>())
   : vis_param_(vis_params) {}
 
-  void visualize(const HypothesisVerification<PointT> *hv, const boost::dynamic_bitset<> &active_solution, float cost,
-                 int times_evaluated);
+  void visualize(const HypothesisVerification<PointT> *hv, const boost::dynamic_bitset<> &active_solution, float cost);
 
-  typedef boost::shared_ptr<HV_CuesVisualizer<PointT>> Ptr;
-  typedef boost::shared_ptr<HV_CuesVisualizer<PointT> const> ConstPtr;
+  typedef std::shared_ptr<HV_CuesVisualizer<PointT>> Ptr;
+  typedef std::shared_ptr<HV_CuesVisualizer<PointT> const> ConstPtr;
 };
 
 template <typename PointT>
@@ -112,13 +116,12 @@ class V4R_EXPORTS HV_PairwiseVisualizer {
   PCLVisualizationParams::ConstPtr vis_param_;
 
  public:
-  HV_PairwiseVisualizer(
-      const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>())
+  HV_PairwiseVisualizer(const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>())
   : vis_param_(vis_params) {}
 
   void visualize(const HypothesisVerification<PointT> *hv);
 
-  typedef boost::shared_ptr<HV_PairwiseVisualizer<PointT>> Ptr;
-  typedef boost::shared_ptr<HV_PairwiseVisualizer<PointT> const> ConstPtr;
+  typedef std::shared_ptr<HV_PairwiseVisualizer<PointT>> Ptr;
+  typedef std::shared_ptr<HV_PairwiseVisualizer<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

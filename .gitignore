@@ -4,7 +4,7 @@ build*/
 bin
 cfg/*
 cmake-build*
-data/
+/data/
 lib
 *~
 debian/

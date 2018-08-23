@@ -52,12 +52,14 @@
 #include <pcl/sample_consensus/sac_model_plane.h>
 
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/io/ply_io.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <v4r/common/convertNormals.h>
 #include <v4r/common/noise_models.h>
 #include <v4r/registration/MvLMIcp.h>
 #include <v4r/registration/noise_model_based_cloud_integration.h>
+#include <v4r/surface/mvs_texturing.h>
 #endif
 
 using namespace std;
@@ -77,11 +79,7 @@ ObjectSegmentation::ObjectSegmentation()
   tmp_cloud2.reset(new pcl::PointCloud<pcl::PointXYZRGB>());
   ncloud_filt.reset(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
 
-  intrinsic = cv::Mat_<double>::eye(3, 3);
-  intrinsic(0, 0) = cam_params.f[0];
-  intrinsic(1, 1) = cam_params.f[1];
-  intrinsic(0, 2) = cam_params.c[0];
-  intrinsic(1, 2) = cam_params.c[1];
+  intrinsic = cam_params.getCameraMatrix();
 
   ba_param.depth_error_scale = 100;
   ba_param.px_error_scale = 1;
@@ -159,7 +157,7 @@ bool ObjectSegmentation::savePointClouds(const std::string &_folder, const std::
 
   // store global model
   if (create_cloud && ncloud_filt->points.size() > 0)
-    pcl::io::savePCDFileBinary(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
+    pcl::io::savePCDFileBinaryCompressed(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
   if (create_mesh && mesh.polygons.size() > 0)
     pcl::io::savePLYFile(_folder + "/models/" + _modelname + "/mesh.ply", mesh);
 
@@ -185,7 +183,7 @@ bool ObjectSegmentation::savePointClouds(const std::string &_folder, const std::
 
       // store cloud
       snprintf(filename, PATH_MAX, cloud_names.c_str(), i);
-      pcl::io::savePCDFileBinary(filename, *clouds[i]);
+      pcl::io::savePCDFileBinaryCompressed(filename, *clouds[i]);
 
       // store image
       v4r::convertImage(*clouds[i], image);
@@ -211,8 +209,8 @@ bool ObjectSegmentation::savePointClouds(const std::string &_folder, const std::
 
 void ObjectSegmentation::set_roi_params(const double &_bbox_scale_xy, const double &_bbox_scale_height,
                                         const double &_seg_offs) {
-  (void) _bbox_scale_xy;
-  (void) _bbox_scale_height;
+  (void)_bbox_scale_xy;
+  (void)_bbox_scale_height;
   seg_offs = _seg_offs;
 }
 
@@ -235,15 +233,9 @@ void ObjectSegmentation::setData(const std::vector<v4r::TSFFrame::Ptr> &_map_fra
   bb_max = _bb_max;
 }
 
-/**
- * @brief ObjectSegmentation::setCameraParameter
- * @param _intrinsic
- * @param _dist_coeffs
- */
-void ObjectSegmentation::setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs) {
-  if (_intrinsic.empty())
-    return;
-  _intrinsic.copyTo(intrinsic);
+void ObjectSegmentation::setCameraParameters(const v4r::Intrinsics &_intrinsics, const cv::Mat &_dist_coeffs) {
+  cam_params = _intrinsics;
+  intrinsic = _intrinsics.getCameraMatrix();
   _dist_coeffs.copyTo(dist_coeffs);
   ba.setCameraParameter(intrinsic, dist_coeffs);
   dist_coeffs.copyTo(dist_coeffs_opti);
@@ -549,7 +541,7 @@ void ObjectSegmentation::optimizePosesMultiviewICP() {
   for (unsigned i = 0; i < map_frames.size(); i++) {
     v4r::invPose(inv_poses[i], pose);
     map_frames[i]->pose = pose * inv_object_base;
-    map_frames[i]->delta_cloud_rgb_pose.setIdentity();
+    map_frames[i]->delta_cloud_rgb_pose = Eigen::Matrix4f::Identity();
   }
 }
 
@@ -581,16 +573,27 @@ void ObjectSegmentation::createCloudModel() {
     }
 
     if (create_mesh || create_tex_mesh) {
-      cout << "Creat mesh..." << endl;
+      cout << "Create mesh..." << endl;
       gfilt.getMesh(ncloud_filt, mesh);
     }
 
     if (create_tex_mesh) {
+      auto intr = v4r::Intrinsics::fromCameraMatrixAndResolution(intrinsic_opti, cam_params.w, cam_params.h);
+
+      std::string output_path = folder + "/models/" + model_name + "/" + model_name;
+
+      pcl::PointCloud<pcl::PointXYZRGB> im_cloud;
+      std::vector<cv::Mat> images(map_frames.size());
+      v4r::surface::MVSTexturing::PoseVector poses(map_frames.size());
+      for (size_t i = 0; i < map_frames.size(); ++i) {
+        v4r::TSFData::convert(map_frames[i]->sf_cloud, im_cloud);
+        v4r::convertImage(im_cloud, images[i]);
+        poses[i] = map_frames[i]->delta_cloud_rgb_pose * map_frames[i]->pose * object_base_transform;
+      }
+
       cout << "Texture mapping..." << endl;
-      v4r::OdmTexturing odmTex;
-      std::string tmp_folder = folder + "/tmp/";
-      std::string tex_model_folder = folder + "/models/" + model_name + "/";
-      odmTex.textureMapping(map_frames, mesh, intrinsic_opti, object_base_transform, tmp_folder, tex_model_folder);
+      v4r::surface::MVSTexturing tex;
+      tex.mapTextureToMesh(mesh, intr, images, poses, output_path);
     }
 
     cout << "Finished!" << endl;

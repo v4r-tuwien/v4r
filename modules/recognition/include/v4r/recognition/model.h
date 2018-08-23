@@ -78,6 +78,7 @@ class V4R_EXPORTS TrainingView {
 
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
+    (void)version;
     ar &cloud_;
     ar &pose_;
     ar &filename_;
@@ -96,19 +97,19 @@ class V4R_EXPORTS TrainingView {
 
   typename pcl::PointCloud<PointT>::ConstPtr cloud_;         ///< point cloud of view
   typename pcl::PointCloud<pcl::Normal>::ConstPtr normals_;  ///< normals for point cloud of view
-  Eigen::Matrix4f pose_;  ///< corresponding camera pose (s.t. multiplying the individual clouds with these transforms
-                          /// bring it into a common coordinate system)
-  std::string filename_;  ///< cloud filename of the training view
-  std::string pose_filename_;      ///< pose filename of the training view
-  std::string indices_filename_;   ///< object mask/indices filename of the training view
+  Eigen::Matrix4f pose_;    ///< corresponding camera pose (s.t. multiplying the individual clouds with these transforms
+                            /// bring it into a common coordinate system)
+  bf::path filename_;       ///< cloud filename of the training view
+  bf::path pose_filename_;  ///< pose filename of the training view
+  bf::path indices_filename_;      ///< object mask/indices filename of the training view
   std::vector<int> indices_;       ///< corresponding object indices
   Eigen::Vector3f view_centroid_;  ///< centre of gravity for the 2.5D view of the model
   float self_occlusion_;           ///< self-occlusion of respective view
   Eigen::Vector3f elongation_;     ///< elongations in meter for each dimension
   Eigen::Matrix4f eigen_pose_alignment_;
 
-  typedef boost::shared_ptr<TrainingView<PointT>> Ptr;
-  typedef boost::shared_ptr<TrainingView<PointT> const> ConstPtr;
+  typedef std::shared_ptr<TrainingView<PointT>> Ptr;
+  typedef std::shared_ptr<TrainingView<PointT> const> ConstPtr;
 };
 
 /**
@@ -121,6 +122,7 @@ class V4R_EXPORTS Model {
 
   template <class Archive>
   V4R_EXPORTS void serialize(Archive &ar, const unsigned int version) {
+    (void)version;
     ar &class_;
     ar &id_;
     if (normals_assembled_)
@@ -191,7 +193,7 @@ class V4R_EXPORTS Model {
 
   pcl::PointCloud<pcl::Normal>::ConstPtr getNormalsAssembled(int resolution_mm) const;
 
-  typedef boost::shared_ptr<Model<PointT>> Ptr;
-  typedef boost::shared_ptr<Model<PointT> const> ConstPtr;
+  typedef std::shared_ptr<Model<PointT>> Ptr;
+  typedef std::shared_ptr<Model<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

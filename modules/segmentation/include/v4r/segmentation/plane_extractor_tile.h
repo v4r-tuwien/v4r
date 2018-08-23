@@ -87,31 +87,34 @@ class PlaneExtractorTileParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Plane Extractor Tile-based Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "plane_extractor_minNrPatches", po::value<int>(&minNrPatches_)->default_value(minNrPatches_),
-        "The minimum number of blocks that are allowed to spawn a plane")(
-        "plane_extractor_patchDim", po::value<int>(&patchDim_)->default_value(patchDim_),
-        "The minimum number of blocks that are allowed to spawn a plane")(
-        "plane_extractor_minBlockInlierRatio",
-        po::value<float>(&minBlockInlierRatio_)->default_value(minBlockInlierRatio_),
-        "The minimum ratio of points that have to be in a patch before it would get discarded")(
-        "plane_extractor_pointwiseNormalCheck",
-        po::value<bool>(&pointwiseNormalCheck_)->default_value(pointwiseNormalCheck_),
-        "Activating this allows to reduce a lot of calculations and improves speed.")(
-        "plane_extractor_maxDistance", po::value<float>(&maxDistance_)->default_value(maxDistance_),
-        "A maximum distance at which no plane segmentation is possible anymore.")(
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("plane_extractor_minNrPatches", po::value<int>(&minNrPatches_)->default_value(minNrPatches_),
+                       "The minimum number of blocks that are allowed to spawn a plane");
+    desc.add_options()("plane_extractor_patchDim", po::value<int>(&patchDim_)->default_value(patchDim_),
+                       "The minimum number of blocks that are allowed to spawn a plane");
+    desc.add_options()("plane_extractor_minBlockInlierRatio",
+                       po::value<float>(&minBlockInlierRatio_)->default_value(minBlockInlierRatio_),
+                       "The minimum ratio of points that have to be in a patch before it would get discarded");
+    desc.add_options()("plane_extractor_pointwiseNormalCheck",
+                       po::value<bool>(&pointwiseNormalCheck_)->default_value(pointwiseNormalCheck_),
+                       "Activating this allows to reduce a lot of calculations and improves speed.");
+    desc.add_options()("plane_extractor_maxDistance", po::value<float>(&maxDistance_)->default_value(maxDistance_),
+                       "A maximum distance at which no plane segmentation is possible anymore.");
+    desc.add_options()(
         "plane_extractor_maxStepSize", po::value<float>(&maxStepSize_)->default_value(maxStepSize_),
         " maxStepSize to calculate normals there is a maximum step size which allowes to correctly distinguish between "
-        "2 adjacent plane segments.")("plane_extractor_maxInlierDist",
-                                      po::value<float>(&maxInlierDist_)->default_value(maxInlierDist_),
-                                      "The maximum distance a point is allowed to be out of his plane")(
-        "plane_extractor_useVariableThresholds",
-        po::value<bool>(&useVariableThresholds_)->default_value(useVariableThresholds_),
-        " useVariableThresholds")("plane_extractor_maxInlierBlockDist",
-                                  po::value<float>(&maxInlierBlockDist_)->default_value(maxInlierBlockDist_),
-                                  "The maximum distance two adjacent patches are allowed to be out of plane")(
-        "plane_extractor_doZTest", po::value<bool>(&doZTest_)->default_value(doZTest_),
-        "Only the closest possible points get added to a plane");
+        "2 adjacent plane segments.");
+    desc.add_options()("plane_extractor_maxInlierDist",
+                       po::value<float>(&maxInlierDist_)->default_value(maxInlierDist_),
+                       "The maximum distance a point is allowed to be out of his plane");
+    desc.add_options()("plane_extractor_useVariableThresholds",
+                       po::value<bool>(&useVariableThresholds_)->default_value(useVariableThresholds_),
+                       " useVariableThresholds");
+    desc.add_options()("plane_extractor_maxInlierBlockDist",
+                       po::value<float>(&maxInlierBlockDist_)->default_value(maxInlierBlockDist_),
+                       "The maximum distance two adjacent patches are allowed to be out of plane");
+    desc.add_options()("plane_extractor_doZTest", po::value<bool>(&doZTest_)->default_value(doZTest_),
+                       "Only the closest possible points get added to a plane");
     po::variables_map vm;
     po::parsed_options parsed =
         po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
@@ -143,7 +146,7 @@ class V4R_EXPORTS PlaneExtractorTile : public PlaneExtractor<PointT> {
  public:
   PlaneExtractorTile(const PlaneExtractorTileParameter &p = PlaneExtractorTileParameter());
 
-  virtual bool getRequiresNormals() const {
+  virtual bool getRequiresNormals() const override {
     return param_.pointwiseNormalCheck_;
   }
 
@@ -161,6 +164,9 @@ class V4R_EXPORTS PlaneExtractorTile : public PlaneExtractor<PointT> {
     double yz;
     double zz;
     int nrPoints;
+
+    PlaneMatrix() : sum(Eigen::Vector3d::Zero()), xx(0), xy(0), xz(0), yy(0), yz(0), zz(0), nrPoints(0) {}
+
     inline PlaneMatrix operator+(const PlaneMatrix &b) {
       PlaneMatrix a;
       a.sum = sum + b.sum;
@@ -253,7 +259,7 @@ class V4R_EXPORTS PlaneExtractorTile : public PlaneExtractor<PointT> {
   float maxBlockAngle;     ///< The maximum angle that is allowed between two adjacent blocks to be able to connect them
   float minCosBlockAngle;  ///< The cos of this block angle
   float (*minCosBlockAngleFunc)(float depth) = nullptr;  ///< minCosBlockAngleFunc
-  float maxAngle;     ///< The angle the normal vector of a pointer is never allowed to be off of a patch befor getting
+  float maxAngle;     ///< The angle the normal vector of a pointer is never allowed to be off of a patch before getting
                       /// discarded.
   float minCosAngle;  ///< The cos of this angle
   float (*minCosAngleFunc)(float depth) = nullptr;         ///< minCosAngleFunc
@@ -290,9 +296,9 @@ class V4R_EXPORTS PlaneExtractorTile : public PlaneExtractor<PointT> {
     minCosBlockAngle = cos(maxBlockAngle);
   }
 
-  void compute();
+  void compute() override;
 
-  typedef boost::shared_ptr<PlaneExtractorTile<PointT>> Ptr;
-  typedef boost::shared_ptr<PlaneExtractorTile<PointT> const> ConstPtr;
+  typedef std::shared_ptr<PlaneExtractorTile<PointT>> Ptr;
+  typedef std::shared_ptr<PlaneExtractorTile<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

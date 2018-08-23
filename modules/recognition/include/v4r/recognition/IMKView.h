@@ -74,6 +74,6 @@ class V4R_EXPORTS IMKView {
   IMKView(const unsigned &_object_id) : object_id(_object_id) {}
 };
 
-}  //--END--
+}  // namespace v4r
 
 #endif

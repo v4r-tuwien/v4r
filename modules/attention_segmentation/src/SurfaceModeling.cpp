@@ -133,7 +133,6 @@ void SurfaceModeling::computeLeastSquarePlane(SurfaceModel::Ptr plane) {
   if ((plane->type == pcl::SACMODEL_PLANE) && (plane->indices.size() > 4)) {
     lsPlane.optimizeModelCoefficients(plane->indices, coeffs, coeffs);
     // dot product
-    // if( (coeffs[0]*n0[0] + coeffs[1]*n0[1] + coeffs[2]*n0[2]) > 0 )
     if ((coeffs[0] * n0[0] + coeffs[1] * n0[1] + coeffs[2] * n0[2]) > 0) {
       coeffs *= -1.;
     }
@@ -150,7 +149,7 @@ void SurfaceModeling::computeLeastSquarePlane(SurfaceModel::Ptr plane) {
       plane->coeffs[2] = coeffs[2];
       plane->coeffs[3] = coeffs[3];
     } else {
-      printf("[SurfaceModeling::computeLeastSquarePlane] Warning: Problematic plane found.\n");
+      LOG(WARNING) << "Problematic plane found.";
     }
 
     // check orientation of normals and calculate probabilities
@@ -192,7 +191,7 @@ void SurfaceModeling::fitNurbs(SurfaceModel::Ptr surface) {
   if (haveIntr && haveExtr) {
     nurbsFitter->setProjectionMatrix(camIntr, camExtr);
   } else {
-    printf("[SurfaceModeling::fitNurbs] Warning, projection matrix is not set!\n");
+    LOG(WARNING) << "projection matrix is not set!";
   }
 
   nurbsFitter->setInputCloud(cloud);
@@ -247,9 +246,8 @@ bool SurfaceModeling::replacePlaneWithBetterNurbs(SurfaceModel::Ptr &surf) {
         computeSavingsNormalized(model->nurbs.m_cv_count[0] * model->nurbs.m_cv_count[1] * COSTS_NURBS_PARAMS,
                                  model->probs, surf->indices.size(), param.kappa1, param.kappa2);
 
-    cout << "Savings plane/NURBS id=" << surf->idx << ": " << surf->savings << "/"
-         << model->savings;  //[SurfaceModeling::modelSelection]
-    cout << " -> " << (model->savings > surf->savings ? "NURBS" : "PLANE") << endl;
+    VLOG(1) << "Savings plane/NURBS id=" << surf->idx << ": " << surf->savings << "/" << model->savings << " -> "
+            << (model->savings > surf->savings ? "NURBS" : "PLANE");
 
     // => create NURBS
     if (model->savings > surf->savings) {
@@ -261,28 +259,6 @@ bool SurfaceModeling::replacePlaneWithBetterNurbs(SurfaceModel::Ptr &surf) {
 
   return replaced;
 }
-
-//       if(model->indices.size() > 3)
-//         FitNurbs(*model);
-//
-//       view->surfaces[i]->savings = ComputeSavingsNormalized(COSTS_PLANE_PARAMS, view->surfaces[i]->probs,
-//       view->surfaces[i]->indices.size());
-//       model->savings = ComputeSavingsNormalized(model->nurbs.m_cv_count[0] * model->nurbs.m_cv_count[1] *
-//       COSTS_NURBS_PARAMS, model->probs, view->surfaces[i]->indices.size());
-//
-// #ifdef DEBUG
-//       cout << "[SurfaceModeling::ModelSelectionParallel] Savings plane/NURBS id=" << i << ": " <<
-//       view->surfaces[i]->savings << "/" << model->savings;
-// #endif
-//
-//       if (model->savings > view->surfaces[i]->savings) { // => create NURBS
-//         model->type = MODEL_NURBS;
-//         model->savings = view->surfaces[i]->savings;
-//         view->surfaces[i] = model;
-//       }
-// #ifdef DEBUG
-//       cout << " -> " << (model->type == MODEL_NURBS ? "NURBS" : "PLANE") << endl;
-// #endif
 
 /**
  * See if merging two surfaces gives a better merged surface in terms of savings.
@@ -368,12 +344,7 @@ void SurfaceModeling::modelSelection() {
 
       replacePlaneWithBetterNurbs(surfaces.at(i));
     }
-
-    //     exit(0);
-
     mergeWithNurbs(mergePairs);
-
-    //     exit(0);
   } else if (tryMergePlanes) {
     mergeWithPlanes(mergePairs);
   }
@@ -388,8 +359,7 @@ void SurfaceModeling::modelSelection() {
     if (mergePairs.at(i).id1 == mergePairs.at(i).id2)
       continue;
 
-    printf("Try merging %u and %u\n", mergePairs.at(i).id1, mergePairs.at(i).id2);  //[SurfaceModeling::modelSelection]
-
+    VLOG(1) << "Try merging " << mergePairs.at(i).id1 << "and " << mergePairs.at(i).id2;
     SurfaceModel::Ptr mergedModel;
 
     bool toBeMerged = false;
@@ -402,15 +372,8 @@ void SurfaceModeling::modelSelection() {
     }
 
     if (toBeMerged) {
-      printf("MERGED: %u-%u (%1.5f > %1.5f)\n", mergePairs.at(i).id1, mergePairs.at(i).id2, mergedModel->savings,
-             surfaces.at(mergePairs.at(i).id1)->savings +
-                 surfaces.at(mergePairs.at(i).id2)->savings);  //[SurfaceModeling::modelSelection]  =>
-
-      //       std::cerr << "surfaces.at(mergePairs.at(i).id1).indices = " <<
-      //       surfaces.at(mergePairs.at(i).id1)->indices.size() << std::endl;
-      //       std::cerr << "surfaces.at(mergePairs.at(i).id2).indices = " <<
-      //       surfaces.at(mergePairs.at(i).id2)->indices.size() << std::endl;
-      //       std::cerr << "mergedModel.indices = " << mergedModel->indices.size() << std::endl;
+      VLOG(1) << "MERGED: " << mergePairs.at(i).id1 << "-" << mergePairs.at(i).id2 << "(" << mergedModel->savings
+              << " > " << surfaces.at(mergePairs.at(i).id1)->savings + surfaces.at(mergePairs.at(i).id2)->savings;
 
       surfaces.at(mergePairs.at(i).id1) = mergedModel;
       surfaces.at(mergePairs.at(i).id2)->selected = false;
@@ -432,7 +395,6 @@ void SurfaceModeling::modelSelection() {
       }
     }
   }
-  //   exit(0);
 }
 
 void SurfaceModeling::mergeWithPlanes(std::vector<MergedPair> &mergePairs) {
@@ -450,7 +412,7 @@ void SurfaceModeling::mergeWithPlanes(std::vector<MergedPair> &mergePairs) {
         if ((!(surfaces.at(*itr)->selected)) || (!(surfaces.at(*itr)->valid)))
           continue;
 
-        // select the neigbour
+        // select the neighbour
         if (surfaces.at(*itr)->type != pcl::SACMODEL_PLANE)
           continue;
 
@@ -466,7 +428,7 @@ void SurfaceModeling::mergeWithPlanes(std::vector<MergedPair> &mergePairs) {
 #pragma omp critical
             {
               mergePairs.push_back(m);
-              cout << "Merge candidates: " << m.id1 << "-" << m.id2 << endl;
+              VLOG(1) << "Merge candidates: " << m.id1 << "-" << m.id2;
             }
           }
         }
@@ -501,7 +463,7 @@ void SurfaceModeling::mergeWithNurbs(std::vector<MergedPair> &mergePairs) {
 #pragma omp critical
               {
                 mergePairs.push_back(m);
-                cout << "Merge candidates: " << m.id1 << "-" << m.id2 << endl;
+                VLOG(1) << "Merge candidates: " << m.id1 << "-" << m.id2;
               }
             }
           }
@@ -512,7 +474,7 @@ void SurfaceModeling::mergeWithNurbs(std::vector<MergedPair> &mergePairs) {
 }
 
 void SurfaceModeling::modifyNeighbours(int oldIdx, int newIdx) {
-  // add all neigbours from oldIdx to newIdx
+  // add all neighbors from oldIdx to newIdx
   // 3D
   std::set<unsigned>::iterator itr_toremove3D = surfaces.at(newIdx)->neighbors3D.find(oldIdx);
   surfaces.at(newIdx)->neighbors3D.erase(itr_toremove3D);
@@ -537,34 +499,6 @@ void SurfaceModeling::modifyNeighbours(int oldIdx, int newIdx) {
       surfaces.at(*itr)->neighbors2D.insert(newIdx);
     }
   }
-
-  //   //then go over all neighbours of oldIdx and change oldIdx to newIdx
-  //   for(int i = 0; i < surfaces.size(); ++i)
-  //   {
-  //     if(neigbouring_matrix2D.at<bool>(i,oldIdx) || neigbouring_matrix2D.at<bool>(oldIdx,i))
-  //     {
-  //       neigbouring_matrix2D.at<bool>(i,oldIdx) = false;
-  //       neigbouring_matrix2D.at<bool>(oldIdx,i) = false;
-  //
-  //       if(i != newIdx)
-  //       {
-  //         neigbouring_matrix2D.at<bool>(i,newIdx) = true;
-  //         neigbouring_matrix2D.at<bool>(newIdx,i) = true;
-  //       }
-  //     }
-  //
-  //     if(neigbouring_matrix3D.at<bool>(i,oldIdx) || neigbouring_matrix3D.at<bool>(oldIdx,i))
-  //     {
-  //       neigbouring_matrix3D.at<bool>(i,oldIdx) = false;
-  //       neigbouring_matrix3D.at<bool>(oldIdx,i) = false;
-  //
-  //       if(i != newIdx)
-  //       {
-  //         neigbouring_matrix3D.at<bool>(i,newIdx) = true;
-  //         neigbouring_matrix3D.at<bool>(newIdx,i) = true;
-  //       }
-  //     }
-  //   }
 }
 
 void SurfaceModeling::modifyBoundary(unsigned int oldIdx, unsigned int newIdx) {
@@ -767,55 +701,6 @@ void SurfaceModeling::init() {
  * getSurfaceModels
  */
 void SurfaceModeling::copySurfaces() {
-  //   for (int i = 0; i < surfaces.size(); i++)
-  //   {
-  //     surfaces.at(i)->neighbors2D.clear();
-  //     surfaces.at(i)->neighbors3D.clear();
-  //   }
-
-  /*//   if(filter_by_size)
-  //   {
-  //     for(int s = 0; s < surfaces.size(); s++)
-  //     {
-  //       if( (surfaces.at(s)->indices.size()) < minSurfaceSize )
-  //       {
-  // 	surfaces.at(s)->valid = false;
-  // 	surfaces.at(s)->selected = false;
-  //       }
-  //     }
-  //   }
-
-  //   for(int s = 0; s < surfaces.size(); s++)
-  //   {
-  //     if( (surfaces.at(s)->selected) && (surfaces.at(s)->type != pcl::SACMODEL_PLANE) && (surfaces.at(s)->type !=
-  MODEL_NURBS) )
-  //     {
-  //       surfaces.at(s)->valid = false;
-  //       surfaces.at(s)->selected = false;
-  //     }
-  //   }*/
-
-  //   for(int i = 0; i < surfaces.size(); i++)
-  //   {
-  //     for(int j = 0; j < i; j++)
-  //     {
-  //       if((!(surfaces.at(i)->valid)) || (!(surfaces.at(j)->valid)))
-  // 	continue;
-  //
-  //       if(neigbouring_matrix2D.at<bool>(i,j) || neigbouring_matrix2D.at<bool>(j,i))
-  //       {
-  // 	surfaces.at(i)->neighbors2D.insert(j);
-  // 	surfaces.at(j)->neighbors2D.insert(i);
-  //       }
-  //
-  //       if(neigbouring_matrix3D.at<bool>(i,j) || neigbouring_matrix3D.at<bool>(j,i))
-  //       {
-  // 	surfaces.at(i)->neighbors3D.insert(j);
-  // 	surfaces.at(j)->neighbors3D.insert(i);
-  //       }
-  //     }
-  //   }
-
   // copy surface normals to view
   for (unsigned int s = 0; s < surfaces.size(); s++) {
     if ((!(surfaces.at(s)->valid)) || (!(surfaces.at(s)->selected)))
@@ -833,23 +718,15 @@ void SurfaceModeling::copySurfaces() {
 
 void SurfaceModeling::pruneSurfaces() {
   std::vector<SurfaceModel::Ptr>::iterator surf_itr = surfaces.begin();
-  //   int curent_surface_number = 0;
   while (surf_itr != surfaces.end()) {
     // if the surface is valid
     if ((*surf_itr)->valid) {
       surf_itr++;
-      //       curent_surface_number++;
       continue;
     }
 
     surf_itr = surfaces.erase(surf_itr, surf_itr + 1);
   }
-
-  //   for (int i = 0; i < surfaces.size(); i++)
-  //   {
-  //     surfaces.at(i)->neighbors2D.clear();
-  //     surfaces.at(i)->neighbors3D.clear();
-  //   }
 }
 
 /************************** PUBLIC *************************/
@@ -977,22 +854,11 @@ void SurfaceModeling::compute() {
     throw std::runtime_error(error_message);
   }
 
-  //   createNeighbours();
-
   init();
-  //   printErrorsAndProbs("probs.txt");
-  //   exit(0);
-  //   computeNeighbors();
-
-  //   printNeigbours("neighbours.txt");
-  //   exit(0);
 
   modelSelection();
 
   copySurfaces();
-
-  //   printSurfaces("surfaces.txt");
-  //   exit(0);
 }
 
 }  // namespace v4r

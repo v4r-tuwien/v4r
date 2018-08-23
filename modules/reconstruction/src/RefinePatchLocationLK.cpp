@@ -46,8 +46,7 @@
  */
 
 #include <v4r/reconstruction/RefinePatchLocationLK.h>
-//#include <opencv2/highgui/highgui.hpp>
-//#include "v4r/CameraTrackerPnP/ScopeTime.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
 
 namespace v4r {
 
@@ -234,4 +233,4 @@ void RefinePatchLocationLK::setImage(const cv::Mat_<unsigned char> &im) {
   cv::Sobel(im_gray, im_dy, CV_32F, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
 }
 
-}  //-- THE END --
+}  // namespace v4r

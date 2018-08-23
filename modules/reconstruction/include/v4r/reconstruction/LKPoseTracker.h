@@ -56,7 +56,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
 #include <string>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
 namespace v4r {
@@ -118,6 +117,7 @@ class V4R_EXPORTS LKPoseTracker {
   inline bool contains(const std::vector<int> &idx, int num);
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   cv::Mat dbg;
 
   LKPoseTracker(const Parameter &p = Parameter());
@@ -133,8 +133,8 @@ class V4R_EXPORTS LKPoseTracker {
 
   void getProjections(std::vector<std::pair<int, cv::Point2f>> &im_pts);
 
-  typedef SmartPtr<::v4r::LKPoseTracker> Ptr;
-  typedef SmartPtr<::v4r::LKPoseTracker const> ConstPtr;
+  typedef std::shared_ptr<::v4r::LKPoseTracker> Ptr;
+  typedef std::shared_ptr<::v4r::LKPoseTracker const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
@@ -167,6 +167,6 @@ inline bool LKPoseTracker::contains(const std::vector<int> &idx, int num) {
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

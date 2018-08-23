@@ -64,16 +64,16 @@
 #include <v4r/apps/ObjectRecognizer.h>
 #include <v4r/apps/ViewRenderer.h>
 
-#ifdef HAVE_V4R_CHANGE_DETECTION
+#if HAVE_V4R_CHANGE_DETECTION
 #include <v4r/change_detection/change_detection.h>
 #include <v4r/change_detection/miscellaneous.h>
 #endif
 
 #include <v4r/common/miscellaneous.h>
 #include <v4r/common/noise_models.h>
-#include <v4r/features/rops_local_estimator.h>
-#include <v4r/features/shot_local_estimator.h>
-#include <v4r/features/sift_local_estimator.h>
+#include <v4r/features/local_estimator_2d.h>
+//#include <v4r/features/rops_local_estimator.h>
+#include <v4r/features/FeatureDetector_KD_SIFTGPU.h>
 #include <v4r/keypoints/all_headers.h>
 #include <v4r/ml/all_headers.h>
 #include <v4r/recognition/global_recognition_pipeline.h>
@@ -89,31 +89,92 @@ namespace v4r {
 namespace apps {
 
 template <typename PointT>
+FeatureDetector::Ptr ObjectRecognizer<PointT>::getFeatureDetector(const v4r::FeatureDetector::Type &type) const {
+  switch (type) {
+#if HAVE_V4R_FEATURES_SIFT_LOCAL_ESTIMATOR
+    case v4r::FeatureDetector::Type::KD_CVSIFT: {
+      FeatureDetector_KD_CVSIFT::Ptr feat_det(new v4r::FeatureDetector_KD_CVSIFT);
+      return feat_det;
+      break;
+    }
+#endif
+#if HAVE_V4R_FEATURES_SIFTGPU_DETECTOR
+    case v4r::FeatureDetector::Type::KD_SIFTGPU: {
+      FeatureDetector_KD_SIFTGPU::Ptr feat_det(new v4r::FeatureDetector_KD_SIFTGPU);
+      return feat_det;
+      break;
+    }
+#endif
+#if HAVE_V4R_FEATURES_AKAZE_LOCAL_ESTIMATOR
+    case v4r::FeatureDetector::Type::KD_AKAZE: {
+      FeatureDetector_KD_AKAZE::Ptr feat_det(new FeatureDetector_KD_AKAZE(param_.feat_params_.akaze_));
+      return feat_det;
+      break;
+    }
+#endif
+#if HAVE_V4R_FEATURES_OPENCV_XFEATURES2D
+    case v4r::FeatureDetector::Type::KD_SURF: {
+      FeatureDetector_KD_SURF::Ptr feat_det(new FeatureDetector_KD_SURF(param_.feat_params_.surf_));
+      return feat_det;
+      break;
+    }
+    case v4r::FeatureDetector::Type::D_FREAK: {
+      FeatureDetector_D_FREAK::Ptr feat_det(new FeatureDetector_D_FREAK(param_.feat_params_.freak_));
+      return feat_det;
+      break;
+    }
+#endif
+    case v4r::FeatureDetector::Type::KD_BRISK: {
+      FeatureDetector_KD_BRISK::Ptr feat_det(new FeatureDetector_KD_BRISK(param_.feat_params_.brisk_));
+      return feat_det;
+      break;
+    }
+    case v4r::FeatureDetector::Type::K_HARRIS: {
+      FeatureDetector_K_HARRIS::Ptr feat_det(new FeatureDetector_K_HARRIS());
+      return feat_det;
+      break;
+    }
+    case v4r::FeatureDetector::Type::K_MSER: {
+      FeatureDetector_K_MSER::Ptr feat_det(new FeatureDetector_K_MSER(param_.feat_params_.mser_));
+      return feat_det;
+      break;
+    }
+    case v4r::FeatureDetector::Type::KD_FAST_IMGD: {
+      FeatureDetector_KD_FAST_IMGD::Ptr feat_det(new FeatureDetector_KD_FAST_IMGD());
+      return feat_det;
+      break;
+    }
+    case v4r::FeatureDetector::Type::KD_ORB: {
+      FeatureDetector_KD_ORB::Ptr feat_det(new FeatureDetector_KD_ORB());
+      return feat_det;
+      break;
+    }
+    default:
+      LOG(ERROR) << "Given feature estimator type not implemented!";
+      return nullptr;
+  }
+}
+
+template <typename PointT>
+void ObjectRecognizer<PointT>::setupLocal2DPipeLine() {
+  typename LocalFeatureMatcher<PointT>::Ptr loc_feat_match(new LocalFeatureMatcher<PointT>(param_.local_2d_pipeline_));
+  typename LocalEstimator2D<PointT>::Ptr est_2d(new LocalEstimator2D<PointT>);
+  est_2d->setMaxDistance(std::numeric_limits<float>::max());
+  est_2d->setKeypointDetector(getFeatureDetector(param_.local_2D_feat_detector_));
+  est_2d->setFeatureDetector(getFeatureDetector(param_.local_2D_feat_est_));
+  loc_feat_match->addFeatureEstimator(est_2d);
+  local_recognition_pipeline_->addLocalFeatureMatcher(loc_feat_match);
+}
+
+template <typename PointT>
 void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line_arguments,
                                           const bf::path &config_folder) {
-  bool visualize_hv_go_cues = false;
-  bool visualize_hv_model_cues = false;
-  bool visualize_hv_pairwise_cues = false;
-  bool visualize_keypoints = false;
-  bool visualize_global_results = false;
   bool retrain = false;
   bool render_training_views_from_mesh_model = false;
-  int visualization_layout_int = static_cast<int>(ObjRecoVisLayoutStyle::FULL);
-
-  const bf::path multipipeline_config_xml_basenemae = "multipipeline_config.xml";
-  const bf::path sift_config_xml_basename = "sift_config.xml";
-  const bf::path shot_config_xml_basename = "shot_config.xml";
-  const bf::path local_pipeline_xml_basename = "local_pipeline.xml";
-  const bf::path depth_image_mask_xml_basename = "xtion_depth_mask.png";
-  const bf::path camera_config_xml_basename = "camera.xml";
-  const bf::path global_config_xml_basename = "global_config.xml";
-  const bf::path hv_config_xml_basename = "hv_config.xml";
+  bf::path camera_calibration_file = v4r::io::getConfigDir() / "rgb_calibration.yaml";
+  bf::path rgb_depth_overlap_image = v4r::io::getConfigDir() / "rgb_depth_overlap.png";
+  const bf::path config_file = "config.ini";
   std::vector<std::string> object_models = {};
-
-  bf::path multipipeline_config_fn = config_folder / multipipeline_config_xml_basenemae;
-  param_.load(multipipeline_config_fn.string());
-  command_line_arguments = param_.init(command_line_arguments);
-  param_.output();
 
   po::options_description desc("Object Instance Recognizer\n======================================\n**Allowed options");
   desc.add_options()("help,h", "produce help message");
@@ -122,36 +183,39 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
                      "Names of object models to load from the models directory. If empty or not set, all object models "
                      "will be loaded from the object models directory.");
   desc.add_options()("visualize,v", po::bool_switch(&visualize_), "visualize recognition results");
-  desc.add_options()("skip_verification", po::bool_switch(&skip_verification_),
-                     "if true, skips verification (only hypotheses generation)");
-  desc.add_options()("hv_vis_cues", po::bool_switch(&visualize_hv_go_cues),
-                     "If set, visualizes cues computed at the"
-                     "hypothesis verification stage such as inlier, outlier points. Mainly used for debugging.");
-  desc.add_options()("hv_vis_model_cues", po::bool_switch(&visualize_hv_model_cues),
-                     "If set, visualizes the model cues. Useful for debugging");
-  desc.add_options()("hv_vis_pairwise_cues", po::bool_switch(&visualize_hv_pairwise_cues),
-                     "If set, visualizes the pairwise cues. Useful for debugging");
-  desc.add_options()("rec_visualize_keypoints", po::bool_switch(&visualize_keypoints),
-                     "If set, visualizes detected keypoints.");
-  desc.add_options()("rec_visualize_global_pipeline", po::bool_switch(&visualize_global_results),
-                     "If set, visualizes segments and results from global pipeline.");
   desc.add_options()("retrain", po::bool_switch(&retrain),
                      "If set, retrains the object models no matter if they already exists.");
-  desc.add_options()("recognizer_remove_planes",
-                     po::value<bool>(&param_.remove_planes_)->default_value(param_.remove_planes_),
-                     "if enabled, removes the dominant plane in the input cloud (given there are at least N inliers)");
   desc.add_options()("render_views", po::bool_switch(&render_training_views_from_mesh_model),
                      "if enabled, renders training views from a (textured) mesh model");
-  desc.add_options()("vis_layout", po::value<int>(&visualization_layout_int)->default_value(visualization_layout_int),
-                     "defines the layout of the visualization (0... full, 1... only show input and verified,"
-                     " 2... show input, processed, and verified)");
+  desc.add_options()("camera_calibration_file",
+                     po::value<bf::path>(&camera_calibration_file)->default_value(camera_calibration_file),
+                     "Calibration file of RGB Camera containing intrinsic parameters");
+  desc.add_options()(
+      "rgb_depth_overlap_image", po::value<bf::path>(&rgb_depth_overlap_image)->default_value(rgb_depth_overlap_image),
+      "binary image mask depicting the overlap of the registered RGB and depth image. Pixel values of 255 (white) "
+      "indicate that the pixel is visible by both RGB and depth after registration. Black pixel are only seen by the "
+      "RGB image due to the physical displacement between RGB and depth sensor.");
+  param_.init(desc);
+
+  if (param_.remove_planes_) {
+    plane_extractor_.reset(new v4r::apps::CloudSegmenter<PointT>(param_.plane_filter_));
+  }
+
   po::variables_map vm;
-  po::parsed_options parsed = po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
+  po::parsed_options parsed = po::command_line_parser(command_line_arguments).options(desc).run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
+
   po::store(parsed, vm);
+
+  bf::path config_path = config_folder / config_file;
+  std::ifstream f((config_folder / config_file).string());
+  CHECK(v4r::io::existsFile(config_path)) << config_path.string() << " does not exist!";
+  po::parsed_options config_parsed = po::parse_config_file(f, desc);
+  po::store(config_parsed, vm);
+  f.close();
+
   if (vm.count("help")) {
     std::cout << desc << std::endl;
-    to_pass_further.push_back("-h");
   }
   try {
     po::notify(vm);
@@ -159,35 +223,20 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
     std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
   }
 
-  // ====== DEFINE CAMERA =======
-  bf::path camera_config_xml = config_folder / camera_config_xml_basename;
-  CHECK(v4r::io::existsFile(camera_config_xml));
+  if (plane_extractor_)
+    plane_extractor_->initialize(to_pass_further);
 
-  v4r::Camera::Ptr cam(new Camera(camera_config_xml.string()));
-  bf::path depth_image_mask_fn = config_folder / depth_image_mask_xml_basename;
-  cv::Mat_<uchar> img_mask = cv::imread(depth_image_mask_fn.string(), CV_LOAD_IMAGE_GRAYSCALE);
-  if (img_mask.data)
-    cam->setCameraDepthRegistrationMask(img_mask);
-  else
-    LOG(WARNING) << "No camera depth registration mask provided. Assuming all pixels have valid depth.";
-
-  camera_ = cam;
-
-  // ====== DEFINE VISUALIZATION PARAMETER =======
-  PCLVisualizationParams::Ptr vis_param(new PCLVisualizationParams);
-  vis_param->no_text_ = false;
-  vis_param->bg_color_ = Eigen::Vector3i(255, 255, 255);
-  vis_param->text_color_ = Eigen::Vector3f(0.f, 0.f, 0.f);
-  vis_param->fontsize_ = 12;
-  vis_param->coordinate_axis_scale_ = 0.2f;
-
-  auto visualization_layout = static_cast<ObjRecoVisLayoutStyle>(visualization_layout_int);
+  try {
+    param_.cam_ = Intrinsics::load(camera_calibration_file.string());
+  } catch (const std::runtime_error &e) {
+    LOG(WARNING) << "Failed to load camera calibration file from " << camera_calibration_file.string()
+                 << "! Will use Primesense default camera intrinsics parameters!" << std::endl;
+    param_.cam_ = Intrinsics::PrimeSense();
+  }
 
   // ==== RENDER VIEWS FROM OBJECT MODELS (IF ENABLED) =====
   if (render_training_views_from_mesh_model) {
-    v4r::apps::ViewRendererParameter rendering_params;
-    to_pass_further = rendering_params.init(to_pass_further);
-    v4r::apps::ViewRenderer renderer(camera_, rendering_params);
+    v4r::apps::ViewRenderer renderer(param_.cam_, param_.rendering_);
     const std::vector<std::string> model_folders = v4r::io::getFoldersInDirectory(models_dir_);
     for (const std::string &m : model_folders) {
       if (std::find(object_models.begin(), object_models.end(), m) != object_models.end()) {
@@ -196,7 +245,7 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
     }
   }
 
-  // ==== FILL OBJECT MODEL DATABASE ==== ( assumes each object is in a seperate folder named after the object and
+  // ==== FILL OBJECT MODEL DATABASE ==== ( assumes each object is in a separate folder named after the object and
   // contains and "views" folder with the training views of the object)
   SourceParameter source_param;
   if (render_training_views_from_mesh_model)
@@ -208,55 +257,31 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
 
   // ====== SETUP MULTI PIPELINE RECOGNIZER ======
   typename v4r::MultiRecognitionPipeline<PointT>::Ptr multipipeline(new v4r::MultiRecognitionPipeline<PointT>);
-  LocalRecognitionPipelineParameter local_rec_pipeline_param;
-  local_rec_pipeline_param.load(config_folder / local_pipeline_xml_basename);
-  to_pass_further = local_rec_pipeline_param.init(to_pass_further);
-  local_recognition_pipeline_.reset(new LocalRecognitionPipeline<PointT>(local_rec_pipeline_param));
+  local_recognition_pipeline_.reset(new LocalRecognitionPipeline<PointT>(param_.local_rec_pipeline_));
   {
     // ====== SETUP LOCAL RECOGNITION PIPELINE =====
-    if (param_.do_sift_ || param_.do_shot_) {
+    if (param_.do_local_2d_ || param_.do_shot_) {
       local_recognition_pipeline_->setModelDatabase(model_database_);
 
       if (!param_.use_multiview_ || !param_.use_multiview_with_kp_correspondence_transfer_) {
         if (param_.use_graph_based_gc_grouping_) {
-          GraphGeometricConsistencyGroupingParameter gcparam;
-          gcparam.gc_size_ = param_.cg_size_;
-          gcparam.gc_threshold_ = param_.cg_thresh_;
-          gcparam.dist_for_cluster_factor_ = param_.cg_min_dist_for_cluster_factor_;
-          to_pass_further = gcparam.init(to_pass_further);
           GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gc_clusterer(
-              new GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>(gcparam));
+              new GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>(param_.gc_));
           local_recognition_pipeline_->setCGAlgorithm(gc_clusterer);
         } else {
-          boost::shared_ptr<pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>> gc_clusterer(
+          std::shared_ptr<pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>> gc_clusterer(
               new pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>);
-          gc_clusterer->setGCSize(param_.cg_size_);
-          gc_clusterer->setGCThreshold(param_.cg_thresh_);
+          gc_clusterer->setGCSize(param_.gc_.gc_size_);
+          gc_clusterer->setGCThreshold(param_.gc_.gc_threshold_);
           local_recognition_pipeline_->setCGAlgorithm(gc_clusterer);
         }
       }
 
-      if (param_.do_sift_) {
-        LocalRecognizerParameter sift_param;
-        sift_param.load(config_folder / sift_config_xml_basename);
+      if (param_.do_local_2d_)
+        setupLocal2DPipeLine();
 
-        if (param_.sift_knn_)
-          sift_param.knn_ = param_.sift_knn_;
-
-        typename LocalFeatureMatcher<PointT>::Ptr sift_rec(new LocalFeatureMatcher<PointT>(sift_param));
-        typename SIFTLocalEstimation<PointT>::Ptr sift_est(new SIFTLocalEstimation<PointT>);
-        sift_est->setMaxDistance(std::numeric_limits<float>::max());
-        sift_rec->addFeatureEstimator(sift_est);
-        local_recognition_pipeline_->addLocalFeatureMatcher(sift_rec);
-      }
       if (param_.do_shot_) {
-        LocalRecognizerParameter shot_pipeline_param;
-        shot_pipeline_param.load(config_folder / shot_config_xml_basename);
-
-        if (param_.shot_knn_)
-          shot_pipeline_param.knn_ = param_.shot_knn_;
-
-        typename LocalFeatureMatcher<PointT>::Ptr shot_rec(new LocalFeatureMatcher<PointT>(shot_pipeline_param));
+        typename LocalFeatureMatcher<PointT>::Ptr shot_rec(new LocalFeatureMatcher<PointT>(param_.shot_pipeline_));
         std::vector<typename v4r::KeypointExtractor<PointT>::Ptr> keypoint_extractor =
             initKeypointExtractors<PointT>(param_.shot_keypoint_extractor_method_, to_pass_further);
 
@@ -264,10 +289,10 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
           shot_rec->addKeypointExtractor(ke);
 
         for (float support_radius : param_.keypoint_support_radii_) {
-          SHOTLocalEstimationParameter shot_param;
-          shot_param.support_radius_ = support_radius;
-          //                    shot_param.init( to_pass_further );
-          typename SHOTLocalEstimation<PointT>::Ptr shot_est(new SHOTLocalEstimation<PointT>(shot_param));
+          SHOTLocalEstimationParameter shot_le_param;
+          shot_le_param.support_radius_ = support_radius;
+
+          typename SHOTLocalEstimation<PointT>::Ptr shot_est(new SHOTLocalEstimation<PointT>(shot_le_param));
 
           //                ROPSLocalEstimationParameter rops_param;
           //                rops_param.init( to_pass_further );
@@ -276,12 +301,12 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
 
           shot_rec->addFeatureEstimator(shot_est);
         }
-        shot_rec->setVisualizeKeypoints(visualize_keypoints);
+        shot_rec->setVisualizeKeypoints(param_.visualize_keypoints_);
         local_recognition_pipeline_->addLocalFeatureMatcher(shot_rec);
       }
 
       typename RecognitionPipeline<PointT>::Ptr rec_pipeline_tmp =
-          boost::static_pointer_cast<RecognitionPipeline<PointT>>(local_recognition_pipeline_);
+          std::static_pointer_cast<RecognitionPipeline<PointT>>(local_recognition_pipeline_);
       multipipeline->addRecognitionPipeline(rec_pipeline_tmp);
     }
 
@@ -307,51 +332,40 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
         Classifier::Ptr classifier =
             initClassifier(param_.classification_methods_[global_pipeline_id], to_pass_further);
 
-        bf::path global_rec_config_fn = config_folder / global_config_xml_basename;
-        GlobalRecognizerParameter global_rec_param(global_rec_config_fn.string());
-        typename GlobalRecognizer<PointT>::Ptr global_r(new GlobalRecognizer<PointT>(global_rec_param));
+        typename GlobalRecognizer<PointT>::Ptr global_r(new GlobalRecognizer<PointT>(param_.global_rec_));
         global_r->setFeatureEstimator(global_concat_estimator);
         global_r->setClassifier(classifier);
         global_recognition_pipeline->addRecognizer(global_r);
       }
 
-      global_recognition_pipeline->setVisualizeClusters(visualize_global_results);
+      global_recognition_pipeline->setVisualizeClusters(param_.visualize_global_results_);
 
       typename RecognitionPipeline<PointT>::Ptr rec_pipeline_tmp =
-          boost::static_pointer_cast<RecognitionPipeline<PointT>>(global_recognition_pipeline);
+          std::static_pointer_cast<RecognitionPipeline<PointT>>(global_recognition_pipeline);
       multipipeline->addRecognitionPipeline(rec_pipeline_tmp);
     }
 
     multipipeline->setModelDatabase(model_database_);
     multipipeline->setNormalEstimator(normal_estimator_);
-    multipipeline->setVisualizationParameter(vis_param);
+    multipipeline->setVisualizationParameter(param_.visualization_);
   }
 
   if (param_.use_multiview_) {
-    MultiviewRecognizerParameter mv_param;
-    mv_param.transfer_keypoint_correspondences_ = param_.use_multiview_with_kp_correspondence_transfer_;
-    to_pass_further = mv_param.init(to_pass_further);
-    mv_param.max_views_ = param_.max_views_;
     typename RecognitionPipeline<PointT>::Ptr rec_pipeline =
-        boost::static_pointer_cast<RecognitionPipeline<PointT>>(multipipeline);
-    typename MultiviewRecognizer<PointT>::Ptr mv_rec(new v4r::MultiviewRecognizer<PointT>(mv_param));
+        std::static_pointer_cast<RecognitionPipeline<PointT>>(multipipeline);
+    typename MultiviewRecognizer<PointT>::Ptr mv_rec(new v4r::MultiviewRecognizer<PointT>(param_.multiview_));
     mv_rec->setSingleViewRecognitionPipeline(rec_pipeline);
     mv_rec->setModelDatabase(model_database_);
 
-    if (param_.use_graph_based_gc_grouping_ && mv_param.transfer_keypoint_correspondences_) {
-      GraphGeometricConsistencyGroupingParameter gcparam;
-      gcparam.gc_size_ = param_.cg_size_;
-      gcparam.gc_threshold_ = param_.cg_thresh_;
-      gcparam.dist_for_cluster_factor_ = param_.cg_min_dist_for_cluster_factor_;
-      to_pass_further = gcparam.init(to_pass_further);
+    if (param_.use_graph_based_gc_grouping_ && param_.multiview_.transfer_keypoint_correspondences_) {
       GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gc_clusterer(
-          new GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>(gcparam));
+          new GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>(param_.gc_));
       mv_rec->setCGAlgorithm(gc_clusterer);
     } else {
-      boost::shared_ptr<pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>> gc_clusterer(
+      std::shared_ptr<pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>> gc_clusterer(
           new pcl::GeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>);
-      gc_clusterer->setGCSize(param_.cg_size_);
-      gc_clusterer->setGCThreshold(param_.cg_thresh_);
+      gc_clusterer->setGCSize(param_.gc_.gc_size_);
+      gc_clusterer->setGCThreshold(param_.gc_.gc_threshold_);
       mv_rec->setCGAlgorithm(gc_clusterer);
     }
 
@@ -361,43 +375,32 @@ void ObjectRecognizer<PointT>::initialize(std::vector<std::string> &command_line
 
   mrec_->initialize(models_dir_, retrain, object_models);
 
-  if (!skip_verification_) {
-    // ====== SETUP HYPOTHESES VERIFICATION =====
-    HV_Parameter paramHV;
-    paramHV.load(config_folder / hv_config_xml_basename);
-    paramHV.init(to_pass_further);
-    hv_.reset(new HypothesisVerification<PointT>(camera_, paramHV));
+  if (!param_.skip_verification_) {
+    hv_.reset(new HypothesisVerification<PointT>(param_.cam_, param_.hv_));
 
-    if (visualize_hv_go_cues)
-      hv_->visualizeCues(vis_param);
-    if (visualize_hv_model_cues)
-      hv_->visualizeModelCues(vis_param);
-    if (visualize_hv_pairwise_cues)
-      hv_->visualizePairwiseCues(vis_param);
+    cv::Mat_<uchar> img_mask = cv::imread(rgb_depth_overlap_image.string(), CV_LOAD_IMAGE_GRAYSCALE);
+    if (img_mask.data)
+      hv_->setRGBDepthOverlap(img_mask);
+    else
+      LOG(WARNING) << "No camera depth registration mask provided. Assuming all pixels have valid depth.";
+
+    if (param_.visualize_hv_go_cues_)
+      hv_->visualizeCues(param_.visualization_);
+    if (param_.visualize_hv_model_cues_)
+      hv_->visualizeModelCues(param_.visualization_);
+    if (param_.visualize_hv_pairwise_cues_)
+      hv_->visualizePairwiseCues(param_.visualization_);
 
     hv_->setModelDatabase(model_database_);
   }
 
-  if (param_.remove_planes_) {
-    // --plane_extraction_method 8 -z 2 --remove_points_below_selected_plane 1 --remove_planes 0
-    // --plane_extractor_maxStepSize 0.1 --use_highest_plane 1 --min_plane_inliers 10000
-    std::vector<std::string> additional_cs_arguments = {
-        "--skip_segmentation", "1", "--remove_selected_plane", "1", "--remove_points_below_selected_plane", "1",
-        "--use_highest_plane", "1"};
-    to_pass_further.insert(to_pass_further.end(), additional_cs_arguments.begin(), additional_cs_arguments.end());
-    v4r::apps::CloudSegmenterParameter cs_param;
-    to_pass_further = cs_param.init(to_pass_further);
-    cloud_segmenter_.reset(new v4r::apps::CloudSegmenter<PointT>(cs_param));
-    cloud_segmenter_->initialize(to_pass_further);
-  }
-
   if (visualize_) {
-    rec_vis_.reset(new v4r::ObjectRecognitionVisualizer<PointT>(visualization_layout));
+    rec_vis_.reset(new v4r::ObjectRecognitionVisualizer<PointT>(param_.vis_layout_));
     rec_vis_->setModelDatabase(model_database_);
   }
 }
 
-#ifdef HAVE_V4R_CHANGE_DETECTION
+#if HAVE_V4R_CHANGE_DETECTION
 template <typename PointT>
 void ObjectRecognizer<PointT>::detectChanges(View &v) {
   v.removed_points_.reset(new pcl::PointCloud<PointT>);
@@ -427,7 +430,7 @@ void ObjectRecognizer<PointT>::detectChanges(View &v) {
 
 template <typename PointT>
 std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
-    const typename pcl::PointCloud<PointT>::ConstPtr &cloud) {
+    const typename pcl::PointCloud<PointT>::ConstPtr &cloud, const std::vector<std::string> &obj_models_to_search) {
   // reset view point - otherwise this messes up PCL's visualization (this does not affect recognition results)
   //    cloud->sensor_orientation_ = Eigen::Quaternionf::Identity();
   //    cloud->sensor_origin_ = Eigen::Vector4f::Zero(4);
@@ -458,10 +461,10 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
     pcl::StopWatch t;
     const std::string time_desc("Removing planes");
 
-    cloud_segmenter_->setNormals(normals);
-    cloud_segmenter_->segment(processed_cloud);
-    processed_cloud = cloud_segmenter_->getProcessedCloud();
-    support_plane = cloud_segmenter_->getSelectedPlane();
+    plane_extractor_->setNormals(normals);
+    plane_extractor_->segment(processed_cloud);
+    processed_cloud = plane_extractor_->getProcessedCloud();
+    support_plane = plane_extractor_->getSelectedPlane();
     mrec_->setTablePlane(support_plane);
 
     double time = t.getTime();
@@ -480,7 +483,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
     const std::string time_desc("Generation of object hypotheses");
 
     mrec_->setInputCloud(processed_cloud);
-    mrec_->recognize();
+    mrec_->recognize(obj_models_to_search);
     generated_object_hypotheses = mrec_->getObjectHypothesis();
 
     double time = t.getTime();
@@ -495,10 +498,10 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
   //        refinePose(processed_cloud);
   //    }
 
-  if (skip_verification_ && param_.icp_iterations_) {
+  if (param_.skip_verification_ && param_.icp_iterations_) {
     for (size_t ohg_id = 0; ohg_id < generated_object_hypotheses.size(); ohg_id++) {
       for (size_t oh_id = 0; oh_id < generated_object_hypotheses[ohg_id].ohs_.size(); oh_id++) {
-        typename ObjectHypothesis::Ptr &oh = generated_object_hypotheses[ohg_id].ohs_[oh_id];
+        ObjectHypothesis::Ptr &oh = generated_object_hypotheses[ohg_id].ohs_[oh_id];
 
         bool found_model_foo;
         typename Model<PointT>::ConstPtr m = model_database_->getModelById("", oh->model_id_, found_model_foo);
@@ -531,7 +534,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
     }
   }
 
-  if (!skip_verification_) {
+  if (!param_.skip_verification_) {
     hv_->setHypotheses(generated_object_hypotheses);
 
     if (param_.use_multiview_ && param_.use_multiview_hv_) {
@@ -560,10 +563,10 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
         elapsed_time_.push_back(std::pair<std::string, float>(time_desc, time));
       }
 
-      size_t num_views = std::min<size_t>(param_.max_views_, views_.size() + 1);
+      size_t num_views = std::min<size_t>(param_.multiview_max_views_, views_.size() + 1);
       LOG(INFO) << "Running multi-view recognition over " << num_views;
 
-#ifdef HAVE_V4R_CHANGE_DETECTION
+#if HAVE_V4R_CHANGE_DETECTION
       if (param_.use_change_detection_ && !views_.empty()) {
         pcl::StopWatch t;
         const std::string time_desc("Change detection");
@@ -641,7 +644,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
         const View &vv = views_[v_id];
         views[tmp_id] = vv.cloud_;
         processed_views[tmp_id] = vv.processed_cloud_;
-        camera_poses[tmp_id] = vv.camera_pose_;  // take the current view as the new common referenc frame
+        camera_poses[tmp_id] = vv.camera_pose_;  // take the current view as the new common reference frame
         views_normals[tmp_id] = vv.cloud_normals_;
         views_pt_properties[tmp_id] = vv.pt_properties_;
         tmp_id++;
@@ -723,7 +726,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
   if (param_.remove_planes_ && param_.remove_non_upright_objects_) {
     for (size_t ohg_id = 0; ohg_id < generated_object_hypotheses.size(); ohg_id++) {
       for (size_t oh_id = 0; oh_id < generated_object_hypotheses[ohg_id].ohs_.size(); oh_id++) {
-        typename ObjectHypothesis::Ptr &oh = generated_object_hypotheses[ohg_id].ohs_[oh_id];
+        ObjectHypothesis::Ptr &oh = generated_object_hypotheses[ohg_id].ohs_[oh_id];
 
         if (!oh->is_verified_)
           continue;
@@ -754,7 +757,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
   std::stringstream info;
   size_t num_detected = 0;
   for (size_t ohg_id = 0; ohg_id < generated_object_hypotheses.size(); ohg_id++) {
-    for (const typename ObjectHypothesis::Ptr &oh : generated_object_hypotheses[ohg_id].ohs_) {
+    for (const ObjectHypothesis::Ptr &oh : generated_object_hypotheses[ohg_id].ohs_) {
       if (oh->is_verified_) {
         num_detected++;
         const std::string &model_id = oh->model_id_;
@@ -782,7 +785,7 @@ std::vector<ObjectHypothesesGroup> ObjectRecognizer<PointT>::recognize(
         local_recognition_pipeline_->getLocalObjectModelDatabase();
     rec_vis_->setCloud(cloud);
 
-    if (param_.use_multiview_ && param_.use_multiview_hv_ && !skip_verification_) {
+    if (param_.use_multiview_ && param_.use_multiview_hv_ && !param_.skip_verification_) {
       const Eigen::Matrix4f tf_global2camera = camera_pose.inverse();
       typename pcl::PointCloud<PointT>::Ptr registered_scene_cloud_aligned(new pcl::PointCloud<PointT>);
       pcl::transformPointCloud(*registered_scene_cloud_, *registered_scene_cloud_aligned, tf_global2camera);
@@ -808,7 +811,7 @@ void ObjectRecognizer<PointT>::resetMultiView() {
     views_.clear();
 
     typename v4r::MultiviewRecognizer<PointT>::Ptr mv_rec =
-        boost::dynamic_pointer_cast<v4r::MultiviewRecognizer<PointT>>(mrec_);
+        std::dynamic_pointer_cast<v4r::MultiviewRecognizer<PointT>>(mrec_);
     if (mrec_)
       mv_rec->clear();
     else
@@ -816,6 +819,20 @@ void ObjectRecognizer<PointT>::resetMultiView() {
   }
 }
 
+template <typename PointT>
+typename pcl::PointCloud<PointT>::ConstPtr ObjectRecognizer<PointT>::getModel(const std::string &model_name,
+                                                                              int resolution_mm) const {
+  bool found;
+  typename Source<PointT>::ConstPtr mdb = mrec_->getModelDatabase();
+  typename Model<PointT>::ConstPtr model = mdb->getModelById("", model_name, found);
+  if (!found) {
+    LOG(ERROR) << "Could not find model with name " << model_name;
+    return nullptr;
+  }
+
+  return model->getAssembled(resolution_mm);
+}
+
 template class V4R_EXPORTS ObjectRecognizer<pcl::PointXYZRGB>;
-}
-}
+}  // namespace apps
+}  // namespace v4r

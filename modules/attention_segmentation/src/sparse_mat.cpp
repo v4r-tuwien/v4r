@@ -36,6 +36,7 @@
 ** sell copies of their contributions without any restrictions.
 **
 ****************************************************************************/
+#include <glog/logging.h>
 
 #include "v4r/attention_segmentation/sparse_mat.h"
 
@@ -80,7 +81,7 @@ double SparseMat::get(int i, int j) {
 
 void SparseMat::set(int i, int j, double v) {
   if (i < 0 || j < 0) {
-    printf("[SparseMat::set] Warning index out of bounds (%d,%d)\n", i, j);
+    LOG(WARNING) << "index out of bounds (" << i << ", " << j << ")";
     return;
   }
 

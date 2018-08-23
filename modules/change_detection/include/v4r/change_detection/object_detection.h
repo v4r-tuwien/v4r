@@ -94,6 +94,6 @@ class ObjectDetection {
   typename pcl::PointCloud<PointType>::ConstPtr cloud;
   Eigen::Affine3f pose;
 };
-}
+}  // namespace v4r
 
 #endif /* OBJECT_DETECTION_H_ */

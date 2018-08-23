@@ -127,17 +127,13 @@ class V4R_EXPORTS ROPSLocalEstimation : public LocalEstimator<PointT> {
     param_.support_radius_ = radius;
   }
 
-  bool acceptsIndices() const {
-    return true;
-  }
-
-  void compute(std::vector<std::vector<float>> &signatures);
+  void compute(cv::Mat &signatures) override;
 
   bool needNormals() const {
     return true;
   }
 
-  typedef boost::shared_ptr<ROPSLocalEstimation<PointT>> Ptr;
-  typedef boost::shared_ptr<ROPSLocalEstimation<PointT> const> ConstPtr;
+  typedef std::shared_ptr<ROPSLocalEstimation<PointT>> Ptr;
+  typedef std::shared_ptr<ROPSLocalEstimation<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -104,10 +104,6 @@ void principleAxis(pcl::PointCloud<pcl::Normal>::ConstPtr cloud, std::vector<pcl
     eigen_values = eigensolver.eigenvalues();
     eigen_vectors = eigensolver.eigenvectors();
 
-    // pcl::eigen33 (cov, eigen_vectors, eigen_values);
-
-    // std::cerr << "inside principleAxis" << std::endl;
-
     axis.at(0).normal[0] = eigen_vectors(0, 0);
     axis.at(0).normal[1] = eigen_vectors(1, 0);
     axis.at(0).normal[2] = eigen_vectors(2, 0);

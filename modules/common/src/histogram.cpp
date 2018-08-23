@@ -112,4 +112,4 @@ Eigen::VectorXf specifyHistogram(const Eigen::VectorXf &input_image, const Eigen
   }
   return color_new;
 }
-}
+}  // namespace v4r

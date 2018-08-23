@@ -57,7 +57,7 @@ namespace v4r {
 //
 // the expression  M(i, j) is equivalent to
 //
-//   arrary[i * row_stride + j * col_stride]
+//   array[i * row_stride + j * col_stride]
 //
 // Conversion functions to and from rotation matrices accept
 // MatrixAdapters to permit using row-major and column-major layouts,
@@ -88,7 +88,7 @@ void AngleAxisToQuaternion(const T* angle_axis, T* quaternion);
 // The value quaternion must be a unit quaternion - it is not normalized first,
 // and angle_axis will be filled with a value whose norm is the angle of
 // rotation in radians, and whose direction is the axis of rotation.
-// The implemention may be used with auto-differentiation up to the first
+// The implementation may be used with auto-differentiation up to the first
 // derivative, higher derivatives may have unexpected results near the origin.
 template <typename T>
 void QuaternionToAngleAxis(const T* quaternion, T* angle_axis);
@@ -521,7 +521,10 @@ inline void QuaternionRotatePoint(const T q[4], const T pt[3], T result[3]) {
 
   // Make unit-norm version of q.
   const T unit[4] = {
-      scale * q[0], scale * q[1], scale * q[2], scale * q[3],
+      scale * q[0],
+      scale * q[1],
+      scale * q[2],
+      scale * q[3],
   };
 
   UnitQuaternionRotatePoint(unit, pt, result);

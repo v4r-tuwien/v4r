@@ -41,14 +41,14 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/shared_ptr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 #include <v4r/keypoints/impl/eigen_boost_serialization.hpp>
 #include <v4r/keypoints/impl/opencv_serialization.hpp>
 #include <v4r/keypoints/impl/pair_serialization.hpp>
-#include <v4r/keypoints/impl/pair_serialization.hpp>
 #include <v4r/keypoints/impl/triple_serialization.hpp>
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -67,8 +67,8 @@ void serialize(Archive &ar, v4r::GlobalPoint &pt, const unsigned int version) {
   ar &pt.pt;
   ar &pt.n;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** ObjectView serialization **/
 namespace boost {
@@ -89,8 +89,8 @@ void serialize(Archive &ar, v4r::ObjectView &view, const unsigned int version) {
   ar &view.projs;
   ar &view.part_indices;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** ObjectView::Ptr serialization **/
 BOOST_SERIALIZATION_SPLIT_FREE(::v4r::ObjectView::Ptr)
@@ -109,8 +109,8 @@ void load(Archive &ar, ::v4r::ObjectView::Ptr &view, const unsigned int version)
   view.reset(new v4r::ObjectView(0));
   ar &*view;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** Object serialization **/
 BOOST_SERIALIZATION_SPLIT_FREE(::v4r::Object)
@@ -143,8 +143,8 @@ void load(Archive &ar, v4r::Object &o, const unsigned int version) {
   for (unsigned i = 0; i < o.views.size(); i++)
     o.views[i]->object = &o;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** Part serialization **/
 namespace boost {
@@ -161,8 +161,8 @@ void serialize(Archive &ar, v4r::Part &p, const unsigned int version) {
   ar &p.projs;
   ar &p.subparts;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** PartRotation1D serialization **/
 namespace boost {
@@ -175,8 +175,8 @@ void serialize(Archive &ar, v4r::PartRotation1D &p, const unsigned int version) 
   ar &p.angle;
   ar &p.rt;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** PartMotion6D serialization **/
 namespace boost {
@@ -188,8 +188,8 @@ void serialize(Archive &ar, v4r::PartMotion6D &p, const unsigned int version) {
   ar &boost::serialization::base_object<v4r::Part>(p);
   ar &p.rt;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** Part::Ptr serialization **/
 BOOST_SERIALIZATION_SPLIT_FREE(::v4r::Part::Ptr)
@@ -207,11 +207,11 @@ void save(Archive &ar, const ::v4r::Part::Ptr &p, const unsigned int version) {
       break;
     }
     case v4r::Part::ROTATION_1D: {
-      ar &*v4r::SmartPtr<v4r::PartRotation1D>(p);
+      ar &*std::dynamic_pointer_cast<v4r::PartRotation1D>(p);
       break;
     }
     case v4r::Part::MOTION_6D: {
-      ar &*v4r::SmartPtr<v4r::PartMotion6D>(p);
+      ar &*std::dynamic_pointer_cast<v4r::PartMotion6D>(p);
       break;
     }
     default:
@@ -235,21 +235,22 @@ void load(Archive &ar, ::v4r::Part::Ptr &p, const unsigned int version) {
     }
     case v4r::Part::ROTATION_1D: {
       p.reset(new v4r::PartRotation1D());
-      ar &*v4r::SmartPtr<v4r::PartRotation1D>(p);
+      ar &*std::dynamic_pointer_cast<v4r::PartRotation1D>(p);
       break;
     }
     case v4r::Part::MOTION_6D: {
       p.reset(new v4r::PartMotion6D());
-      ar &*v4r::SmartPtr<v4r::PartMotion6D>(p);
+      ar &*std::dynamic_pointer_cast<v4r::PartMotion6D>(p);
       break;
     }
     default:
       std::cout << "serialization::v4r::Part::Ptr not implemented!" << std::endl;
+      p = nullptr;
       break;
   }
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 /** ArticulatedObject serialization **/
 BOOST_SERIALIZATION_SPLIT_FREE(::v4r::ArticulatedObject::Ptr)
@@ -296,7 +297,7 @@ void load(Archive &ar, ::v4r::ArticulatedObject::Ptr &o, const unsigned int vers
     }
   }
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 #endif

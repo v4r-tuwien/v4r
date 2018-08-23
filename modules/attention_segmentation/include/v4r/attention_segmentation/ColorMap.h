@@ -60,8 +60,8 @@ class V4R_EXPORTS ColorSaliencyMap : public BaseMap {
   void setColor(cv::Scalar color_);
   cv::Scalar getColor();
   /**
-  * calculates single color map
-  * */
+   * calculates single color map
+   * */
   virtual int calculate();
   virtual void reset();
   virtual void print();

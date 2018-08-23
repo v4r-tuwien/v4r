@@ -163,4 +163,4 @@ void ComputeImGDescOrientations::compute(const cv::Mat_<unsigned char> &image, s
 //cv::waitKey(0);
   }
 }*/
-}
+}  // namespace v4r

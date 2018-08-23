@@ -53,11 +53,9 @@
 
 namespace v4r {
 
-enum NormalEstimatorType {
-  PCL_DEFAULT = 0x01,          // 00000001
-  PCL_INTEGRAL_NORMAL = 0x02,  // 00000010
-  Z_ADAPTIVE = 0x04,           // 00000100
-};
+enum class NormalEstimatorType { PCL_DEFAULT, PCL_INTEGRAL_NORMAL, Z_ADAPTIVE };
+V4R_EXPORTS std::istream& operator>>(std::istream& in, NormalEstimatorType& style);
+V4R_EXPORTS std::ostream& operator<<(std::ostream& out, const NormalEstimatorType& style);
 
 template <typename PointT>
 class V4R_EXPORTS NormalEstimator {
@@ -74,7 +72,7 @@ class V4R_EXPORTS NormalEstimator {
    * @brief setInputCloud
    * @param input input cloud
    */
-  void setInputCloud(const typename pcl::PointCloud<PointT>::ConstPtr &input) {
+  void setInputCloud(const typename pcl::PointCloud<PointT>::ConstPtr& input) {
     input_ = input;
   }
 
@@ -82,7 +80,7 @@ class V4R_EXPORTS NormalEstimator {
    * @brief setIndices
    * @param indices indices of the segmented object (extracted keypoints outside of this will be neglected)
    */
-  void setIndices(const std::vector<int> &indices) {
+  void setIndices(const std::vector<int>& indices) {
     indices_ = indices;
   }
 
@@ -90,14 +88,14 @@ class V4R_EXPORTS NormalEstimator {
    * @brief getNormalEstimatorType
    * @return unique type id of normal estimator(as stated in keypoint/types.h)
    */
-  virtual int getNormalEstimatorType() const = 0;
+  virtual NormalEstimatorType getNormalEstimatorType() const = 0;
 
   /**
    * @brief compute
    */
   virtual pcl::PointCloud<pcl::Normal>::Ptr compute() = 0;
 
-  typedef boost::shared_ptr<NormalEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<NormalEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<NormalEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<NormalEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

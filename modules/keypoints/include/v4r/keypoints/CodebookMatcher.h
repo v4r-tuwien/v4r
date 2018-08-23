@@ -58,7 +58,6 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/triple.hpp>
 #include <vector>
 
@@ -115,12 +114,12 @@ class V4R_EXPORTS CodebookMatcher {
     return view_rank;
   }
 
-  typedef SmartPtr<::v4r::CodebookMatcher> Ptr;
-  typedef SmartPtr<::v4r::CodebookMatcher const> ConstPtr;
+  typedef std::shared_ptr<::v4r::CodebookMatcher> Ptr;
+  typedef std::shared_ptr<::v4r::CodebookMatcher const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

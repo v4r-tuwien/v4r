@@ -49,16 +49,17 @@ void Source<PointT>::init(const bf::path &model_database_path,
 
       for (size_t v_id = 0; v_id < training_view_filenames.size(); v_id++) {
         typename TrainingView<PointT>::Ptr v(new TrainingView<PointT>);
-        bf::path view_filename = object_dir / training_view_filenames[v_id];
-        v->filename_ = view_filename.string();
+        v->filename_ = object_dir / training_view_filenames[v_id];
 
-        v->pose_filename_ = v->filename_;
-        boost::replace_last(v->pose_filename_, param_.view_prefix_, param_.pose_prefix_);
-        boost::replace_last(v->pose_filename_, ".pcd", ".txt");
+        std::string pose_filename = v->filename_.string();
+        boost::replace_last(pose_filename, param_.view_prefix_, param_.pose_prefix_);
+        boost::replace_last(pose_filename, ".pcd", ".txt");
+        v->pose_filename_ = pose_filename;
 
-        v->indices_filename_ = v->filename_;
-        boost::replace_last(v->indices_filename_, param_.view_prefix_, param_.indices_prefix_);
-        boost::replace_last(v->indices_filename_, ".pcd", ".txt");
+        std::string indices_filename = v->filename_.string();
+        boost::replace_last(indices_filename, param_.view_prefix_, param_.indices_prefix_);
+        boost::replace_last(indices_filename, ".pcd", ".txt");
+        v->indices_filename_ = indices_filename;
 
         obj->addTrainingView(v);
       }
@@ -74,4 +75,4 @@ void Source<PointT>::init(const bf::path &model_database_path,
 
 template class V4R_EXPORTS Source<pcl::PointXYZ>;
 template class V4R_EXPORTS Source<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

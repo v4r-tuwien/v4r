@@ -105,6 +105,6 @@ class V4R_EXPORTS SVMScale {
 
   void compute();
 };
-}
+}  // namespace svm
 
 #endif  // SVM_SCALE_H

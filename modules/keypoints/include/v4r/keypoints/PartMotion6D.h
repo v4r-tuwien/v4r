@@ -68,8 +68,8 @@ class V4R_EXPORTS PartMotion6D : public Part {
   PartMotion6D();
   ~PartMotion6D();
 
-  typedef SmartPtr<::v4r::PartMotion6D> Ptr;
-  typedef SmartPtr<::v4r::PartMotion6D const> ConstPtr;
+  typedef std::shared_ptr<::v4r::PartMotion6D> Ptr;
+  typedef std::shared_ptr<::v4r::PartMotion6D const> ConstPtr;
 
   virtual void initParameter();
   virtual void setParameter(const Eigen::VectorXd &_param);
@@ -80,6 +80,6 @@ class V4R_EXPORTS PartMotion6D : public Part {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

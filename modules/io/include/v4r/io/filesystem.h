@@ -62,49 +62,49 @@ namespace v4r {
 namespace io {
 
 /** Returns folder names in a folder </br>
-      * @param dir
-      * @return relative_paths
-      */
+ * @param dir
+ * @return relative_paths
+ */
 V4R_EXPORTS std::vector<std::string> getFoldersInDirectory(const boost::filesystem::path &dir);
 
 /** Returns a the name of files in a folder </br>
-        * '(.*)bmp'
-        * @param dir
-        * @param regex_pattern examples "(.*)bmp",  "(.*)$"
-        * @param recursive (true if files in subfolders should be returned as well)
-        * @return files in folder
-        */
+ * '(.*)bmp'
+ * @param dir
+ * @param regex_pattern examples "(.*)bmp",  "(.*)$"
+ * @param recursive (true if files in subfolders should be returned as well)
+ * @return files in folder
+ */
 V4R_EXPORTS
 std::vector<std::string> getFilesInDirectory(const boost::filesystem::path &dir,
                                              const std::string &regex_pattern = std::string(""), bool recursive = true);
 
 /** checks if a file exists
-        * @param rFile
-        * @return true if file exsits
-        */
+ * @param rFile
+ * @return true if file exists
+ */
 V4R_EXPORTS bool existsFile(const boost::filesystem::path &rFile);
 
 /** checks if a folder exists
-        * @param rFolder
-        * @return true if folder exsits
-        */
+ * @param rFolder
+ * @return true if folder exists
+ */
 V4R_EXPORTS bool existsFolder(const boost::filesystem::path &dir);
 
 /** checks if folder already exists and if not, creates one
-          * @param folder_name
-          */
+ * @param folder_name
+ */
 V4R_EXPORTS void createDirIfNotExist(const boost::filesystem::path &dir);
 
 /** checks if the path for the filename already exists,
-         * otherwise creates it
-         * @param filename
-         */
+ * otherwise creates it
+ * @param filename
+ */
 V4R_EXPORTS void createDirForFileIfNotExist(const boost::filesystem::path &filename);
 
 /** @brief copies a directory from source to destination
-          * @param path of source directory
-          * @param path of destination directory
-          */
+ * @param path of source directory
+ * @param path of destination directory
+ */
 V4R_EXPORTS
 void copyDir(const bf::path &sourceDir, const bf::path &destinationDir);
 
@@ -114,5 +114,18 @@ void copyDir(const bf::path &sourceDir, const bf::path &destinationDir);
  */
 V4R_EXPORTS
 void removeDir(const bf::path &path);
-}
-}
+
+/// Get base directory relative to which user specific V4R data files should be stored.
+/// Follows XDG Base Directory Specification:
+///   https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+V4R_EXPORTS
+bf::path getDataDir();
+
+/// Get base directory relative to which user specific V4R configuration files should be stored.
+/// Follows XDG Base Directory Specification:
+///   https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+V4R_EXPORTS
+bf::path getConfigDir();
+
+}  // namespace io
+}  // namespace v4r

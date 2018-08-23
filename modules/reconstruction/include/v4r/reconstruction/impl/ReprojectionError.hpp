@@ -427,6 +427,6 @@ struct RadialDistortionReprojectionAndDepthErrorGlobalPose {
   const double inv_depth;
   const double depth_err_weight;
 };
-}
+}  // namespace v4r
 
 #endif

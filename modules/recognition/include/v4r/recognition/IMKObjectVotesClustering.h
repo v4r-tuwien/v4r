@@ -99,14 +99,14 @@ class V4R_EXPORTS IMKObjectVotesClustering {
 
   void operate(const std::vector<std::string> &object_names, const std::vector<IMKView> &views,
                const std::vector<cv::KeyPoint> &keys, const std::vector<std::vector<cv::DMatch>> &matches,
-               std::vector<boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters);
+               std::vector<std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters);
 
   void setParameter(const Parameter &_param) {
     param = _param;
   }
 
-  typedef boost::shared_ptr<::v4r::IMKObjectVotesClustering> Ptr;
-  typedef boost::shared_ptr<::v4r::IMKObjectVotesClustering const> ConstPtr;
+  typedef std::shared_ptr<::v4r::IMKObjectVotesClustering> Ptr;
+  typedef std::shared_ptr<::v4r::IMKObjectVotesClustering const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
@@ -123,6 +123,6 @@ inline float IMKObjectVotesClustering::scaleAngle_0_2pi(float a) {
   return a;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

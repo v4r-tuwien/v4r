@@ -286,4 +286,4 @@ void CodebookMatcher::queryMatches(const cv::Mat &descriptors, std::vector<std::
   if (sort_view_rank)
     std::sort(view_rank.begin(), view_rank.end(), cmpViewRandDec);
 }
-}
+}  // namespace v4r

@@ -49,12 +49,12 @@ class V4R_EXPORTS SimplePyramid : public BasePyramid {
  public:
   SimplePyramid();
   virtual ~SimplePyramid();
-  typedef boost::shared_ptr<SimplePyramid> Ptr;
+  typedef std::shared_ptr<SimplePyramid> Ptr;
 
   virtual void reset();
   virtual void combinePyramid(bool standard = false);
 
  private:
 };
-}
+}  // namespace v4r
 #endif  // PYRAMID_SIMPLE_HPP

@@ -46,10 +46,10 @@
  */
 #pragma once
 
+#include <libsvm/svm.h>
 #include <v4r/core/macros.h>
 #include <v4r/ml/classifier.h>
-
-#include <libsvm/svm.h>
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <vector>
 
@@ -57,21 +57,23 @@ namespace po = boost::program_options;
 
 namespace v4r {
 
-class V4R_EXPORTS SVMParameter {
- public:
-  int do_cross_validation_;  /// if greater 1, performs k-fold cross validation with k equal set by this variable
-  int knn_;                  ///< return the knn most probably classes when parameter probability is set to true
-  bool do_scaling_;          ///< scale each attribute to [0 1]
+struct V4R_EXPORTS SVMParameter {
+  int do_cross_validation_ = 0;  /// if greater 1, performs k-fold cross validation with k equal set by this variable
+  int knn_ = 3;                  ///< return the knn most probably classes when parameter probability is set to true
+  bool do_scaling_ = false;      ///< scale each attribute to [0 1]
   ::svm_parameter svm_;
 
-  std::vector<double> cross_validation_range_C_;  ///< cross validation range for parameter C (first element minimum,
-                                                  /// second element maximum, third element step size as a multiplier)
-  std::vector<double> cross_validation_range_gamma_;  ///< cross validation range for parameter gamma (first element
-                                                      /// minimum, second element maximum, third element step size as a
+  std::vector<double> cross_validation_range_C_ =
+      {exp2(-5), exp2(15), 2};  ///< cross validation range for parameter C (first element minimum,
+                                /// second element maximum, third element step size as a multiplier)
+  std::vector<double> cross_validation_range_gamma_ =
+      {exp2(-15), exp2(3), 4};  ///< cross validation range for parameter gamma (first element
+                                /// minimum, second element maximum, third element step size as a
   /// multiplier)
 
-  std::string filename_;  ///< filename from where to load svm file (if path exists, will skip training and use this
-                          /// model instead)
+  std::string filename_ =
+      "";  ///< filename from where to load svm file (if path exists, will skip training and use this
+           /// model instead)
 
   SVMParameter(int svm_type = ::C_SVC,
                int kernel_type = ::LINEAR,  //::RBF,
@@ -112,45 +114,51 @@ class V4R_EXPORTS SVMParameter {
   }
 
   /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
+   * @brief init parameters
+   * @param command_line_arguments (according to Boost program options library)
+   * @return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(int argc, char **argv) {
     std::vector<std::string> arguments(argv + 1, argv + argc);
     return init(arguments);
   }
 
   /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
+   * @brief init parameters
+   * @param command_line_arguments (according to Boost program options library)
+   * @return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("SVM Classification Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "svm_do_cross_validation", po::value<int>(&do_cross_validation_)->default_value(do_cross_validation_),
-        "if greater 1, performs k-fold cross validation with k equal set by this variable")(
-        "svm_knn", po::value<int>(&knn_)->default_value(knn_),
-        "return the knn most probably classes when parameter probability is set to true")(
-        "svm_do_scaling", po::value<bool>(&do_scaling_)->default_value(do_scaling_), "scale each attribute to [0 1]")(
-        "svm_type", po::value<int>(&svm_.svm_type)->default_value(svm_.svm_type), "according to LIBSVM")(
-        "svm_kernel_type", po::value<int>(&svm_.kernel_type)->default_value(svm_.kernel_type), "according to LIBSVM")(
-        "svm_gamma", po::value<double>(&svm_.gamma)->default_value(svm_.gamma), "for poly/rbf/sigmoid")(
-        "svm_cache_size", po::value<double>(&svm_.cache_size)->default_value(svm_.cache_size), "in MB")(
-        "svm_eps", po::value<double>(&svm_.eps)->default_value(svm_.eps), "stopping criteria")(
-        "svm_C", po::value<double>(&svm_.C)->default_value(svm_.C), "for C_SVC, EPSILON_SVR and NU_SVR")(
-        "svm_nr_weight", po::value<int>(&svm_.nr_weight)->default_value(svm_.nr_weight), "")(
-        "svm_shrinking", po::value<int>(&svm_.shrinking)->default_value(svm_.shrinking),
-        "use the shrinking heuristics")("svm_probability",
-                                        po::value<int>(&svm_.probability)->default_value(svm_.probability),
-                                        "do probability estimates")(
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("svm_do_cross_validation",
+                       po::value<int>(&do_cross_validation_)->default_value(do_cross_validation_),
+                       "if greater 1, performs k-fold cross validation with k equal set by this variable");
+    desc.add_options()("svm_knn", po::value<int>(&knn_)->default_value(knn_),
+                       "return the knn most probably classes when parameter probability is set to true");
+    desc.add_options()("svm_do_scaling", po::value<bool>(&do_scaling_)->default_value(do_scaling_),
+                       "scale each attribute to [0 1]");
+    desc.add_options()("svm_type", po::value<int>(&svm_.svm_type)->default_value(svm_.svm_type), "according to LIBSVM");
+    desc.add_options()("svm_kernel_type", po::value<int>(&svm_.kernel_type)->default_value(svm_.kernel_type),
+                       "according to LIBSVM");
+    desc.add_options()("svm_gamma", po::value<double>(&svm_.gamma)->default_value(svm_.gamma), "for poly/rbf/sigmoid");
+    desc.add_options()("svm_cache_size", po::value<double>(&svm_.cache_size)->default_value(svm_.cache_size), "in MB");
+    desc.add_options()("svm_eps", po::value<double>(&svm_.eps)->default_value(svm_.eps), "stopping criteria");
+    desc.add_options()("svm_C", po::value<double>(&svm_.C)->default_value(svm_.C), "for C_SVC, EPSILON_SVR and NU_SVR");
+    desc.add_options()("svm_nr_weight", po::value<int>(&svm_.nr_weight)->default_value(svm_.nr_weight), "");
+    desc.add_options()("svm_shrinking", po::value<int>(&svm_.shrinking)->default_value(svm_.shrinking),
+                       "use the shrinking heuristics");
+    desc.add_options()("svm_probability", po::value<int>(&svm_.probability)->default_value(svm_.probability),
+                       "do probability estimates");
+    desc.add_options()(
         "svm_cross_validation_range_C", po::value<std::vector<double>>(&cross_validation_range_C_)->multitoken(),
         "cross validation range for parameter C (first element minimum, second element maximum, third element step "
-        "size as a multiplier)")("svm_cross_validation_range_gamma",
-                                 po::value<std::vector<double>>(&cross_validation_range_gamma_)->multitoken(),
-                                 "cross validation range for parameter gamma (first element minimum, second element "
-                                 "maximum, third element step size as a multiplier)")(
+        "size as a multiplier)");
+    desc.add_options()("svm_cross_validation_range_gamma",
+                       po::value<std::vector<double>>(&cross_validation_range_gamma_)->multitoken(),
+                       "cross validation range for parameter gamma (first element minimum, second element "
+                       "maximum, third element step size as a multiplier)");
+    desc.add_options()(
         "svm_filename", po::value<std::string>(&filename_)->default_value(filename_),
         "filename from where to load svm file (if path exists, will skip training and use this model instead)");
     po::variables_map vm;
@@ -181,27 +189,27 @@ class V4R_EXPORTS svmClassifier : public Classifier {
  public:
   svmClassifier(const SVMParameter &p = SVMParameter()) : param_(p) {}
 
-  void predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &predicted_label) const;
+  void predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &predicted_label) const override;
 
   /**
-       * @brief saveModel save current svm model
-       * @param filename filename to save trained model
-       */
-  void saveModel(const std::string &filename) const;
+   * @brief saveModel save current svm model
+   * @param filename filename to save trained model
+   */
+  void saveModel(const boost::filesystem::path &filename) const;
 
   /**
-       * @brief loadModel load an SVM model from file
-       * @param filename filename to read svm model
-       */
-  void loadModel(const std::string &filename);
+   * @brief loadModel load an SVM model from file
+   * @param filename filename to read svm model
+   */
+  void loadModel(const boost::filesystem::path &filename);
 
-  void train(const Eigen::MatrixXf &training_data, const Eigen::VectorXi &training_label);
+  void train(const Eigen::MatrixXf &training_data, const Eigen::VectorXi &training_label) override;
 
-  int getType() const {
+  ClassifierType getType() const override {
     return ClassifierType::SVM;
   }
 
-  typedef boost::shared_ptr<svmClassifier> Ptr;
-  typedef boost::shared_ptr<svmClassifier const> ConstPtr;
+  typedef std::shared_ptr<svmClassifier> Ptr;
+  typedef std::shared_ptr<svmClassifier const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -133,13 +133,9 @@ void Segmenter::initModelSurfaces() {
   sfmParams.z_max = 0.01;
   surfModeling = v4r::SurfaceModeling::Ptr(new v4r::SurfaceModeling(sfmParams));
   surfModeling->setIntrinsic(570.3, 570.3, 320., 240.);
-  //   surfModeling->setIntrinsic(525., 525., 320., 240.);
   Eigen::Matrix4d pose = Eigen::Matrix4d::Identity();
   surfModeling->setExtrinsic(pose);
-
   surfModeling->setInputCloud(pcl_cloud);
-  //   surfModeling->setNormals(normals);
-
   surfModeling->setMinSurfaceSize(50);
 
   if (!use_planes) {
@@ -154,7 +150,6 @@ void Segmenter::initModelSurfaces() {
 void Segmenter::modelSurfaces() {
   surfModeling->setBoundary2D(ngbr2D_map);
   surfModeling->setBoundary3D(ngbr3D_map);
-
   surfModeling->setNormals(normals);
   surfModeling->setSurfaces(surfaces);
   surfModeling->compute();
@@ -168,7 +163,6 @@ void Segmenter::preComputeRelations() {
   structuralRelations.setInputCloud(pcl_cloud);
   structuralRelations.setNormals(normals);
   structuralRelations.setSurfaces(surfaces);
-  //   structuralRelations.setRelations(relations);
   structuralRelations.setNeighbours2D(ngbr2D_map);
   structuralRelations.setNeighbours3D(ngbr3D_map);
   //   structuralRelations.setUsedRelations(0x0001);
@@ -178,22 +172,10 @@ void Segmenter::preComputeRelations() {
 
 void Segmenter::computeRelations() {
   structuralRelations.setSurfaces(surfaces);
-  //   structuralRelations.setRelations(relations);
   structuralRelations.setNeighbours2D(ngbr2D_map);
   structuralRelations.setNeighbours3D(ngbr3D_map);
   structuralRelations.compute();
   validRelations = structuralRelations.getValidRelations();
-
-  //   assemblyRelations.setInputCloud(pcl_cloud);
-  //   assemblyRelations.setNormals(normals);
-  //   assemblyRelations.setSurfaces(surfaces);
-  //   assemblyRelations.setRelations(relations);
-  //   assemblyRelations.setNeighbours2D(ngbr2D);
-  //   assemblyRelations.setNeighbours3D(ngbr3D);
-  //   assemblyRelations.compute();
-  //
-  //   relations = assemblyRelations.getRelations();
-  //   view.relations = relations;
 }
 
 void Segmenter::graphBasedSegmentation() {
@@ -205,30 +187,8 @@ void Segmenter::graphBasedSegmentation() {
   svmPredictorSingle.setScaling(true, scaling_file_name);
   svmPredictorSingle.compute();
   validRelations = svmPredictorSingle.getRelations();
-
-  //   svmPredictorSingle.setPredictProbability(true);
-  //   svmPredictorSingle.setModelFilename("./AS-TrainALL.model.txt");
-  //   svmPredictorSingle.setSurfaces(surfaces);
-  //   svmPredictorSingle.setRelations(relations);
-  //   svmPredictorSingle.setType(2);
-  //   svmPredictorSingle.setScaling(true,"./AS-TrainALL.scalingparams.txt");
-  //   svmPredictorSingle.compute();
-  //   relations = svmPredictorSingle.getRelations();
-  //   view.relations = relations;
-
   graphCut.setSurfaces(surfaces);
   graphCut.setRelations(validRelations);
-  //   graphCut.printResults(true);
-  //   if(graphCut.init())
-  //   {
-  //     printf("graph cut initialized\n");
-  //     graphCut.process();
-  //     surfaces = graphCut.getSurfaces();
-  //   }
-  //   else
-  //   {
-  //     printf("cant init graph cut\n");
-  //   }
   graphCut.process2();
   surfaces = graphCut.getSurfaces();
 }
@@ -324,75 +284,6 @@ void Segmenter::createTrainFile() {
 }
 
 void Segmenter::attentionSegment() {
-  /*  if( (!have_cloud) || (!have_saliencyMaps) )
-    {
-      char* error_message = new char[200];
-      sprintf(error_message,"[%s::segment()]: I suggest you first set the point cloud.",ClassName.c_str()); // and
-  normals
-      throw std::runtime_error(error_message);
-    }
-
-    masks.resize(saliencyMaps.size());
-
-  v4r::TimeEstimationClass
-  timeEstimationClass_All(CLOCK_THREAD_CPUTIME_ID);//CLOCK_THREAD_CPUTIME_ID);//CLOCK_PROCESS_CPUTIME_ID
-  v4r::TimeEstimationClass timeEstimationClass_Custom(CLOCK_THREAD_CPUTIME_ID);
-
-  timeEstimationClass_All.countingStart();
-
-  timeEstimationClass_Custom.countingStart();
-    calculateNormals();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_normalsCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-    calculatePatches();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_patchesCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-  //   v4r::View view;
-    view.Reset();
-    view.setPointCloud(pcl_cloud);
-    view.normals = normals;
-    view.setSurfaces(surfaces);
-    surfaces = view.surfaces;
-
-    view.createPatchImage();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_patchImageCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-    view.computeNeighbors();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_neighborsCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-    surfaces = view.surfaces;
-    view.calculateBorders(view.cloud);
-    ngbr3D_map = view.ngbr3D_map;
-    ngbr2D_map = view.ngbr2D_map;
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_borderCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-    preComputeRelations();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_relationsPreComputation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimationClass_Custom.countingStart();
-    initModelSurfaces();
-  timeEstimationClass_Custom.countingEnd();
-  timeEstimates.time_initModelSurfaces = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-  timeEstimates.times_saliencySorting.resize(saliencyMaps.size());
-  timeEstimates.times_surfaceModelling.resize(saliencyMaps.size());
-  timeEstimates.times_relationsComputation.resize(saliencyMaps.size());
-  timeEstimates.times_graphBasedSegmentation.resize(saliencyMaps.size());
-  timeEstimates.times_maskCreation.resize(saliencyMaps.size());
-  timeEstimates.times_neigboursUpdate.resize(saliencyMaps.size());
-  timeEstimates.time_totalPerSegment.resize(saliencyMaps.size());*/
-
   attentionSegmentInit();
 
   v4r::TimeEstimationClass timeEstimationClass_All(
@@ -513,7 +404,7 @@ int Segmenter::attentionSegment(cv::Mat& object_mask, int originalIndex, int sal
       for (std::set<unsigned>::iterator itr = surfaces.at(idx)->neighbors3D.begin();
            itr != surfaces.at(idx)->neighbors3D.end(); itr++) {
         if ((surfaces.at(*itr)->valid) && (!(surfaces.at(*itr)->selected))) {
-          //           printf("Adding neigbour %u is selected \n",*itr);
+          //           printf("Adding neighbour %u is selected \n",*itr);
           surfaces.at(*itr)->selected = true;
           surfaces.at(*itr)->isNew = true;
         }
@@ -544,7 +435,6 @@ void Segmenter::segment() {
   calculateNormals();
   timeEstimationClass_Custom.countingEnd();
   timeEstimates.time_normalsCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
   timeEstimationClass_Custom.countingStart();
   calculatePatches();
   timeEstimationClass_Custom.countingEnd();
@@ -813,163 +703,4 @@ void Segmenter::createMasks() {
   masks.push_back(mask);
 }
 
-/*void Segmenter::attentionSegment(int &objNumber)
-{
-  if( (!have_cloud) || (!have_saliencyMaps) )
-  {
-    char* error_message = new char[200];
-    sprintf(error_message,"[%s::segment()]: I suggest you first set the point cloud.",ClassName.c_str()); // and normals
-    throw std::runtime_error(error_message);
-  }
-
-  assert(saliencyMaps.size() == 1);
-
-  masks.resize(objNumber);
-
-v4r::TimeEstimationClass
-timeEstimationClass_All(CLOCK_THREAD_CPUTIME_ID);//CLOCK_THREAD_CPUTIME_ID);//CLOCK_PROCESS_CPUTIME_ID
-v4r::TimeEstimationClass timeEstimationClass_Custom(CLOCK_THREAD_CPUTIME_ID);
-
-timeEstimationClass_All.countingStart();
-
-timeEstimationClass_Custom.countingStart();
-  calculateNormals();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_normalsCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  calculatePatches();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_patchesCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  v4r::View view;
-  view.Reset();
-  view.setPointCloud(pcl_cloud);
-  view.normals = normals;
-  view.setSurfaces(surfaces);
-  surfaces = view.surfaces;
-
-  view.createPatchImage();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_patchImageCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  view.computeNeighbors();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_neighborsCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  surfaces = view.surfaces;
-  view.calculateBorders(view.cloud);
-  ngbr3D_map = view.ngbr3D_map;
-  ngbr2D_map = view.ngbr2D_map;
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_borderCalculation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  preComputeRelations();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_relationsPreComputation = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimationClass_Custom.countingStart();
-  initModelSurfaces();
-timeEstimationClass_Custom.countingEnd();
-timeEstimates.time_initModelSurfaces = timeEstimationClass_Custom.getWorkTimeInNanoseconds();
-
-timeEstimates.times_saliencySorting.resize(objNumber);
-timeEstimates.times_surfaceModelling.resize(objNumber);
-timeEstimates.times_relationsComputation.resize(objNumber);
-timeEstimates.times_graphBasedSegmentation.resize(objNumber);
-timeEstimates.times_maskCreation.resize(objNumber);
-timeEstimates.times_neigboursUpdate.resize(objNumber);
-timeEstimates.time_totalPerSegment.resize(objNumber);
-
-v4r::TimeEstimationClass timeEstimationClass_CustomLoopTemp(CLOCK_THREAD_CPUTIME_ID);
-timeEstimationClass_CustomLoopTemp.countingStart();
-  view.setSaliencyMap(saliencyMaps.at(0));
-//     cv::imshow("saliencyMaps.at(i)",saliencyMaps.at(i));
-//     cv::waitKey(-1);
-  view.sortPatches();
-  surfaces = view.surfaces;
-
-  for(size_t j = 0; j < surfaces.size(); j++)
-  {
-    surfaces.at(j)->selected = false;
-    surfaces.at(j)->isNew = false;
-  }
-
-timeEstimationClass_CustomLoopTemp.countingEnd();
-unsigned long long times_saliencySorting_temp = timeEstimationClass_CustomLoopTemp.getWorkTimeInNanoseconds();
-
-  for(int i = 0; i < objNumber; ++i)
-  {
-v4r::TimeEstimationClass timeEstimationClass_CustomLoop(CLOCK_THREAD_CPUTIME_ID);
-timeEstimationClass_CustomLoop.countingStart();
-
-    int originalIndex = -1;
-    for(size_t j = 0; j < view.sortedSurfaces.size(); j++)
-    {
-      int originalIndex_temp = view.sortedSurfaces.at(j);
-      if(surfaces.at(originalIndex_temp)->valid)
-      {
-        originalIndex = originalIndex_temp;
-        break;
-      }
-    }
-
-    if(originalIndex == -1)
-    {
-      objNumber = i;
-      return;
-    }
-
-    //std::cerr << "originalIndex " << originalIndex << std::endl;
-
-timeEstimationClass_CustomLoop.countingEnd();
-timeEstimates.times_saliencySorting.at(i) = timeEstimationClass_CustomLoop.getWorkTimeInNanoseconds();
-
-if(i==0)
-{
-  timeEstimates.times_saliencySorting.at(i) += times_saliencySorting_temp;
-}
-
-v4r::TimeEstimationClass timeEstimationClass_CustomLoopSegment(CLOCK_THREAD_CPUTIME_ID);
-timeEstimationClass_CustomLoopSegment.countingStart();
-
-    if(surfaces.at(originalIndex)->segmented_number != -1)
-    {
-
-timeEstimates.times_surfaceModelling.at(i) = 0;
-timeEstimates.times_relationsComputation.at(i) = 0;
-timeEstimates.times_graphBasedSegmentation.at(i) = 0;
-timeEstimates.times_maskCreation.at(i) = 0;
-timeEstimates.times_neigboursUpdate.at(i) = 0;
-
-      masks.at(surfaces.at(originalIndex)->segmented_number).copyTo(masks.at(i));
-      //continue;
-    }
-    else
-    {
-
-      surfaces.at(originalIndex)->selected = true;
-      surfaces.at(originalIndex)->isNew = true;
-      view.surfaces = surfaces;
-
-      cv::Mat object_mask = cv::Mat_<uchar>::zeros(pcl_cloud->height,pcl_cloud->width);
-      originalIndex = attentionSegment(object_mask, originalIndex, i);
-      object_mask.copyTo(masks.at(i));
-      view.surfaces = surfaces;
-    }
-
-timeEstimationClass_CustomLoopSegment.countingEnd();
-timeEstimates.time_totalPerSegment.at(i) = timeEstimationClass_CustomLoopSegment.getWorkTimeInNanoseconds();
-
-  }
-
-timeEstimationClass_All.countingEnd();
-timeEstimates.time_total = timeEstimationClass_All.getWorkTimeInNanoseconds();
-
-}*/
-
-}  // end segmentation
+}  // namespace v4r

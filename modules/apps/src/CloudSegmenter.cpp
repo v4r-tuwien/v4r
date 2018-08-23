@@ -14,51 +14,64 @@ namespace po = boost::program_options;
 namespace v4r {
 namespace apps {
 
+void CloudSegmenterParameter::init(boost::program_options::options_description &desc, const std::string &section_name) {
+  desc.add_options()((section_name + "." + "plane_inlier_threshold").c_str(),
+                     po::value<float>(&plane_inlier_threshold_)->default_value(plane_inlier_threshold_),
+                     "inlier threshold for plane");
+  desc.add_options()((section_name + "." + "chop_z,z").c_str(), po::value<float>(&chop_z_)->default_value(chop_z_),
+                     "cut-off threshold in meter");
+  desc.add_options()((section_name + "." + "min_plane_inliers").c_str(),
+                     po::value<size_t>(&min_plane_inliers_)->default_value(min_plane_inliers_),
+                     "minimum number of inlier points for a plane to be valid");
+  desc.add_options()((section_name + "." + "skip_segmentation").c_str(),
+                     po::value<bool>(&skip_segmentation_)->default_value(skip_segmentation_),
+                     " if true, skips segmentation");
+  desc.add_options()((section_name + "." + "remove_planes").c_str(),
+                     po::value<bool>(&remove_planes_)->default_value(remove_planes_),
+                     "if true, removes plane from input cloud only. If false, removes plane and "
+                     "everything below it (i.e. further away from the camera)");
+  desc.add_options()((section_name + "." + "remove_selected_plane").c_str(),
+                     po::value<bool>(&remove_selected_plane_)->default_value(remove_selected_plane_),
+                     "if true, removes the selected plane (either dominant or the one parallel and higher)");
+  desc.add_options()(
+      (section_name + "." + "remove_points_below_selected_plane").c_str(),
+      po::value<bool>(&remove_points_below_selected_plane_)->default_value(remove_points_below_selected_plane_),
+      "if true, removes only the plane with the largest number of plane inliers");
+  desc.add_options()(
+      (section_name + "." + "use_highest_plane").c_str(),
+      po::value<bool>(&use_highest_plane_)->default_value(use_highest_plane_),
+      "if true, removes all points which are not above the highest plane parallel to the dominant plane");
+  desc.add_options()(
+      (section_name + "." + "cosinus_angle_for_planes_to_be_parallel").c_str(),
+      po::value<float>(&cosinus_angle_for_planes_to_be_parallel_)
+          ->default_value(cosinus_angle_for_planes_to_be_parallel_),
+      "the minimum cosinus angle of the surface normals of two planes such that the two planes are considered "
+      "parallel (only used if check for higher plane is enabled)");
+  desc.add_options()((section_name + ".min_distance_to_plane").c_str(),
+                     po::value<float>(&min_distance_to_plane_)->default_value(min_distance_to_plane_),
+                     "minimum distance in meter a point needs to have to be considered above");
+  desc.add_options()((section_name + ".segmentation_method").c_str(),
+                     po::value<SegmentationType>(&segmentation_method_)->default_value(segmentation_method_),
+                     "segmentation method");
+  desc.add_options()((section_name + ".plane_extraction_method").c_str(),
+                     po::value<PlaneExtractionType>(&plane_extraction_method_)->default_value(plane_extraction_method_),
+                     "plane extraction method");
+  desc.add_options()(
+      (section_name + ".normal_computation_method").c_str(),
+      po::value<NormalEstimatorType>(&normal_computation_method_)->default_value(normal_computation_method_),
+      "normal computation method (if needed by segmentation approach)");
+}
+
 template <typename PointT>
 void CloudSegmenter<PointT>::initialize(std::vector<std::string> &command_line_arguments) {
-  int segmentation_method = v4r::SegmentationType::OrganizedConnectedComponents;
-  int plane_extraction_method = v4r::PlaneExtractionType::Tile;
-  int normal_computation_method = v4r::NormalEstimatorType::PCL_INTEGRAL_NORMAL;
-
-  po::options_description desc("Point Cloud Segmentation\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message");
-  desc.add_options()("segmentation_method", po::value<int>(&segmentation_method)->default_value(segmentation_method),
-                     "segmentation method");
-  desc.add_options()("plane_extraction_method",
-                     po::value<int>(&plane_extraction_method)->default_value(plane_extraction_method),
-                     "plane extraction method");
-  desc.add_options()("normal_computation_method,n",
-                     po::value<int>(&normal_computation_method)->default_value(normal_computation_method),
-                     "normal computation method (if needed by segmentation approach)");
-  po::variables_map vm;
-  po::parsed_options parsed = po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-  command_line_arguments = po::collect_unrecognized(parsed.options, po::include_positional);
-  po::store(parsed, vm);
-  if (vm.count("help")) {
-    std::cout << desc << std::endl;
-  }
-  try {
-    po::notify(vm);
-  } catch (std::exception &e) {
-    std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-  }
-
-  plane_extractor_ = v4r::initPlaneExtractor<PointT>(plane_extraction_method, command_line_arguments);
+  plane_extractor_ = v4r::initPlaneExtractor<PointT>(param_.plane_extraction_method_, command_line_arguments);
 
   if (!param_.skip_segmentation_)
-    segmenter_ = v4r::initSegmenter<PointT>(segmentation_method, command_line_arguments);
+    segmenter_ = v4r::initSegmenter<PointT>(param_.segmentation_method_, command_line_arguments);
 
   if (((segmenter_ && segmenter_->getRequiresNormals()) ||
        (plane_extractor_ && plane_extractor_->getRequiresNormals())))
-    normal_estimator_ = v4r::initNormalEstimator<PointT>(normal_computation_method, command_line_arguments);
-
-  if (!command_line_arguments.empty()) {
-    std::cerr << "Unused command line arguments: ";
-    for (size_t c = 0; c < command_line_arguments.size(); c++)
-      std::cerr << command_line_arguments[c] << " ";
-
-    std::cerr << "!" << std::endl;
-  }
+    normal_estimator_ = v4r::initNormalEstimator<PointT>(param_.normal_computation_method_, command_line_arguments);
 }
 
 template <typename PointT>
@@ -93,7 +106,7 @@ void CloudSegmenter<PointT>::segment(const typename pcl::PointCloud<PointT>::Con
     } else  // get plane inliers
     {
       if (plane_inliers_.size() !=
-          planes_.size())  // the plane inliers are not already extracted by the algorithm - do it explicity
+          planes_.size())  // the plane inliers are not already extracted by the algorithm - do it explicitly
       {
         plane_inliers_.resize(planes_.size());
         for (size_t plane_id = 0; plane_id < planes_.size(); plane_id++)
@@ -191,5 +204,5 @@ void CloudSegmenter<PointT>::segment(const typename pcl::PointCloud<PointT>::Con
 
 #define PCL_INSTANTIATE_CloudSegmenter(T) template class V4R_EXPORTS CloudSegmenter<T>;
 PCL_INSTANTIATE(CloudSegmenter, PCL_XYZ_POINT_TYPES)
-}
-}
+}  // namespace apps
+}  // namespace v4r

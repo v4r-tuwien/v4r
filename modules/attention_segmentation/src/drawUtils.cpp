@@ -197,7 +197,7 @@ void drawSegmentationResults(cv::Mat &image, std::vector<cv::Point> &attentionPo
   }
 }
 
-// revison
+// revision
 void drawAttentionPoints(cv::Mat &image, std::vector<cv::Point> &attentionPoints, unsigned int maxNumber,
                          bool connect_points) {
   cv::Point p;

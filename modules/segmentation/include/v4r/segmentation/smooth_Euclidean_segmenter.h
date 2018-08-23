@@ -139,7 +139,7 @@ class V4R_EXPORTS SmoothEuclideanSegmenter : public Segmenter<PointT> {
   SmoothEuclideanSegmenter(const SmoothEuclideanSegmenterParameter &p = SmoothEuclideanSegmenterParameter())
   : param_(p) {}
 
-  bool getRequiresNormals() {
+  bool getRequiresNormals() const override {
     return true;
   }
 
@@ -149,7 +149,7 @@ class V4R_EXPORTS SmoothEuclideanSegmenter : public Segmenter<PointT> {
 
   void segment();
 
-  typedef boost::shared_ptr<SmoothEuclideanSegmenter<PointT>> Ptr;
-  typedef boost::shared_ptr<SmoothEuclideanSegmenter<PointT> const> ConstPtr;
+  typedef std::shared_ptr<SmoothEuclideanSegmenter<PointT>> Ptr;
+  typedef std::shared_ptr<SmoothEuclideanSegmenter<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

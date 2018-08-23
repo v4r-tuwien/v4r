@@ -90,14 +90,16 @@ V4R_EXPORTS void defaultParams(Params& params);
 void initializeWTA(WTA& wta, const cv::Mat& salmap, Params& salParams);
 void evolveLeakyIntFire(LIF& lif, float t, cv::Mat& spikes);
 void evolveWTA(WTA& wta, cv::Point& winner);
-bool fastSegmentMap(cv::Mat& resultMap, cv::Mat& map, cv::Point& seedPoint, int& Number);
+bool fastSegmentMap(cv::Mat& resultMap, cv::Mat& map, cv::Point& seedPoint);
+bool SecondRound(cv::Point winner, cv::Mat& existing_points);
+
 bool estimateShape(cv::Mat& binMap, cv::Mat& segmentedMap, cv::Mat& shapeMap, cv::Mat& salmap, cv::Point& winner,
                    Params& params, cv::Mat& image);
 void applyIOR(WTA& wta, cv::Point& winner, Params& params);
 void diskIOR(WTA& wta, cv::Point& winner, Params& params);
 // void shapeIOR(WTA& wta, cv::Point& winner, Params& params, cv::Mat& binaryMap, cv::Mat& binMap);
 void winnerToImgCoords(cv::Point& win2, cv::Point& winner, Params& params, cv::Mat& img, const cv::Mat& _salmap);
-void plotSalientLocation(cv::Point& win2, cv::Point& lastWinner, cv::Mat& img, Params& params, int pointNumber);
+void plotSalientLocation(cv::Point& win2, cv::Point& lastWinner, cv::Mat& img, int pointNumber);
 V4R_EXPORTS int CalculateWTA(cv::Mat& img, cv::Mat& _salmap, std::vector<cv::Point>& attented_points,
                              int AttentionPointsNumber, Params& params);
 void PrintImage(const cv::Mat& img);

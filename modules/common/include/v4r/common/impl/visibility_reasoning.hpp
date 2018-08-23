@@ -19,8 +19,8 @@ int VisibilityReasoning<PointT>::computeRangeDifferencesWhereObserved(
     const typename pcl::PointCloud<PointT>::ConstPtr& im1, const typename pcl::PointCloud<PointT>::ConstPtr& im2,
     std::vector<float>& range_diff) {
   float cx, cy;
-  cx = static_cast<float>(cx_) / 2.f;  //- 0.5f;
-  cy = static_cast<float>(cy_) / 2.f;  // - 0.5f;
+  cx = cam_.cx / 2.f;  //- 0.5f;
+  cy = cam_.cy / 2.f;  // - 0.5f;
 
   range_diff.resize(im2->points.size());
   int keep = 0;
@@ -31,10 +31,10 @@ int VisibilityReasoning<PointT>::computeRangeDifferencesWhereObserved(
     float x = im2->points[i].x;
     float y = im2->points[i].y;
     float z = im2->points[i].z;
-    int u = static_cast<int>(focal_length_ * x / z + cx);
-    int v = static_cast<int>(focal_length_ * y / z + cy);
+    int u = static_cast<int>(cam_.fx * x / z + cx);
+    int v = static_cast<int>(cam_.fy * y / z + cy);
 
-    if (u >= cx_ || v >= cy_ || u < 0 || v < 0)
+    if (u >= cam_.cx || v >= cam_.cy || u < 0 || v < 0)
       continue;
 
     // Check if point depth (distance to camera) is greater than the (u,v) meaning that the point is not visible
@@ -54,8 +54,8 @@ int VisibilityReasoning<PointT>::computeRangeDifferencesWhereObservedWithIndices
     const typename pcl::PointCloud<PointT>::ConstPtr& im1, const typename pcl::PointCloud<PointT>::ConstPtr& im2,
     std::vector<float>& range_diff, std::vector<int>& indices) {
   float cx, cy;
-  cx = static_cast<float>(cx_) / 2.f;  //- 0.5f;
-  cy = static_cast<float>(cy_) / 2.f;  // - 0.5f;
+  cx = cam_.cx / 2.f;  //- 0.5f;
+  cy = cam_.cy / 2.f;  // - 0.5f;
 
   range_diff.resize(im2->points.size());
   indices.resize(im2->points.size());
@@ -67,10 +67,10 @@ int VisibilityReasoning<PointT>::computeRangeDifferencesWhereObservedWithIndices
     float x = im2->points[i].x;
     float y = im2->points[i].y;
     float z = im2->points[i].z;
-    int u = static_cast<int>(focal_length_ * x / z + cx);
-    int v = static_cast<int>(focal_length_ * y / z + cy);
+    int u = static_cast<int>(cam_.fx * x / z + cx);
+    int v = static_cast<int>(cam_.fy * y / z + cy);
 
-    if (u >= cx_ || v >= cy_ || u < 0 || v < 0)
+    if (u >= cam_.cx || v >= cam_.cy || u < 0 || v < 0)
       continue;
 
     // Check if point depth (distance to camera) is greater than the (u,v) meaning that the point is not visible
@@ -168,34 +168,34 @@ void VisibilityReasoning<PointT>::computeRangeImage(int width, int height, float
     //Dilate and smooth the depth map
     int ws = wsize;
     int ws2 = int (std::floor (static_cast<float> (ws) / 2.f));
-    float * depth_smooth = new float[cx_ * cy_];
-    for (int i = 0; i < (cx_ * cy_); i++)
+    float * depth_smooth = new float[cam_.cx * cam_.cy];
+    for (int i = 0; i < (cam_.cx * cam_.cy); i++)
       depth_smooth[i] = std::numeric_limits<float>::quiet_NaN ();
 
-    for (int u = ws2; u < (cx_ - ws2); u++)
+    for (int u = ws2; u < (cam_.cx - ws2); u++)
     {
-      for (int v = ws2; v < (cy_ - ws2); v++)
+      for (int v = ws2; v < (cam_.cy - ws2); v++)
       {
         float min = std::numeric_limits<float>::max ();
         for (int j = (u - ws2); j <= (u + ws2); j++)
         {
           for (int i = (v - ws2); i <= (v + ws2); i++)
           {
-            if (pcl_isfinite(depth_[j * cx_ + i]) && (depth_[j * cx_ + i] < min))
+            if (pcl_isfinite(depth_[j * cam_.cx + i]) && (depth_[j * cam_.cx + i] < min))
             {
-              min = depth_[j * cx_ + i];
+              min = depth_[j * cam_.cx + i];
             }
           }
         }
 
         if (min < (std::numeric_limits<float>::max () - 0.1))
         {
-          depth_smooth[u * cx_ + v] = min;
+          depth_smooth[u * cam_.cx + v] = min;
         }
       }
     }
 
-    memcpy (depth_, depth_smooth, sizeof(float) * cx_ * cy_);
+    memcpy (depth_, depth_smooth, sizeof(float) * cam_.cx * cam_.cy);
     delete[] depth_smooth;
   }*/
 }
@@ -217,19 +217,18 @@ float VisibilityReasoning<PointT>::computeOSV(const typename pcl::PointCloud<Poi
   pcl::transformPointCloud(*im2, *im2_trans, pose_2_to_1);
   //  }
 
-  float cx, cy;
-  cx = static_cast<float>(cx_) / 2.f - 0.5f;
-  cy = static_cast<float>(cy_) / 2.f - 0.5f;
+  const float cx = cam_.cx / 2.f - 0.5f;
+  const float cy = cam_.cy / 2.f - 0.5f;
 
   int osv = 0;
   for (size_t i = 0; i < im2_trans->points.size(); i++) {
     float x = im2_trans->points[i].x;
     float y = im2_trans->points[i].y;
     float z = im2_trans->points[i].z;
-    int u = static_cast<int>(focal_length_ * x / z + cx);
-    int v = static_cast<int>(focal_length_ * y / z + cy);
+    int u = static_cast<int>(cam_.fx * x / z + cx);
+    int v = static_cast<int>(cam_.fy * y / z + cy);
 
-    if (u >= cx_ || v >= cy_ || u < 0 || v < 0)
+    if (u >= cam_.cx || v >= cam_.cy || u < 0 || v < 0)
       continue;
 
     // TODO: Probably not only if its finite but also if behind by some threhsold
@@ -319,5 +318,5 @@ float VisibilityReasoning<PointT>::computeFSVWithNormals(const typename pcl::Poi
 
   return fsv_val;
 }
-}
+}  // namespace v4r
 #endif /* VISIBILITY_REASONING_HPP_ */

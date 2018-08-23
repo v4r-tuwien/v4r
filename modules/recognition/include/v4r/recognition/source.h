@@ -70,17 +70,15 @@ class V4R_EXPORTS SourceParameter {
 };
 
 /**
-* \brief Abstract data source class, manages filesystem, incremental training, etc.
-* \author Aitor Aldoma, Thomas Faeulhammer
-*/
+ * \brief Abstract data source class, manages filesystem, incremental training, etc.
+ * \author Aitor Aldoma, Thomas Faeulhammer
+ */
 template <typename PointT>
 class V4R_EXPORTS Source {
  private:
   SourceParameter param_;
 
  protected:
-  typedef Model<PointT> ModelT;
-
   std::vector<typename Model<PointT>::ConstPtr> models_;  ///< all models
 
  public:
@@ -89,20 +87,20 @@ class V4R_EXPORTS Source {
   /**
    * @brief Source
    * @param model_database_path path to object model database. This class assumes that each object is stored in a
-   * seperate folder. Each of these folders has a folder "/views" with training views in it.
+   * separate folder. Each of these folders has a folder "/views" with training views in it.
    * Each training view has a pointcloud which filename begins with the string in variable view_prefix,
    * object indices that indicate the object which filename begins with the string in variable indices_prefix,
    * a 4x4 homogenous camera pose that aligns the training views into a common coordinate system when multiplied with
    * each other which filename begins with the string in variable pose_prefix
-   * @param object_instances_to_load vector of object models to load from model_database_path. If emtpy, all objects
+   * @param object_instances_to_load vector of object models to load from model_database_path. If empty, all objects
    * in directory will be loaded.
    */
   void init(const bf::path &model_database_path, const std::vector<std::string> &object_instances_to_load = {});
 
   /**
-  * \brief Get the generated model
-  * \return returns all generated models
-  */
+   * \brief Get the generated model
+   * \return returns all generated models
+   */
   std::vector<typename Model<PointT>::ConstPtr> getModels() const {
     return models_;
   }
@@ -124,8 +122,7 @@ class V4R_EXPORTS Source {
       }
     }
     std::cerr << "Model with class: " << class_id << " and instance: " << instance_id << " not found" << std::endl;
-    typename Model<PointT>::ConstPtr foo;
-    return foo;
+    return nullptr;
   }
 
   /**
@@ -136,7 +133,7 @@ class V4R_EXPORTS Source {
     models_.push_back(m);
   }
 
-  typedef boost::shared_ptr<Source<PointT>> Ptr;
-  typedef boost::shared_ptr<Source<PointT> const> ConstPtr;
+  typedef std::shared_ptr<Source<PointT>> Ptr;
+  typedef std::shared_ptr<Source<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

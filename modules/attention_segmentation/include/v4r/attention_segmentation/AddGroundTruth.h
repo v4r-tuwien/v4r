@@ -105,6 +105,6 @@ inline std::vector<Relation> AddGroundTruth::getRelations() {
   return relations;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

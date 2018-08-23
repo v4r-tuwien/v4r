@@ -276,7 +276,7 @@ void v4r::Registration::StablePlanesRegistration<PointT>::compute(int s1, int s2
 
   size_t MAX_PLANES_ = 4;
 
-//#define VIS_PLANES
+  //#define VIS_PLANES
 
 #ifdef VIS_PLANES
   pcl::visualization::PCLVisualizer vis_s2("s2 on stable planes...");

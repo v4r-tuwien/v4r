@@ -68,6 +68,6 @@ struct Relation {
   int prediction;                       ///< 0=false / 1=true
   bool valid;                           ///< validity flag
 };
-}
+}  // namespace v4r
 
 #endif

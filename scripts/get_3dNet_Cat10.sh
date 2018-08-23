@@ -2,7 +2,7 @@
 
 cd data
 echo "Downloading Cat10 model database from 3dNet..."
-output=$(wget -c https://repo.acin.tuwien.ac.at/tmp/permanent/3d-net.org/Cat10_ModelDatabase.zip)
+output=$(wget -c -O Cat10_ModelDatabase.zip https://data.acin.tuwien.ac.at/index.php/s/7GrnwJlDQrajFTo/download)
 if [ $? -ne 0 ]; then
     echo "Error downloading file"
 else

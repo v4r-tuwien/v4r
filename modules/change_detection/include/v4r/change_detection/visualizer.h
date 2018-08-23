@@ -150,7 +150,7 @@ class V4R_EXPORTS Visualizer3D {
     return *this;
   }
 
-  const boost::shared_ptr<pcl::visualization::PCLVisualizer>& getViewer() const {
+  const pcl::visualization::PCLVisualizer::Ptr& getViewer() const {
     return viewer;
   }
 
@@ -178,10 +178,10 @@ class V4R_EXPORTS Visualizer3D {
   cv::RNG& rng;
   unsigned color_index;
   vector<unsigned> color_stack;
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+  pcl::visualization::PCLVisualizer::Ptr viewer;
   int identifier;
   vector<string> all_identifiers;
 };
-}
+}  // namespace v4r
 
 #endif /* VISUALISER3D_H_ */

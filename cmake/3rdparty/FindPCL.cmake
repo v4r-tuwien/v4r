@@ -1,4 +1,4 @@
-find_package(PCL 1.7.1 QUIET)
+find_package(PCL 1.7.2 QUIET)
 if(PCL_FOUND)
   v4r_list_filterout(PCL_LIBRARIES "optimized|debug|vtkproj4")
   list(REMOVE_DUPLICATES PCL_LIBRARIES)

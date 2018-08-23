@@ -46,22 +46,21 @@
  */
 #pragma once
 
-#include <v4r/common/flann.h>
+#include <v4r/common/metrics.h>
 #include <v4r/core/macros.h>
 #include <v4r/ml/classifier.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <opencv2/flann/flann.hpp>
 
 namespace po = boost::program_options;
 
 namespace v4r {
-class V4R_EXPORTS NearestNeighborClassifierParameter {
- public:
-  int kdtree_splits_;
-  size_t knn_;           ///< nearest neighbors to search for when checking feature descriptions of the scene
-  int distance_metric_;  ///< defines the norm used for feature matching (1... L1 norm, 2... L2 norm)
-
-  NearestNeighborClassifierParameter(int kdtree_splits = 512, size_t knn = 1, int distance_metric = 2)
-  : kdtree_splits_(kdtree_splits), knn_(knn), distance_metric_(distance_metric) {}
+struct V4R_EXPORTS NearestNeighborClassifierParameter {
+  int kdtree_num_trees_ = 4;
+  int checks_ = 32;  ///< how many leafs to visit when searching for neighbours (-1 for unlimited)
+  size_t knn_ = 1;   ///< nearest neighbors to search for when checking feature descriptions of the scene
+  DistanceMetric distance_metric_ = DistanceMetric::L2;  ///< defines the norm used for feature ma
 
   /**
    * @brief init parameters
@@ -80,12 +79,16 @@ class V4R_EXPORTS NearestNeighborClassifierParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Nearest Neighbor Classifier Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "nn_kdtree_splits", po::value<int>(&kdtree_splits_)->default_value(kdtree_splits_), "")(
-        "nn_knn", po::value<size_t>(&knn_)->default_value(knn_),
-        "nearest neighbors to search for when checking feature descriptions of the scene")(
-        "nn_distance_metric", po::value<int>(&distance_metric_)->default_value(distance_metric_),
-        "defines the norm used for feature matching (1... L1 norm, 2... L2 norm)");
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("nn_kdtree_num_trees", po::value<int>(&kdtree_num_trees_)->default_value(kdtree_num_trees_),
+                       "Number of kd-trees");
+    desc.add_options()("nn_knn", po::value<size_t>(&knn_)->default_value(knn_),
+                       "nearest neighbors to search for when checking feature descriptions of the scene");
+    desc.add_options()("nn_checks", po::value<int>(&checks_)->default_value(checks_),
+                       "How many leafs to visit when searching for neighbours (-1 for unlimited)");
+    desc.add_options()("nn_distance_metric",
+                       po::value<DistanceMetric>(&distance_metric_)->default_value(distance_metric_),
+                       "defines the norm used for feature matching (1... L1 norm, 2... L2 norm)");
     po::variables_map vm;
     po::parsed_options parsed =
         po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
@@ -106,21 +109,20 @@ class V4R_EXPORTS NearestNeighborClassifierParameter {
 
 class V4R_EXPORTS NearestNeighborClassifier : public Classifier {
  private:
-  EigenFLANN::Ptr flann_;
-  boost::shared_ptr<flann::Index<flann::L1<float>>> flann_index_l1_;
-  boost::shared_ptr<flann::Index<flann::L2<float>>> flann_index_l2_;
-  mutable Eigen::MatrixXi knn_indices_;
-  mutable Eigen::MatrixXf knn_distances_;
-  Eigen::VectorXi training_label_;
+  std::shared_ptr<cv::flann::Index> flann_index;
+  mutable cv::Mat knn_indices_;
+  mutable cv::Mat knn_distances_;
+  cv::Mat training_label_;
   NearestNeighborClassifierParameter param_;
+  cv::Mat all_training_data;  ///< all signatures from all objects in the database
 
  public:
   NearestNeighborClassifier(const NearestNeighborClassifierParameter &p = NearestNeighborClassifierParameter())
   : param_(p) {}
 
-  void predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &predicted_label) const;
+  void predict(const Eigen::MatrixXf &query_data, Eigen::MatrixXi &predicted_label) const override;
 
-  void train(const Eigen::MatrixXf &training_data, const Eigen::VectorXi &training_label);
+  void train(const Eigen::MatrixXf &training_data, const Eigen::VectorXi &training_label) override;
 
   /**
    * @brief getTrainingSampleIDSforPredictions
@@ -128,16 +130,13 @@ class V4R_EXPORTS NearestNeighborClassifier : public Classifier {
    * @param distances of the training sample to the corresponding query data
    */
   void getTrainingSampleIDSforPredictions(Eigen::MatrixXi &predicted_training_sample_indices,
-                                          Eigen::MatrixXf &distances) {
-    predicted_training_sample_indices = knn_indices_;
-    distances = knn_distances_;
-  }
+                                          Eigen::MatrixXf &distances) const override;
 
-  int getType() const {
+  ClassifierType getType() const override {
     return ClassifierType::KNN;
   }
 
-  typedef boost::shared_ptr<NearestNeighborClassifier> Ptr;
-  typedef boost::shared_ptr<NearestNeighborClassifier const> ConstPtr;
+  typedef std::shared_ptr<NearestNeighborClassifier> Ptr;
+  typedef std::shared_ptr<NearestNeighborClassifier const> ConstPtr;
 };
-}
+}  // namespace v4r

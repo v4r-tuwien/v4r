@@ -131,4 +131,4 @@ pcl::PointCloud<pcl::Normal>::Ptr ZAdaptiveNormalsPCL<PointT>::compute() {
 
 #define PCL_INSTANTIATE_ZAdaptiveNormalsPCL(T) template class V4R_EXPORTS ZAdaptiveNormalsPCL<T>;
 PCL_INSTANTIATE(ZAdaptiveNormalsPCL, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

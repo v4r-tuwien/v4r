@@ -54,9 +54,9 @@ namespace v4r {
 
 class V4R_EXPORTS ConnectedComponentsSegmenterParameter : public SegmenterParameter {
  public:
-  using SegmenterParameter::min_cluster_size_;
-  using SegmenterParameter::max_cluster_size_;
   using SegmenterParameter::distance_threshold_;
+  using SegmenterParameter::max_cluster_size_;
+  using SegmenterParameter::min_cluster_size_;
   using SegmenterParameter::wsize_;
 
   ConnectedComponentsSegmenterParameter() {}
@@ -72,7 +72,7 @@ class V4R_EXPORTS ConnectedComponentsSegmenter : public Segmenter<PointT> {
   SegmenterParameter param_;
 
   bool check(const pcl::PointXYZI &p1, pcl::PointXYZI &p2) const {
-    if (p1.intensity != 0 && ((p1.getVector3fMap() - p2.getVector3fMap()).norm() <= param_.cluster_tolerance_)) {
+    if (p1.intensity != 0 && ((p1.getVector4fMap() - p2.getVector4fMap()).norm() <= param_.cluster_tolerance_)) {
       p2.intensity = p1.intensity;
       return false;
     }
@@ -82,13 +82,13 @@ class V4R_EXPORTS ConnectedComponentsSegmenter : public Segmenter<PointT> {
  public:
   ConnectedComponentsSegmenter(const SegmenterParameter &p = SegmenterParameter()) : param_(p) {}
 
-  void segment();
+  void segment() override;
 
-  bool getRequiresNormals() {
+  bool getRequiresNormals() const override {
     return true;
   }
 
-  typedef boost::shared_ptr<ConnectedComponentsSegmenter<PointT>> Ptr;
-  typedef boost::shared_ptr<ConnectedComponentsSegmenter<PointT> const> ConstPtr;
+  typedef std::shared_ptr<ConnectedComponentsSegmenter<PointT>> Ptr;
+  typedef std::shared_ptr<ConnectedComponentsSegmenter<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

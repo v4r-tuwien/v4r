@@ -57,9 +57,9 @@ namespace v4r {
 
 class V4R_EXPORTS OrganizedConnectedComponentSegmenterParameter : public SegmenterParameter {
  public:
-  using SegmenterParameter::min_cluster_size_;
-  using SegmenterParameter::max_cluster_size_;
   using SegmenterParameter::distance_threshold_;
+  using SegmenterParameter::max_cluster_size_;
+  using SegmenterParameter::min_cluster_size_;
 
   OrganizedConnectedComponentSegmenterParameter() {
     distance_threshold_ = 0.035f;
@@ -79,13 +79,13 @@ class V4R_EXPORTS OrganizedConnectedComponentSegmenter : public Segmenter<PointT
       const OrganizedConnectedComponentSegmenterParameter &p = OrganizedConnectedComponentSegmenterParameter())
   : param_(p) {}
 
-  bool getRequiresNormals() {
+  bool getRequiresNormals() const override {
     return true;
   }
 
-  void segment();
+  void segment() override;
 
-  typedef boost::shared_ptr<OrganizedConnectedComponentSegmenter<PointT>> Ptr;
-  typedef boost::shared_ptr<OrganizedConnectedComponentSegmenter<PointT> const> ConstPtr;
+  typedef std::shared_ptr<OrganizedConnectedComponentSegmenter<PointT>> Ptr;
+  typedef std::shared_ptr<OrganizedConnectedComponentSegmenter<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

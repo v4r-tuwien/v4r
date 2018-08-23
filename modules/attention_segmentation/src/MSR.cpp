@@ -120,9 +120,6 @@ void detectMSR(std::vector<cv::Point>& centers, cv::Mat map_, MRSParams params) 
       }
     }
     cv::minMaxLoc(map, 0, &maxVal, 0, &maxLoc);
-
-    //     cv::imshow("map",map);
-    //     cv::waitKey();
   }
 }
 

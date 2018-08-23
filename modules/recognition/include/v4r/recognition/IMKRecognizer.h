@@ -107,7 +107,7 @@ class V4R_EXPORTS IMKRecognizer {
   cv::Mat descs;
   std::vector<cv::KeyPoint> keys;
   std::vector<std::vector<cv::DMatch>> matches;
-  std::vector<boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>>
+  std::vector<std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>>
       clusters;  // <object_id, clustered matches>
   std::vector<cv::Point2f> query_pts;
   std::vector<cv::Point3f> model_pts;
@@ -136,7 +136,7 @@ class V4R_EXPORTS IMKRecognizer {
       const std::vector<cv::Mat_<unsigned char>> &_im_channels, const std::vector<std::string> &object_names,
       const std::vector<IMKView> &views, const std::vector<cv::KeyPoint> &keys, const cv::Mat &descs,
       const std::vector<std::vector<cv::DMatch>> &matches,
-      const std::vector<boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters,
+      const std::vector<std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters,
       std::vector<v4r::triple<std::string, double, Eigen::Matrix4f>> &objects,
       const pcl::PointCloud<pcl::PointXYZRGB> &_cloud);
   int getMaxViewIndex(const std::vector<IMKView> &views, const std::vector<cv::DMatch> &matches,
@@ -169,12 +169,12 @@ class V4R_EXPORTS IMKRecognizer {
 
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
 
-  typedef boost::shared_ptr<::v4r::IMKRecognizer> Ptr;
-  typedef boost::shared_ptr<::v4r::IMKRecognizer const> ConstPtr;
+  typedef std::shared_ptr<::v4r::IMKRecognizer> Ptr;
+  typedef std::shared_ptr<::v4r::IMKRecognizer const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

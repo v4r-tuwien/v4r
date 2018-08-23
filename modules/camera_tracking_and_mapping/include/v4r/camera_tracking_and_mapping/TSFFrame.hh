@@ -37,41 +37,35 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #ifndef KP_TSF_FRAME_HH
 #define KP_TSF_FRAME_HH
 
+#include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
-#include <boost/shared_ptr.hpp>
-#include <v4r/keypoints/impl/triple.hpp>
-#include <v4r/common/impl/DataMatrix2D.hpp>
 #include <v4r/camera_tracking_and_mapping/Surfel.hh>
-#include <v4r/core/macros.h>
+#include <v4r/common/impl/DataMatrix2D.hpp>
+#include <v4r/keypoints/impl/triple.hpp>
 
-
-
-namespace v4r
-{
-
-
+namespace v4r {
 
 /**
  * TSFFrame
  */
-class V4R_EXPORTS TSFFrame 
-{
-public:
+class V4R_EXPORTS TSFFrame {
+ public:
   int idx;
+  double timestamp;
   Eigen::Matrix4f pose;
   Eigen::Matrix4f delta_cloud_rgb_pose;
   v4r::DataMatrix2D<Surfel> sf_cloud;
@@ -89,21 +83,20 @@ public:
 
   bool have_track;
 
-  std::vector< std::vector< v4r::triple<int, cv::Point2f, Eigen::Vector3f > > > projections;
+  std::vector<std::vector<v4r::triple<int, cv::Point2f, Eigen::Vector3f>>> projections;
 
   TSFFrame();
   TSFFrame(const int &_idx, const Eigen::Matrix4f &_pose, const v4r::DataMatrix2D<Surfel> &_sf_cloud, bool _have_track);
+  TSFFrame(const int &_idx, const double &_ts, const Eigen::Matrix4f &_pose, const v4r::DataMatrix2D<Surfel> &_sf_cloud,
+           bool _have_track);
   ~TSFFrame();
 
-  typedef boost::shared_ptr< ::v4r::TSFFrame> Ptr;
-  typedef boost::shared_ptr< ::v4r::TSFFrame const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TSFFrame> Ptr;
+  typedef std::shared_ptr<::v4r::TSFFrame const> ConstPtr;
 };
-
-
 
 /*************************** INLINE METHODES **************************/
 
-} //--END--
+}  // namespace v4r
 
 #endif
-

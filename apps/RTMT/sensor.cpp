@@ -70,11 +70,11 @@ Sensor::Sensor()
   pose(Eigen::Matrix4f::Identity()), conf(0), cam_id(-1), bbox_scale_xy(1.), bbox_scale_height(1.), seg_offs(0.01),
   bb_min(Eigen::Vector3f(-2., -2., -0.01)), bb_max(Eigen::Vector3f(2., 2., .5)), max_integration_frames(20.) {
   /**
-     * kd_param: ransac inlier distance for interest point based reinitialization [m] (e.g. 0.01)
-     * lk_param: ransac inlier distance for  lk based tracking [m] (e.g. 0.01)
-     * kt_param: ransac inlier distance for projective lk based refinement
-     *           (can be a factor 2 to 5 more than dist_reinit and dist_track) [m] (e.g. 0.03)
-     */
+   * kd_param: ransac inlier distance for interest point based reinitialization [m] (e.g. 0.01)
+   * lk_param: ransac inlier distance for  lk based tracking [m] (e.g. 0.01)
+   * kt_param: ransac inlier distance for projective lk based refinement
+   *           (can be a factor 2 to 5 more than dist_reinit and dist_track) [m] (e.g. 0.03)
+   */
   ct_param.kd_param.rt_param.inl_dist = 0.01;           // e.g. 0.01 .. table top, 0.03 ..rooms
   ct_param.lk_param.rt_param.inl_dist = 0.01;           // e.g. 0.01 .. table top, 0.03 ..rooms
   ct_param.kt_param.rt_param.inl_dist = 0.03;           // e.g. 0.04 .. table top, 0.1 ..room
@@ -146,7 +146,7 @@ Sensor::~Sensor() {
  * @brief Sensor::getClouds
  * @return
  */
-// const boost::shared_ptr< std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > >& Sensor::getClouds()
+// const std::shared_ptr< std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > >& Sensor::getClouds()
 //{
 //  stopTracker();
 //  return log_clouds;
@@ -365,7 +365,7 @@ void Sensor::storeKeyframes(const std::string &_folder) {
 
   for (unsigned i = 0; i < log_clouds->size(); i++) {
     snprintf(filename, PATH_MAX, cloud_names.c_str(), i);
-    pcl::io::savePCDFileBinary(filename, *log_clouds->at(i).second);
+    pcl::io::savePCDFileBinaryCompressed(filename, *log_clouds->at(i).second);
     v4r::convertImage(*log_clouds->at(i).second, _image);
     snprintf(filename, PATH_MAX, image_names.c_str(), i);
     cv::imwrite(filename, _image);
@@ -391,7 +391,7 @@ void Sensor::storePointCloudModel(const std::string &_folder) {
     _cloud.points[i] = oc[i];
 
   if (_cloud.points.size() > 0)
-    pcl::io::savePCDFileBinary(_folder + "/model.pcd", *tmp_cloud);
+    pcl::io::savePCDFileBinaryCompressed(_folder + "/model.pcd", *tmp_cloud);
 }
 
 /**
@@ -611,7 +611,7 @@ void Sensor::integrateData(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cons
   tmp_z = cv::Mat_<float>::zeros(height, width);
   nan_z = cv::Mat_<float>(height, width);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (int v = 0; v < _sf_cloud.rows; v++) {
     for (int u = 0; u < _sf_cloud.cols; u++) {
       const Surfel &s = _sf_cloud(v, u);

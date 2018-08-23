@@ -62,7 +62,7 @@ namespace v4r {
  */
 class V4R_EXPORTS ColorHistogram {
  public:
-  typedef boost::shared_ptr<ColorHistogram> Ptr;
+  typedef std::shared_ptr<ColorHistogram> Ptr;
 
   struct Color3C {
     int ch1;  // R/B/Y
@@ -179,6 +179,6 @@ class V4R_EXPORTS ColorHistogram {
 
   void printHistogram();
 };
-}
+}  // namespace v4r
 
 #endif

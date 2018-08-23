@@ -111,6 +111,6 @@ inline int Node::GetSplitFeatureIdx() {
 inline float Node::GetThreshold() {
   return threshold_;
 }
-}
-}
+}  // namespace RandomForest
+}  // namespace v4r
 #endif  // NODE_H

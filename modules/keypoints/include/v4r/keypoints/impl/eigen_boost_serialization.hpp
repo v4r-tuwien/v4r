@@ -36,7 +36,7 @@
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/vector.hpp>
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -129,6 +129,6 @@ template <class Archive, typename _Scalar, int _Options, typename _Index>
         split_free(ar,m,version);
     }
 */
-}
-}
+}  // namespace serialization
+}  // namespace boost
 #endif

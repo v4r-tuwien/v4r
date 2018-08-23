@@ -88,5 +88,5 @@ To visualize results, add argument `-v`. This will visualize the input scene, th
 For further parameter information, call the program with `-h` or have a look at the doxygen documents.  
 
 ## References
-* https://repo.acin.tuwien.ac.at/tmp/permanent/dataset_index.php
+* https://www.acin.tuwien.ac.at/en/vision-for-robotics/software-tools/tuw-object-instance-recognition-dataset/
 * Thomas Fäulhammer, Michael Zillich, Johann Prankl, Markus Vincze, "A Multi-Modal RGB-D Object Recognizer", IAPR International Conf. on Pattern Recognition (ICPR), Cancun, Mexico, 2016

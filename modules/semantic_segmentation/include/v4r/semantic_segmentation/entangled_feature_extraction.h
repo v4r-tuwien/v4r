@@ -204,4 +204,4 @@ class V4R_EXPORTS EntangledForestFeatureExtraction {
                    std::vector<std::vector<std::pair<double, int>>>& euclid);
   void prepareClassification(EntangledForestData* d);
 };
-}
+}  // namespace v4r

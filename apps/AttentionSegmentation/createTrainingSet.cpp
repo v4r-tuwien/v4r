@@ -29,6 +29,7 @@
  * @brief Creates training set.
  */
 
+#include <glog/logging.h>
 #include <stdio.h>  /* printf, scanf, puts, NULL */
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
@@ -42,6 +43,7 @@
 #include "v4r/attention_segmentation/PCLUtils.h"
 #include "v4r/attention_segmentation/segmentation.h"
 
+namespace {
 void readData(std::string filename, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pcl_cloud,
               pcl::PointCloud<pcl::PointXYZRGBL>::Ptr &pcl_cloud_l) {
   if (!(pclAddOns::readPointCloud<pcl::PointXYZRGBL>(filename.c_str(), pcl_cloud_l))) {
@@ -67,12 +69,16 @@ void printUsage(char *av) {
       av);
   std::cout << " Example: " << av << " cloud.pcd training_data.txt" << std::endl;
 }
+}  // namespace
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printUsage(argv[0]);
     exit(0);
   }
+
+  // init logging
+  google::InitGoogleLogging(argv[0]);
 
   std::string rgbd_filename = argv[1];
   std::string train_ST_file_name = argv[2];

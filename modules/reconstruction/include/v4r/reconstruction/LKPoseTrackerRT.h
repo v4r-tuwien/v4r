@@ -59,7 +59,6 @@
 #include <string>
 #include <v4r/common/impl/DataMatrix2D.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
-#include "v4r/common/impl/SmartPtr.hpp"
 
 namespace v4r {
 
@@ -118,12 +117,12 @@ class V4R_EXPORTS LKPoseTrackerRT {
 
   void getProjections(std::vector<std::pair<int, cv::Point2f>> &im_pts);
 
-  typedef SmartPtr<::v4r::LKPoseTrackerRT> Ptr;
-  typedef SmartPtr<::v4r::LKPoseTrackerRT const> ConstPtr;
+  typedef std::shared_ptr<::v4r::LKPoseTrackerRT> Ptr;
+  typedef std::shared_ptr<::v4r::LKPoseTrackerRT const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

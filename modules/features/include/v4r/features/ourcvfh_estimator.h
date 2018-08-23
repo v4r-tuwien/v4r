@@ -82,6 +82,7 @@ class V4R_EXPORTS OURCVFHEstimator : public GlobalEstimator<PointT> {
   OURCVFHEstimatorParameter param_;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   OURCVFHEstimator(const OURCVFHEstimatorParameter &p = OURCVFHEstimatorParameter())
   : GlobalEstimator<PointT>("ourcvfh", FeatureType::OURCVFH, 308), param_(p) {}
 
@@ -91,4 +92,4 @@ class V4R_EXPORTS OURCVFHEstimator : public GlobalEstimator<PointT> {
     return true;
   }
 };
-}
+}  // namespace v4r

@@ -72,6 +72,6 @@ class V4R_EXPORTS FrintropSaliencyMap : public BaseMap {
   virtual int checkParameters();  //
 };
 
-}  // v4r
+}  // namespace v4r
 
 #endif  // FRINTROP_SALIENCYMAP_HPP

@@ -82,6 +82,6 @@ class V4R_EXPORTS IMKRecognizerIO {
                    CodebookMatcher &cb, const std::string &codebookFilename = "");
 };
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -48,4 +48,4 @@ void EuclideanSegmenter<PointT>::segment() {
 
 #define PCL_INSTANTIATE_EuclideanSegmenter(T) template class V4R_EXPORTS EuclideanSegmenter<T>;
 PCL_INSTANTIATE(EuclideanSegmenter, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

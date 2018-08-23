@@ -48,11 +48,11 @@
 #ifndef V4R_COMPUTE_GRADIENT_DESCRIPTORS_HH
 #define V4R_COMPUTE_GRADIENT_DESCRIPTORS_HH
 
+#include <v4r/features/ImGradientDescriptor.h>
+#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
-#include "ImGradientDescriptor.h"
 
 namespace v4r {
 
@@ -80,12 +80,12 @@ class V4R_EXPORTS ComputeImGradientDescriptors {
   // void compute(const cv::Mat_<unsigned char> &image, const std::vector<AffKeypoint> &keys,
   //      cv::Mat &descriptors);
 
-  typedef SmartPtr<::v4r::ComputeImGradientDescriptors> Ptr;
-  typedef SmartPtr<::v4r::ComputeImGradientDescriptors const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ComputeImGradientDescriptors> Ptr;
+  typedef std::shared_ptr<::v4r::ComputeImGradientDescriptors const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -58,18 +58,22 @@ namespace v4r {
  * @param color matrix a (each row is a color)
  * @param diff
  */
-V4R_EXPORTS float CIE76(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
+V4R_EXPORTS float computeCIE76(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
-V4R_EXPORTS float CIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1, float K2,
-                        float Kl);  // default parameters for graphics
+V4R_EXPORTS float computeCIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1, float K2,
+                               float Kl);  // default parameters for graphics
 // V4R_EXPORTS float CIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1=1.f, float K2=.045f, float
 // Kl=.015f); // default parameters for graphics
 // V4R_EXPORTS float CIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1=2.f, float K2=.048f, float
 // Kl=.014f); // default parameters for textiles
 
-V4R_EXPORTS float CIE94_DEFAULT(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
+V4R_EXPORTS float computeCIE94_DEFAULT(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
-V4R_EXPORTS float CIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
+V4R_EXPORTS float computeCIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
-enum ColorComparisonMethod { cie76, cie94, ciede2000 };
-}
+enum class ColorComparisonMethod { CIE76, CIE94, CIEDE2000, CUSTOM };
+
+V4R_EXPORTS std::istream &operator>>(std::istream &in, ColorComparisonMethod &dm);
+V4R_EXPORTS std::ostream &operator<<(std::ostream &out, const ColorComparisonMethod &dm);
+
+}  // namespace v4r

@@ -72,4 +72,4 @@ void ViewportChecker<PointType>::getVisibles(const typename pcl::PointCloud<Poin
 
 template class V4R_EXPORTS ViewVolume<pcl::PointXYZRGB>;
 template class V4R_EXPORTS ViewportChecker<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

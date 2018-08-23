@@ -889,4 +889,4 @@ EntangledForestTree::~EntangledForestTree() {
     delete mNodes[i];
   }
 }
-}
+}  // namespace v4r

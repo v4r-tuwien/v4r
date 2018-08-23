@@ -59,7 +59,6 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/search/kdtree.h>
@@ -228,7 +227,7 @@ static void fillResultCloud(pcl::PointCloud<pcl::PointXYZL>::Ptr segmentation, s
       color = colorCode[resultlbl];
     } else {
       // point has not been labeled, e.g. filtered out
-      color = {0, 0, 0};
+      color = {{0, 0, 0}};
       rgb_pt.x = 0.0;
       rgb_pt.y = 0.0;
       rgb_pt.z = 0.0;

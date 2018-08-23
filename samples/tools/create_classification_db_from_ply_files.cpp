@@ -1,15 +1,15 @@
 
 /**
-  * @author Thomas Faeulhammer on 19.01.17
-  * @brief This file opens mesh files stored as ".ply" and renders PCL point clouds from various views on a specified
+ * @author Thomas Faeulhammer on 19.01.17
+ * @brief This file opens mesh files stored as ".ply" and renders PCL point clouds from various views on a specified
  * sphere
-  * It creates a model database that can be used for recognition by assuming each the input directory has folders
-  * for each object and inside these folders are .ply files showing specific instances of this object.
-  * The program outputs a model folder with the object folders on top, in each object folder there is a folder for each
+ * It creates a model database that can be used for recognition by assuming each the input directory has folders
+ * for each object and inside these folders are .ply files showing specific instances of this object.
+ * The program outputs a model folder with the object folders on top, in each object folder there is a folder for each
  * instance
-  * and within this instance folder there is a "/view" folder with the rendered point clouds and their poses of this
+ * and within this instance folder there is a "/view" folder with the rendered point clouds and their poses of this
  * particular instance.
-  */
+ */
 
 #include <stdio.h>
 #include <iomanip>

@@ -23,169 +23,191 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="sensorTab">
     <attribute name="title">
      <string>Sensor</string>
     </attribute>
-    <widget class="QGroupBox" name="rgbGroupBox">
+    <widget class="QWidget" name="layoutWidget1">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>771</width>
-       <height>341</height>
+       <width>711</width>
+       <height>371</height>
       </rect>
      </property>
-     <property name="title">
-      <string>OpenNI camera parameter</string>
-     </property>
-     <widget class="QWidget" name="gridLayoutWidget_3">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>30</y>
-        <width>331</width>
-        <height>81</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="rgbLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="fRgbLabel">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QGroupBox" name="groupBox_4">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>600</width>
+          <height>70</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>Stream URI</string>
+        </property>
+        <widget class="QLabel" name="label">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>50</y>
+           <width>591</width>
+           <height>16</height>
+          </rect>
+         </property>
          <property name="text">
-          <string>Focal lengths</string>
+          <string>Device name (&quot;asus&quot;, &quot;kinect&quot;) or device address or dataset path</string>
          </property>
         </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="cuRgbEdit">
-         <property name="text">
-          <string>320</string>
+        <widget class="QWidget" name="layoutWidget4">
+         <property name="geometry">
+          <rect>
+           <x>14</x>
+           <y>20</y>
+           <width>602</width>
+           <height>24</height>
+          </rect>
          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0">
+          <item>
+           <widget class="QLineEdit" name="editStreamURI">
+            <property name="minimumSize">
+             <size>
+              <width>600</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="fuRgbEdit">
-         <property name="text">
-          <string>525</string>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>600</width>
+          <height>70</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>RADICAL vgn-file for vignetting correction (optional)</string>
+        </property>
+        <widget class="QWidget" name="layoutWidget5">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>30</y>
+           <width>688</width>
+           <height>24</height>
+          </rect>
          </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLineEdit" name="editVGNfile">
+            <property name="minimumSize">
+             <size>
+              <width>600</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushFindVGNfile">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>20</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLineEdit" name="fvRgbEdit">
-         <property name="text">
-          <string>525</string>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>600</width>
+          <height>70</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>RADICAL crf-file for vignetting correction (optional)</string>
+        </property>
+        <widget class="QWidget" name="layoutWidget2">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>30</y>
+           <width>688</width>
+           <height>24</height>
+          </rect>
          </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLineEdit" name="editCRFfile">
+            <property name="minimumSize">
+             <size>
+              <width>600</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushFindCRFfile">
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="cRgbLabel">
-         <property name="text">
-          <string>Principal point</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QLineEdit" name="cvRgbEdit">
-         <property name="text">
-          <string>240</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_2">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>130</y>
-        <width>701</width>
-        <height>61</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>RADICAL vgn-file for vignetting correction (optional)</string>
-      </property>
-      <widget class="QLineEdit" name="editVGNfile">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>30</y>
-         <width>621</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushFindVGNfile">
-       <property name="geometry">
-        <rect>
-         <x>650</x>
-         <y>30</y>
-         <width>31</width>
-         <height>27</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </widget>
-    </widget>
-    <widget class="QPushButton" name="applyButton">
-     <property name="geometry">
-      <rect>
-       <x>593</x>
-       <y>320</y>
-       <width>98</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Apply</string>
-     </property>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>210</y>
-       <width>701</width>
-       <height>61</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>RADICAL crf-file for vignetting correction (optional)</string>
-     </property>
-     <widget class="QLineEdit" name="editCRFfile">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>621</width>
-        <height>27</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pushFindCRFfile">
-      <property name="geometry">
-       <rect>
-        <x>650</x>
-        <y>30</y>
-        <width>31</width>
-        <height>27</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>...</string>
-      </property>
-     </widget>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </widget>
    <widget class="QWidget" name="ioTab">

@@ -49,10 +49,16 @@
 
 #include <v4r/common/normal_estimator.h>
 #include <v4r/core/macros.h>
+#include <opencv2/core/core.hpp>
 #include <vector>
 
 namespace v4r {
 
+/**
+ * Class for local feature estimation
+ * @tparam PointT
+ * @author Thomas Faeulhammer
+ */
 template <typename PointT>
 class V4R_EXPORTS LocalEstimator {
  protected:
@@ -64,17 +70,32 @@ class V4R_EXPORTS LocalEstimator {
   std::string descr_name_;
   size_t descr_type_;
   size_t descr_dims_;
+  float max_distance_;  ///< max distance in meters for a keypoint to be valid
 
  public:
+  LocalEstimator() : max_distance_(std::numeric_limits<float>::max()) {}
+
   virtual ~LocalEstimator() {}
 
+  /**
+   * query unique feature type identifier
+   * @return unique feature type identifier
+   */
   size_t getFeatureType() const {
     return descr_type_;
   }
 
-  virtual bool acceptsIndices() const = 0;
-
+  /**
+   * indicates if feature estimator needs surface normals
+   * @return true if surfance normals are required
+   */
   virtual bool needNormals() const = 0;
+
+  /**
+   * indicates if features estimator intrinsically includes a keypoint detector
+   * @return true if keypoint detector is included in feature estimator
+   */
+  virtual bool detectsKeypoints() const = 0;
 
   /**
    * @brief set indices of the object (segmented cluster). Points not within this indices will be ignored.
@@ -100,14 +121,26 @@ class V4R_EXPORTS LocalEstimator {
     cloud_ = cloud;
   }
 
-  std::vector<int> getKeypointIndices() const {
+  /**
+   * query keypoint indices with respect to input cloud
+   * @return indices of the input cloud that indicate the keypoints
+   */
+  const std::vector<int> &getKeypointIndices() const {
     return keypoint_indices_;
   }
 
-  std::string getFeatureDescriptorName() const {
+  /**
+   * query the name of the feature descriptor
+   * @return name of feature descriptor
+   */
+  const std::string &getFeatureDescriptorName() const {
     return descr_name_;
   }
 
+  /**
+   * query the dimension of the feature descriptor
+   * @return the number of feature dimensions
+   */
   size_t getFeatureDimensions() const {
     return descr_dims_;
   }
@@ -122,12 +155,20 @@ class V4R_EXPORTS LocalEstimator {
   }
 
   /**
+   * @brief setMaxDistance sets the maximum distance in meter for a keypoint to be valid
+   * @param max_distance maximal distance in meters
+   */
+  void setMaxDistance(float max_distance) {
+    max_distance_ = max_distance;
+  }
+
+  /**
    * @brief compute features from given input cloud
    * @param signatures
    */
-  virtual void compute(std::vector<std::vector<float>> &signatures) = 0;
+  virtual void compute(cv::Mat &signatures) = 0;
 
-  typedef boost::shared_ptr<LocalEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<LocalEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<LocalEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<LocalEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

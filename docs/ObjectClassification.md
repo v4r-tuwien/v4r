@@ -129,6 +129,5 @@ You can now run the classifier. The rendered views are used for training the cla
 ```
 
 ## References
-* https://repo.acin.tuwien.ac.at/tmp/permanent/3d-net.org/
-
+* https://www.acin.tuwien.ac.at/en/vision-for-robotics/software-tools/3dnet-dataset/
 *  Walter Wohlkinger, Aitor Aldoma Buchaca, Radu Rusu, Markus Vincze. "3DNet: Large-Scale Object Class Recognition from CAD Models". In IEEE International Conference on Robotics and Automation (ICRA), 2012.

@@ -71,56 +71,46 @@ MainWindow::MainWindow(QWidget *parent)
   m_glview->setViewport(m_glviewer);
 
   // input signals
-  connect(m_glview, SIGNAL(mouse_moved(QMouseEvent *)), m_glviewer, SLOT(mouse_moved(QMouseEvent *)));
-  connect(m_glview, SIGNAL(mouse_pressed(QMouseEvent *)), m_glviewer, SLOT(mouse_pressed(QMouseEvent *)));
-  connect(m_glview, SIGNAL(key_pressed(QKeyEvent *)), m_glviewer, SLOT(key_pressed(QKeyEvent *)));
-  connect(m_glview, SIGNAL(wheel_event(QWheelEvent *)), m_glviewer, SLOT(wheel_event(QWheelEvent *)));
+  connect(m_glview, &GLGraphicsView::mouse_moved, m_glviewer, &GLViewer::mouse_moved);
+  connect(m_glview, &GLGraphicsView::mouse_pressed, m_glviewer, &GLViewer::mouse_pressed);
+  connect(m_glview, &GLGraphicsView::key_pressed, m_glviewer, &GLViewer::key_pressed);
+  connect(m_glview, &GLGraphicsView::wheel_event, m_glviewer, &GLViewer::wheel_event);
 
   // param signals
-  connect(m_params, SIGNAL(cam_params_changed(const RGBDCameraParameter)), m_glviewer,
-          SLOT(cam_params_changed(const RGBDCameraParameter)));
-  connect(m_params, SIGNAL(cam_params_changed(const RGBDCameraParameter)), m_sensor,
-          SLOT(cam_params_changed(const RGBDCameraParameter)));
-  connect(m_params, SIGNAL(set_roi_params(const double, const double, const double)), m_sensor,
-          SLOT(set_roi_params(const double, const double, const double)));
-  connect(m_params, SIGNAL(set_roi_params(const double, const double, const double)), m_segmentation,
-          SLOT(set_roi_params(const double, const double, const double)));
+  qRegisterMetaType<v4r::Intrinsics>("v4r::Intrinsics");
+  connect(m_sensor, &Sensor::cam_params_changed, m_glviewer, &GLViewer::cam_params_changed);
+  connect(m_params, &Params::set_roi_params, m_sensor, &Sensor::set_roi_params);
+  connect(m_params, &Params::set_roi_params, m_segmentation, &ObjectSegmentation::set_roi_params);
 
   // sensor signals
   qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr");
   qRegisterMetaType<cv::Mat_<cv::Vec3b>>("cv::Mat_<cv::Vec3b>");
-  qRegisterMetaType<boost::shared_ptr<std::vector<Sensor::CameraLocation>>>(
-      "boost::shared_ptr< std::vector<Sensor::CameraLocation> >");
+  qRegisterMetaType<std::shared_ptr<std::vector<Sensor::CameraLocation>>>(
+      "std::shared_ptr< std::vector<Sensor::CameraLocation> >");
   qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>("pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr");
   qRegisterMetaType<std::string>("std::string");
   qRegisterMetaType<std::vector<Eigen::Vector3f>>("std::vector<Eigen::Vector3f>");
   qRegisterMetaType<Eigen::Matrix4f>("Eigen::Matrix4f");
   qRegisterMetaType<Eigen::Vector3f>("Eigen::Vector3f");
 
-  connect(m_sensor, SIGNAL(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)),
-          m_glviewer, SLOT(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)));
-  connect(m_sensor, SIGNAL(update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)), m_glviewer,
-          SLOT(update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)));
-  connect(m_sensor, SIGNAL(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)),
-          m_glviewer, SLOT(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)));
-  connect(m_sensor, SIGNAL(update_visualization()), m_glviewer, SLOT(update_visualization()));
-  connect(m_sensor, SIGNAL(printStatus(const std::string)), this, SLOT(printStatus(const std::string)));
-  connect(m_glviewer, SIGNAL(select_roi(int, int)), m_sensor, SLOT(select_roi(int, int)));
+  connect(m_sensor, &Sensor::new_image, m_glviewer, &GLViewer::new_image);
+  connect(m_sensor, &Sensor::update_model_cloud, m_glviewer, &GLViewer::update_model_cloud);
+  connect(m_sensor, &Sensor::update_cam_trajectory, m_glviewer, &GLViewer::update_cam_trajectory);
+  connect(m_sensor, &Sensor::update_visualization, m_glviewer, &GLViewer::update_visualization);
+  connect(m_sensor, &Sensor::printStatus, this, &MainWindow::printStatus);
+  connect(m_glviewer, &GLViewer::select_roi, m_sensor, &Sensor::select_roi);
 
-  connect(m_segmentation, SIGNAL(update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)), m_glviewer,
-          SLOT(update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr)));
-  connect(m_segmentation, SIGNAL(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)),
-          m_glviewer, SLOT(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)));
-  connect(m_segmentation, SIGNAL(printStatus(const std::string)), this, SLOT(printStatus(const std::string)));
-  connect(m_segmentation, SIGNAL(update_visualization()), m_glviewer, SLOT(update_visualization()));
-  connect(m_segmentation, SIGNAL(finishedModelling()), this, SLOT(finishedModelling()));
+  connect(m_segmentation, &ObjectSegmentation::update_model_cloud, m_glviewer, &GLViewer::update_model_cloud);
+  connect(m_segmentation, &ObjectSegmentation::new_image, m_glviewer, &GLViewer::new_image);
+  connect(m_segmentation, &ObjectSegmentation::printStatus, this, &MainWindow::printStatus);
+  connect(m_segmentation, &ObjectSegmentation::update_visualization, m_glviewer, &GLViewer::update_visualization);
+  connect(m_segmentation, &ObjectSegmentation::finishedModelling, this, &MainWindow::finishedModelling);
 
   // object segmentation
-  connect(m_sensor, SIGNAL(update_boundingbox(const std::vector<Eigen::Vector3f>, const Eigen::Matrix4f)), m_glviewer,
-          SLOT(update_boundingbox(const std::vector<Eigen::Vector3f>, const Eigen::Matrix4f)));
-  connect(m_params, SIGNAL(vignetting_calibration_file_changed()), this, SLOT(vignetting_calibration_file_changed()));
+  connect(m_sensor, &Sensor::update_boundingbox, m_glviewer, &GLViewer::update_boundingbox);
+  connect(m_params, &Params::vignetting_calibration_file_changed, this,
+          &MainWindow::vignetting_calibration_file_changed);
 
-  m_params->apply_cam_params();
   m_params->apply_params();
 
   setWindowTitle(tr("RTM-Toolbox"));
@@ -218,7 +208,7 @@ void MainWindow::on_CamStart_clicked() {
 
   setStartVis();
 
-  m_sensor->start(0);
+  m_sensor->start(m_params->getStreamURI());
   m_ui->statusLabel->setText("Status: Started camera");
 }
 
@@ -239,7 +229,7 @@ void MainWindow::on_TrackerStart_clicked() {
   m_sensor->setTSFParameter(m_params->getTsfNbFramesBA(), m_params->getTsfBatchSize(), m_params->getMinCamMotionKF(),
                             m_params->getMinCamRotatationKF());
 
-  m_sensor->startTracker(0);
+  m_sensor->startTracker();
 
   // m_glviewer->drawBoundingBox(false);
   m_ui->statusLabel->setText("Status: Started tracker");
@@ -325,13 +315,13 @@ void MainWindow::on_CreateAndSaveModel_clicked() {
 
   if (ok && object_name.isNull() == false) {
     if (boost::filesystem::exists(m_params->get_rgbd_path() + "/" + object_name.toStdString() + "/tracking_model.ao")) {
-      int ret = QMessageBox::warning(this, tr("Store model"), tr("The object file exists!\n"
-                                                                 "Do you want to overwrite the file?"),
+      int ret = QMessageBox::warning(this, tr("Store model"),
+                                     tr("The object file exists!\n"
+                                        "Do you want to overwrite the file?"),
                                      QMessageBox::Save, QMessageBox::Cancel);
       if (ret != QMessageBox::Save)
         ok = false;
     }
-
     if (ok) {
       m_params->set_object_name(object_name);
 
@@ -341,7 +331,6 @@ void MainWindow::on_CreateAndSaveModel_clicked() {
       deactivateAllButtons();
       Eigen::Matrix4f base_transform;
       Eigen::Vector3f bb_min, bb_max;
-      cv::Mat intrinsic, dist_coeffs;
       m_segmentation->createPointCloud(m_params->createPointCloud());
       m_segmentation->createViews(m_params->createViews());
       m_segmentation->createMesh(m_params->createMesh());
@@ -355,8 +344,8 @@ void MainWindow::on_CreateAndSaveModel_clicked() {
       m_sensor->getObjectTransform(base_transform, bb_min, bb_max);
       m_segmentation->setDirectories(m_params->get_rgbd_path(), object_name.toStdString());
       m_segmentation->setData(m_sensor->getMap(), base_transform, bb_min, bb_max);
-      m_sensor->getCameraParameter(intrinsic, dist_coeffs);
-      m_segmentation->setCameraParameter(intrinsic, dist_coeffs);
+      m_segmentation->setCameraParameters(m_sensor->getOptimizedCameraIntrinsics(),
+                                          m_sensor->getOptimizedCameraDistortionCoefficients());
       m_segmentation->finishModelling();  // starts the modelling thread
 
       is_model_stored = true;
@@ -375,7 +364,7 @@ void MainWindow::on_ShowDepthMask_clicked() {
 
 void MainWindow::on_setROI_clicked() {
   bbox_active = true;
-  m_sensor->start(0);
+  m_sensor->start(m_params->getStreamURI());
   // m_glviewer->drawBoundingBox(true);
   m_glviewer->selectROI(true);
   m_ui->statusLabel->setText(

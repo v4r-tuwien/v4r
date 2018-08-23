@@ -182,4 +182,4 @@ PCL_INSTANTIATE(computePointCloudProperties, PCL_XYZ_POINT_TYPES)
 template V4R_EXPORTS std::vector<size_t> createIndicesFromMask(const boost::dynamic_bitset<> &mask, bool invert);
 
 template V4R_EXPORTS std::vector<int> createIndicesFromMask(const boost::dynamic_bitset<> &mask, bool invert);
-}
+}  // namespace v4r

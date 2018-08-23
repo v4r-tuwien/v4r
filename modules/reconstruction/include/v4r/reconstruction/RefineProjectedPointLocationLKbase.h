@@ -50,8 +50,8 @@
 
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -90,11 +90,11 @@ class V4R_EXPORTS RefineProjectedPointLocationLKbase {
     (void)_dist_coeffs;
   };
 
-  typedef SmartPtr<::v4r::RefineProjectedPointLocationLKbase> Ptr;
-  typedef SmartPtr<::v4r::RefineProjectedPointLocationLKbase const> ConstPtr;
+  typedef std::shared_ptr<::v4r::RefineProjectedPointLocationLKbase> Ptr;
+  typedef std::shared_ptr<::v4r::RefineProjectedPointLocationLKbase const> ConstPtr;
 };
 
 /*********************** INLINE METHODES **************************/
-}
+}  // namespace v4r
 
 #endif

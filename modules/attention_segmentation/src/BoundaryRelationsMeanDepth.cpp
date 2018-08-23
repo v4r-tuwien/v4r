@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary depth and standart deviation.
+ * @brief Class to calculate boundary depth and standard deviation.
  */
 
 #include "v4r/attention_segmentation/BoundaryRelationsMeanDepth.h"
@@ -60,21 +60,18 @@ BoundaryRelationsMeanDepth::~BoundaryRelationsMeanDepth() {}
 v4r::meanVal BoundaryRelationsMeanDepth::compute() {
   //@ep: TODO check reconditions
   if (!have_cloud) {
-    printf("[BoundaryRelationsMeanDepth::compute] Error: No input cloud set.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanDepth::compute] no input cloud set.");
   }
 
   if (!have_boundary) {
-    printf("[BoundaryRelationsMeanDepth::compute] Error: No input border.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanDepth::compute] no input border set.");
   }
 
   v4r::meanVal meanDepth;
 
   if (boundary.size() <= 0) {
-    printf(
-        "[BoundaryRelationsMeanDepth::compute] Warning: Boundary size is 0. This means that constants are different "
-        "everywhere!\n");
+    LOG(WARNING) << "Boundary size is 0. This means that constants are "
+                    "different everywhere!";
     meanDepth.mean = 0;
     meanDepth.stddev = 0;
     return meanDepth;
@@ -102,7 +99,7 @@ v4r::meanVal BoundaryRelationsMeanDepth::compute() {
   }
 
   // normalize depth sum and calculate depth variance
-  //@ep: this shoule be separate function in the utils
+  //@ep: this should be separate function in the utils
   if (boundaryLength > 0) {
     totalDepth /= boundaryLength;
     for (unsigned i = 0; i < valuesDepth.size(); i++) {
@@ -110,9 +107,7 @@ v4r::meanVal BoundaryRelationsMeanDepth::compute() {
     }
     totalDepthStdDev /= boundaryLength;
   } else {
-    std::printf(
-        "[BoundaryRelationsMeanDepth::compute] Warning: Number of valid depth points is zero: totalDepth: %4.3f\n",
-        totalDepth);
+    LOG(WARNING) << "Number of valid depth points is zero: totalDepth: " << totalDepth;
     totalDepth = 0.;
     totalDepthStdDev = 0.;
   }
@@ -123,4 +118,4 @@ v4r::meanVal BoundaryRelationsMeanDepth::compute() {
   return meanDepth;
 }
 
-}  // end surface
+}  // namespace v4r

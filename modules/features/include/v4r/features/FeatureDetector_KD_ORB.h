@@ -39,19 +39,21 @@
 
 /**
  * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
+ * @author Johann Prankl (prankl@acin.tuwien.ac.at), Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
  */
 
-#ifndef KP_FEATURE_DETECTOR_ORB_HH
-#define KP_FEATURE_DETECTOR_ORB_HH
+#pragma once
 
 #include <v4r/features/FeatureDetector.h>
+#include <boost/program_options.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+namespace po = boost::program_options;
 
 namespace v4r {
 
@@ -59,34 +61,46 @@ class V4R_EXPORTS FeatureDetector_KD_ORB : public FeatureDetector {
  public:
   class V4R_EXPORTS Parameter {
    public:
-    int nfeatures;
-    float scaleFactor;
-    int nlevels;
-    int patchSize;
+    int nfeatures;      ///< The maximum number of features to retain.
+    float scaleFactor;  ///< Pyramid decimation ratio, greater than 1. scaleFactor==2 means the classical pyramid, where
+                        ///< each next level has 4x less pixels than the previous, but such a big scale factor will
+                        ///< degrade feature matching scores dramatically. On the other hand, too close to 1 scale
+                        ///< factor will mean that to cover certain scale range you will need more pyramid levels and so
+                        ///< the speed will suffer.
+    int nlevels;        ///< The number of pyramid levels. The smallest level will have linear size equal to
+                        ///< input_image_linear_size/pow(scaleFactor, nlevels).
+    int patchSize;      ///< 	size of the patch used by the oriented BRIEF descriptor. Of course, on smaller pyramid
+                        ///< layers the perceived image area covered by a feature will be larger.
     Parameter(int _nfeatures = 1000, float _scaleFactor = 1.44, int _nlevels = 2, int _patchSize = 17)
     : nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels), patchSize(_patchSize) {}
+
+    /**
+     * @brief init parameters
+     * @param command_line_arguments (according to Boost program options library)
+     * @param section_name section name of program options
+     */
+    void init(boost::program_options::options_description &desc, const std::string &section_name = "orb");
   };
 
  private:
+  using FeatureDetector::descr_name_;
   Parameter param;
-  cv::Mat_<unsigned char> im_gray;
 
   cv::Ptr<cv::ORB> orb;
+  cv::Mat_<unsigned char> im_gray_;
 
  public:
   FeatureDetector_KD_ORB(const Parameter &_p = Parameter());
   ~FeatureDetector_KD_ORB();
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys);
-  virtual void extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
+  void detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors,
+                        const cv::Mat &object_mask = cv::Mat()) override final;
+  void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+              const cv::Mat &object_mask = cv::Mat()) override final;
+  void compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) override final;
 
-  typedef SmartPtr<::v4r::FeatureDetector_KD_ORB> Ptr;
-  typedef SmartPtr<::v4r::FeatureDetector_KD_ORB const> ConstPtr;
+  typedef std::shared_ptr<FeatureDetector_KD_ORB> Ptr;
+  typedef std::shared_ptr<FeatureDetector_KD_ORB const> ConstPtr;
 };
 
-/*************************** INLINE METHODES **************************/
-
-}  //--END--
-
-#endif
+}  // namespace v4r

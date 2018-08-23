@@ -139,5 +139,5 @@ inline void serialize(Archive& ar, Eigen::Matrix<_Scalar, _Rows, _Cols, _Options
   for (int i = 0; i < t.size(); i++)
     ar& t.data()[i];
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost

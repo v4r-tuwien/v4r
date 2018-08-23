@@ -22,4 +22,4 @@ bool SimpleShapeEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
 
 template class V4R_EXPORTS SimpleShapeEstimator<pcl::PointXYZ>;
 template class V4R_EXPORTS SimpleShapeEstimator<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

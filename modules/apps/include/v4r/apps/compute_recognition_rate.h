@@ -1,8 +1,10 @@
 #pragma once
 
 #include <pcl/visualization/pcl_visualizer.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/common/pcl_visualization_utils.h>
 #include <v4r/core/macros.h>
+#include <v4r/io/filesystem.h>
 
 #include <fstream>
 #include <iostream>
@@ -20,35 +22,52 @@ namespace apps {
 std::vector<std::vector<int>> PermGenerator(int n, int k);
 
 struct Hypothesis {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::Matrix4f pose;
   float occlusion;
 };
 
 class V4R_EXPORTS RecognitionEvaluator {
+ public:
+  struct Parameter {
+    float rotation_error_threshold_deg_ = 30.f;
+    float translation_error_threshold_m_ = 0.05f;
+    float occlusion_threshold_ = 0.95f;
+    bf::path out_dir = "recognition_rates";
+    bf::path gt_dir;
+    bf::path or_dir;
+    bf::path models_dir;
+    bf::path test_dir;
+    bf::path img_out_dir = "recognition_output_images";
+    bf::path camera_calibration_file = v4r::io::getConfigDir() / "rgb_calibration.yaml";
+    bool visualize_ = false;
+    bool visualize_errors_only_ = false;
+    bool save_images_to_disk_ = false;
+    bool highlight_errors_ = false;
+    bool use_generated_hypotheses_ = false;
+    v4r::Intrinsics cam = v4r::Intrinsics::PrimeSense();
+
+    Parameter() {}
+
+    /**
+     * @brief init set directories and stuff from (boost) console arguments
+     * @param params parameters (boost program options)
+     */
+    void init(boost::program_options::options_description &desc);
+  };
+
  private:
   typedef pcl::PointXYZRGB PointT;
+  typedef pcl::PointXYZRGBNormal ModelT;
+  Parameter param_;
 
   struct Model {
-    pcl::PointCloud<PointT>::Ptr cloud;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    pcl::PointCloud<ModelT>::Ptr cloud;
     Eigen::Vector4f centroid;
     bool is_rotation_invariant_ = false;  // in-plane (x/y)
     bool is_rotational_symmetric_ = false;
   };
-
-  float rotation_error_threshold_deg;
-  float translation_error_threshold_m;
-  float occlusion_threshold;
-  std::vector<std::string> coordinate_system_ids_;
-  std::string out_dir;
-  std::string gt_dir;
-  std::string or_dir;
-  std::string models_dir;
-  std::string test_dir;
-  bool visualize_;
-  bool visualize_errors_only_;
-  bool save_images_to_disk_;
-  bool highlight_errors_;
-  bool use_generated_hypotheses_;
 
   pcl::visualization::PCLVisualizer::Ptr vis_;
   int vp1_, vp2_, vp3_;
@@ -65,10 +84,7 @@ class V4R_EXPORTS RecognitionEvaluator {
       rotational_invariant_objects_;  ///< name of objects which are rotational invariant with respect to xy plane
 
  public:
-  RecognitionEvaluator()
-  : rotation_error_threshold_deg(30.f), translation_error_threshold_m(0.05f), occlusion_threshold(0.95f),
-    out_dir("/tmp/recognition_rates/"), visualize_(false), visualize_errors_only_(false), save_images_to_disk_(false),
-    highlight_errors_(false), use_generated_hypotheses_(false) {
+  RecognitionEvaluator(const Parameter &p = Parameter()) : param_(p) {
     rotational_invariant_objects_ = {
         "toilet_paper",     "red_mug_white_spots", "muller_milch_shoko", "muller_milch_banana",
         "coffee_container", "object_11",           "object_19",          "object_29",
@@ -84,18 +100,10 @@ class V4R_EXPORTS RecognitionEvaluator {
                                                                       // symmetric but very hard to distinguish
 
     };
-
     vis_params_.reset(new PCLVisualizationParams());
     vis_params_->bg_color_ = Eigen::Vector3i(255, 255, 255);
     vis_params_->coordinate_axis_scale_ = 0.04f;
   }
-
-  /**
-   * @brief init set directories and stuff from (boost) console arguments
-   * @param params parameters (boost program options)
-   * @param unused parameters
-   */
-  std::vector<std::string> init(const std::vector<std::string> &params);
 
   // =======  DECLARATIONS ===================
   /**
@@ -111,26 +119,6 @@ class V4R_EXPORTS RecognitionEvaluator {
    */
   bool computeError(const Eigen::Matrix4f &pose_a, const Eigen::Matrix4f &pose_b, const Eigen::Vector4f &centroid_model,
                     float &trans_error, float &rot_error, bool is_rotation_invariant, bool is_rotational_symmetric);
-
-  /**
-   * @brief checkMatchvector check a certain match configuration
-   * @param[in] rec2gt matches indicated by first index corresponding
-   * to model id and second index to ground-truth id
-   * @param[in] rec_hyps recognition hypotheses
-   * @param[in] gt_hyps ground-truth hypotheses
-   * @param[in] centroid of object model in model coordinate system
-   * @param[out] translation_errors
-   * @param[out] rotational_errors
-   * @param[out] tp true positives
-   * @param[out] fp flase positives
-   * @param[out] fn false negatives
-   * @param[in] true if model is invariant for rotation around z
-   * @param[in] true if model is symmetric for rotation around z (180deg periodic)
-   */
-  void checkMatchvector(const std::vector<std::pair<int, int>> &rec2gt, const std::vector<Hypothesis> &rec_hyps,
-                        const std::vector<Hypothesis> &gt_hyps, const Eigen::Vector4f &model_centroid,
-                        std::vector<float> &translation_error, std::vector<float> &rotational_error, size_t &tp,
-                        size_t &fp, size_t &fn, bool is_rotation_invariant, bool is_rotational_symmetric);
 
   /**
    * @brief selectBestMatch computes the best matches for a set of hypotheses. This
@@ -151,14 +139,14 @@ class V4R_EXPORTS RecognitionEvaluator {
    * @return best match for the given hypotheses. First index corresponds to element in
    * given recognition hypothesis, second index to ground-truth hypothesis
    */
-  std::vector<std::pair<int, int>> selectBestMatch(const std::vector<Hypothesis> &rec_hyps,
-                                                   const std::vector<Hypothesis> &gt_hyps,
-                                                   const Eigen::Vector4f &model_centroid, size_t &tp, size_t &fp,
-                                                   size_t &fn, std::vector<float> &translation_errors,
-                                                   std::vector<float> &rotational_errors, bool is_rotation_invariant,
-                                                   bool is_rotational_symmetric);
+  std::vector<std::pair<int, int>> selectBestMatch(
+      const std::vector<Hypothesis, Eigen::aligned_allocator<Hypothesis>> &rec_hyps,
+      const std::vector<Hypothesis, Eigen::aligned_allocator<Hypothesis>> &gt_hyps,
+      const Eigen::Vector4f &model_centroid, size_t &tp, size_t &fp, size_t &fn, std::vector<float> &translation_errors,
+      std::vector<float> &rotational_errors, bool is_rotation_invariant, bool is_rotational_symmetric);
 
-  std::map<std::string, std::vector<Hypothesis>> readHypothesesFromFile(const std::string &filename);
+  std::map<std::string, std::vector<Hypothesis, Eigen::aligned_allocator<Hypothesis>>> readHypothesesFromFile(
+      const bf::path &filename);
 
   /**
    * @brief setRotationalInvariantObjects
@@ -182,21 +170,6 @@ class V4R_EXPORTS RecognitionEvaluator {
   void
   checkIndividualHypotheses();  ///< check for each recognized object if there is a corresponding ground-truth object<w
 
-  std::string getModels_dir() const;
-  void setModels_dir(const std::string &value);
-  std::string getTest_dir() const;
-  void setTest_dir(const std::string &value);
-  std::string getOr_dir() const;
-  void setOr_dir(const std::string &value);
-  std::string getGt_dir() const;
-  void setGt_dir(const std::string &value);
-  bool getUse_generated_hypotheses() const;
-  void setUse_generated_hypotheses(bool value = true);
-  bool getVisualize() const;
-  void setVisualize(bool value);
-  std::string getOut_dir() const;
-  void setOut_dir(const std::string &value);
-
   /**
    * @brief visualize results for an input cloud with ground-truth and recognized object models
    * @param input_cloud cloud of the input scene
@@ -208,5 +181,5 @@ class V4R_EXPORTS RecognitionEvaluator {
 
   Eigen::MatrixXi compute_confusion_matrix();
 };
-}
-}
+}  // namespace apps
+}  // namespace v4r

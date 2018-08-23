@@ -18,7 +18,7 @@
 #include <v4r/common/normals.h>
 #include <v4r/common/pcl_opencv.h>
 #include <v4r/common/pcl_utils.h>
-#include <v4r/features/sift_local_estimator.h>
+#include <v4r/features/FeatureDetector_KD_SIFTGPU.h>
 #include <v4r/io/filesystem.h>
 #include <v4r/keypoints/all_headers.h>
 
@@ -26,6 +26,7 @@
 #include <boost/any.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#include <numeric>
 
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
@@ -41,7 +42,7 @@ using namespace v4r;
 
 int main(int argc, char** argv) {
   typedef pcl::PointXYZRGB PointT;
-  std::string test_dir;
+  bf::path test_dir;
   bool visualize = false;
   bool filter_planar = true;
   int filter_boundary_pts = 7;  //  according to the edge types defined in pcl::OrganizedEdgeBase (EDGELABEL_OCCLUDING
@@ -56,39 +57,46 @@ int main(int argc, char** argv) {
   double vis_pt_size = 7;
   int kp_extraction_type = KeypointType::UniformSampling;
   bool use_sift = false;
-  int normal_estimation_type = NormalEstimatorType::PCL_INTEGRAL_NORMAL;
+  NormalEstimatorType normal_estimation_type = NormalEstimatorType::PCL_INTEGRAL_NORMAL;
 
   google::InitGoogleLogging(argv[0]);
 
   po::options_description desc(
       "Point Cloud Segmentation Example\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message")("test_dir,t", po::value<std::string>(&test_dir)->required(),
-                                                       "Directory with test scenes stored as point clouds (.pcd).")(
-      "keypoint_extraction_type", po::value<int>(&kp_extraction_type)->default_value(kp_extraction_type),
-      "keypoint extraction type")("normal_estimation_type",
-                                  po::value<int>(&normal_estimation_type)->default_value(normal_estimation_type),
-                                  "surface normal estimation type")(
-      "chop_z,z", po::value<float>(&chop_z)->default_value(chop_z), "cut-off distance in meter")(
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("test_dir,t", po::value<bf::path>(&test_dir)->required(),
+                     "Directory with test scenes stored as point clouds (.pcd).");
+  desc.add_options()("keypoint_extraction_type", po::value<int>(&kp_extraction_type)->default_value(kp_extraction_type),
+                     "keypoint extraction type");
+  desc.add_options()("normal_estimation_type",
+                     po::value<NormalEstimatorType>(&normal_estimation_type)->default_value(normal_estimation_type),
+                     "surface normal estimation type");
+  desc.add_options()("chop_z,z", po::value<float>(&chop_z)->default_value(chop_z), "cut-off distance in meter");
+  desc.add_options()(
       "use_sift", po::value<bool>(&use_sift)->default_value(use_sift),
       "if true, uses DoG as keypoint extraction method (which is implemented in SIFT-GPU). Ignores keypoint extraction "
-      "type.")("filter_planar", po::value<bool>(&filter_planar)->default_value(filter_planar),
-               "if true, filters planar keypoints")(
-      "filter_boundary_pts", po::value<int>(&filter_boundary_pts)->default_value(filter_boundary_pts),
-      "if true, filters keypoints on depth discontinuities")(
-      "planar_support_radius", po::value<float>(&planar_support_radius)->default_value(planar_support_radius),
-      "planar support radius in meter  (only used if \"filter_planar\" is enabled)")(
-      "max_depth_change_factor", po::value<float>(&max_depth_change_factor)->default_value(max_depth_change_factor),
-      "max_depth_change_factor  (only used if \"filter_planar\" is enabled)")(
-      "normal_smoothing_size", po::value<float>(&normal_smoothing_size)->default_value(normal_smoothing_size),
-      "normal_smoothing_size  (only used if \"filter_planar\" is enabled)")(
-      "use_depth_dependent_smoothing",
-      po::value<bool>(&use_depth_dependent_smoothing)->default_value(use_depth_dependent_smoothing),
-      "use_depth_dependent_smoothing  (only used if \"filter_planar\" is enabled)")(
-      "threshold_planar", po::value<float>(&threshold_planar)->default_value(threshold_planar),
-      "curvature threshold (only used if \"filter_planar\" is enabled)")(
-      "boundary_width", po::value<int>(&boundary_width)->default_value(boundary_width),
-      "boundary width in pixel (only used if \"filter_boundary_pts\" is enabled)")(
-      "visualize,v", po::bool_switch(&visualize), "If set, visualizes segmented clusters.");
+      "type.");
+  desc.add_options()("filter_planar", po::value<bool>(&filter_planar)->default_value(filter_planar),
+                     "if true, filters planar keypoints");
+  desc.add_options()("filter_boundary_pts", po::value<int>(&filter_boundary_pts)->default_value(filter_boundary_pts),
+                     "if true, filters keypoints on depth discontinuities");
+  desc.add_options()("planar_support_radius",
+                     po::value<float>(&planar_support_radius)->default_value(planar_support_radius),
+                     "planar support radius in meter  (only used if \"filter_planar\" is enabled)");
+  desc.add_options()("max_depth_change_factor",
+                     po::value<float>(&max_depth_change_factor)->default_value(max_depth_change_factor),
+                     "max_depth_change_factor  (only used if \"filter_planar\" is enabled)");
+  desc.add_options()("normal_smoothing_size",
+                     po::value<float>(&normal_smoothing_size)->default_value(normal_smoothing_size),
+                     "normal_smoothing_size  (only used if \"filter_planar\" is enabled)");
+  desc.add_options()("use_depth_dependent_smoothing",
+                     po::value<bool>(&use_depth_dependent_smoothing)->default_value(use_depth_dependent_smoothing),
+                     "use_depth_dependent_smoothing  (only used if \"filter_planar\" is enabled)");
+  desc.add_options()("threshold_planar", po::value<float>(&threshold_planar)->default_value(threshold_planar),
+                     "curvature threshold (only used if \"filter_planar\" is enabled)");
+  desc.add_options()("boundary_width", po::value<int>(&boundary_width)->default_value(boundary_width),
+                     "boundary width in pixel (only used if \"filter_boundary_pts\" is enabled)");
+  desc.add_options()("visualize,v", po::bool_switch(&visualize), "If set, visualizes segmented clusters.");
   po::variables_map vm;
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -123,14 +131,12 @@ int main(int argc, char** argv) {
 
   std::sort(sub_folder_names.begin(), sub_folder_names.end());
   for (size_t sub_folder_id = 0; sub_folder_id < sub_folder_names.size(); sub_folder_id++) {
-    bf::path sequence_path = test_dir;
-    sequence_path /= sub_folder_names[sub_folder_id];
+    bf::path sequence_path = test_dir / sub_folder_names[sub_folder_id];
 
     std::vector<std::string> views = v4r::io::getFilesInDirectory(sequence_path.string(), ".*.pcd", false);
 
     for (size_t v_id = 0; v_id < views.size(); v_id++) {
-      bf::path in_path = sequence_path;
-      in_path /= views[v_id];
+      bf::path in_path = sequence_path / views[v_id];
 
       std::cout << "Extracting keypoints for file " << in_path.string() << std::endl;
 
@@ -191,11 +197,14 @@ int main(int argc, char** argv) {
       {
         if (use_sift) {
           pcl::ScopeTime t("SIFT Keypoint extraction");
-          typename v4r::SIFTLocalEstimation<PointT>::Ptr sift_estimator(new v4r::SIFTLocalEstimation<PointT>);
-          sift_estimator->setInputCloud(cloud);
-          std::vector<std::vector<float>> signatures_foo;
-          sift_estimator->compute(signatures_foo);
-          kp_indices = sift_estimator->getKeypointIndices();
+          PCLOpenCVConverter<PointT> pcl_opencv_converter;
+          pcl_opencv_converter.setInputCloud(cloud);
+          auto color_image = pcl_opencv_converter.getRGBImage();
+
+          std::vector<cv::KeyPoint> keypoints;
+          FeatureDetector_KD_SIFTGPU sift;
+          sift.detect(color_image, keypoints);
+          kp_indices = sift.getKeypointIndices();
         } else {
           boost::dynamic_bitset<> scene_pt_is_keypoint(cloud->points.size(), 0);
 

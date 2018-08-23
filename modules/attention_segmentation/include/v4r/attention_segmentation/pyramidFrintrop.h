@@ -49,7 +49,7 @@ class V4R_EXPORTS FrintropPyramid : public BasePyramid {
  public:
   FrintropPyramid();
   virtual ~FrintropPyramid();
-  typedef boost::shared_ptr<FrintropPyramid> Ptr;
+  typedef std::shared_ptr<FrintropPyramid> Ptr;
 
   void setR(std::vector<int> &R_);
   std::vector<int> getR();
@@ -67,5 +67,5 @@ class V4R_EXPORTS FrintropPyramid : public BasePyramid {
 
   std::vector<cv::Mat> pyramidConspicuities;
 };
-}
+}  // namespace v4r
 #endif

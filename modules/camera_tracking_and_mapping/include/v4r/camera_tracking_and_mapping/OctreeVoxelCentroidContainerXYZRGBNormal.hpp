@@ -14,9 +14,9 @@
 namespace pcl {
 namespace octree {
 /** \brief @b Octree pointcloud voxel centroid leaf node class
-  * \note This class implements a leaf node that calculates the mean centroid of PointXYZRGB points added this octree
+ * \note This class implements a leaf node that calculates the mean centroid of PointXYZRGB points added this octree
  * container.
-  */
+ */
 template <typename PointT = pcl::PointXYZRGBNormal>
 class V4R_EXPORTS OctreeVoxelCentroidContainerXYZRGBNormal : public OctreeContainerBase {
  public:
@@ -41,8 +41,8 @@ class V4R_EXPORTS OctreeVoxelCentroidContainerXYZRGBNormal : public OctreeContai
   }
 
   /** \brief Add new point to voxel.
-    * \param[in] new_point the new point to add
-    */
+   * \param[in] new_point the new point to add
+   */
   void addPoint(const PointT& new_point) {
     using namespace pcl::common;
 
@@ -60,14 +60,14 @@ class V4R_EXPORTS OctreeVoxelCentroidContainerXYZRGBNormal : public OctreeContai
   }
 
   /** \brief Calculate centroid of voxel.
-    * \param[out] centroid_arg the resultant centroid of the voxel
-    */
+   * \param[out] centroid_arg the resultant centroid of the voxel
+   */
   void getCentroid(PointT& centroid_arg) const {
     using namespace pcl::common;
 
     if (point_counter_) {
-      centroid_arg.getVector3fMap() = (pt_ / static_cast<double>(point_counter_)).cast<float>();
-      centroid_arg.getNormalVector3fMap() = n_.normalized().cast<float>();
+      centroid_arg.getVector3fMap() = (pt_ / static_cast<double>(point_counter_)).template cast<float>();
+      centroid_arg.getNormalVector3fMap() = n_.normalized().template cast<float>();
       centroid_arg.r = static_cast<unsigned char>(r_ / point_counter_);
       centroid_arg.g = static_cast<unsigned char>(g_ / point_counter_);
       centroid_arg.b = static_cast<unsigned char>(b_ / point_counter_);
@@ -100,7 +100,7 @@ class V4R_EXPORTS OctreeVoxelCentroidContainerXYZRGBNormal : public OctreeContai
   Eigen::Vector3d n_;
   unsigned r_, g_, b_;
 };
-}
-}
+}  // namespace octree
+}  // namespace pcl
 
 #endif

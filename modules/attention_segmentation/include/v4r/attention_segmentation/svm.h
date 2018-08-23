@@ -57,7 +57,7 @@ struct svm_model {
   double *probA;              /* pariwise probability information */
   double *probB;
   int *sv_indices; /* sv_indices[0,...,nSV-1] are values in [1,...,num_traning_data] to indicate SVs in the training set
-                      */
+                    */
 
   /* for classification only */
 
@@ -97,7 +97,7 @@ int svm_check_probability_model(const struct svm_model *model);
 void svm_set_print_string_function(void (*print_func)(const char *));
 
 #ifdef __cplusplus
-}
+}  // namespace svm
 #endif
 }
 #endif /* _LIBSVM_H */

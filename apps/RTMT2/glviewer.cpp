@@ -50,15 +50,15 @@
 using namespace std;
 
 GLViewer::GLViewer(QWidget *_parent)
-: QGLWidget(_parent), m_width(640), m_height(480), m_point_size(1.), m_timer(this),
-  bbox_pose(Eigen::Matrix4f::Identity()), m_show_image(true), m_show_cloud(false), m_show_cameras(false),
-  m_show_object(false), m_draw_bbox(false), m_segment_object(false), m_select_roi(false), cor(glm::vec3(0., 0., 0.)) {
+: QGLWidget(_parent), m_point_size(1.), m_timer(this), bbox_pose(Eigen::Matrix4f::Identity()), m_show_image(true),
+  m_show_cloud(false), m_show_cameras(false), m_show_object(false), m_draw_bbox(false), m_segment_object(false),
+  m_select_roi(false), cor(glm::vec3(0., 0., 0.)), camera_params_(v4r::Intrinsics::PrimeSense()) {
   setAttribute(Qt::WA_NoSystemBackground, true);
   setFocusPolicy(Qt::StrongFocus);
   setAcceptDrops(true);
   setCursor(Qt::PointingHandCursor);
 
-  connect(&m_timer, SIGNAL(timeout()), this, SLOT(draw()));
+  connect(&m_timer, &QTimer::timeout, this, &GLViewer::draw);
   m_timer.start(200);
   //  m_elapsed.start();
 
@@ -67,7 +67,7 @@ GLViewer::GLViewer(QWidget *_parent)
   pt0y = Eigen::Vector4f(0., 1., 0., 1.);
   pt0z = Eigen::Vector4f(0., 0., 1., 1.);
 
-  cam_params_changed(cam_params);
+  cam_params_changed(camera_params_);
 }
 
 GLViewer::~GLViewer() {}
@@ -122,14 +122,14 @@ void GLViewer::update_model_cloud(const pcl::PointCloud<pcl::PointXYZRGBNormal>:
   // cout<<"[GLViewer::update_model_cloud] "<<oc_cloud.size()<<endl;
 }
 
-void GLViewer::update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory) {
+void GLViewer::update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory) {
   cam_mutex.lock();
   cam_trajectory = *_cam_trajectory;
   cam_mutex.unlock();
 }
 
 void GLViewer::update_boundingbox(const std::vector<Eigen::Vector3f> &edges, const Eigen::Matrix4f &pose) {
-  Eigen::Matrix3f R = pose.topLeftCorner<3, 3>(0, 0);
+  Eigen::Matrix3f R = pose.block<3, 3>(0, 0);
   Eigen::Vector3f t = pose.block<3, 1>(0, 3);
 
   if (!m_draw_bbox)
@@ -139,7 +139,14 @@ void GLViewer::update_boundingbox(const std::vector<Eigen::Vector3f> &edges, con
   bbox.resize(edges.size());
   for (unsigned i = 0; i < bbox.size(); i++)
     bbox[i] = R * edges[i] + t;
-  bbox_pose = pose;
+
+  // Use memcpy instead of operator= of Eigen.
+  // Reason: sporadical segfaults due to alignment issues. When V4R is compiled with AVX instruction set enabled, Eigen
+  // tries to use AVX load/store instructions to accelerate this assignment. However, the pose matrix is not always
+  // 32-byte aligned (despite properly specified EIGEN_MAKE_ALIGNED_OPERATOR_NEW in containing class), which leads to
+  // segfault.
+  memcpy(bbox_pose.data(), pose.data(), sizeof(float) * 16);
+
   bb_mutex.unlock();
 }
 
@@ -151,26 +158,12 @@ void GLViewer::draw() {
   updateGL();
 }
 
-void GLViewer::cam_params_changed(const RGBDCameraParameter &_cam_params) {
-  cam_params = _cam_params;
+void GLViewer::cam_params_changed(const v4r::Intrinsics &camera_params) {
+  camera_params_ = camera_params;
 
-  size_t size[2];
-  float f[2];
-  float c[2];
-  float range[2];
+  this->setGeometry(0, 0, camera_params_.w, camera_params_.h);
 
   cv::Mat_<float> ext = cv::Mat_<float>::eye(4, 4);
-  m_width = size[0] = cam_params.width;
-  m_height = size[1] = cam_params.height;
-  f[0] = cam_params.f[0];
-  f[1] = cam_params.f[1];
-  c[0] = cam_params.c[0];
-  c[1] = cam_params.c[1];
-  range[0] = cam_params.range[0];
-  range[1] = cam_params.range[1];
-
-  this->setGeometry(0, 0, m_width, m_height);
-
   glm::mat4 E;
   E[0][0] = ext.at<float>(0, 0);
   E[0][1] = ext.at<float>(0, 1);
@@ -189,10 +182,11 @@ void GLViewer::cam_params_changed(const RGBDCameraParameter &_cam_params) {
   E[3][2] = ext.at<float>(3, 2);
   E[3][3] = ext.at<float>(3, 3);
 
-  m_cam_perspective.SetPerspective(f[0], f[1], c[0], c[1], size[0], size[1], 0.5f * range[0], 2.0f * range[1]);
+  m_cam_perspective.SetPerspective(camera_params_.fx, camera_params_.fy, camera_params_.cx, camera_params_.cy,
+                                   camera_params_.w, camera_params_.h, 0.05f, 7.0f);
   m_cam_perspective.SetExtrinsic(tg::Camera::cv2gl(E));
   m_cam_origin = m_cam_perspective;
-  m_cam_ortho.SetOrtho(size[0], size[1], 0.1f, 2.0f);
+  m_cam_ortho.SetOrtho(camera_params_.w, camera_params_.h, 0.1f, 2.0f);
 
   updateGL();
 }
@@ -271,8 +265,8 @@ void GLViewer::drawImage() {
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
 
-    float w = float(m_width);
-    float h = float(m_height);
+    auto w = static_cast<float>(camera_params_.w);
+    auto h = static_cast<float>(camera_params_.h);
     glColor3f(1, 1, 1);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 1.0f);

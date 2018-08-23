@@ -350,4 +350,4 @@ bool DepthmapRendererModel::hasNormals() {
 Eigen::Vector3f DepthmapRendererModel::getOffset() {
   return offset;
 }
-}
+}  // namespace v4r

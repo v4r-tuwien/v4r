@@ -137,17 +137,17 @@ int main(int argc, const char *argv[]) {
     if (model.hasColor() || model.hasTexture()) {
       if (createNormals) {
         const pcl::PointCloud<pcl::PointXYZRGBNormal> cloud = renderer.renderPointcloudColorNormal(visible);
-        pcl::io::savePCDFileBinary(output_fn.string(), cloud);
+        pcl::io::savePCDFileBinaryCompressed(output_fn.string(), cloud);
       } else {
         const pcl::PointCloud<pcl::PointXYZRGB> cloud = renderer.renderPointcloudColor(visible);
-        pcl::io::savePCDFileBinary(output_fn.string(), cloud);
+        pcl::io::savePCDFileBinaryCompressed(output_fn.string(), cloud);
       }
 
       if (visualize)
         cv::imshow("color", color);
     } else {
       const pcl::PointCloud<pcl::PointXYZ> cloud = renderer.renderPointcloud(visible);
-      pcl::io::savePCDFileBinary(output_fn.string(), cloud);
+      pcl::io::savePCDFileBinaryCompressed(output_fn.string(), cloud);
     }
 
     LOG(INFO) << "Saved data points to " << output_fn.string() << ".";

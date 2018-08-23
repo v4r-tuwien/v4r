@@ -59,7 +59,7 @@
 namespace v4r {
 
 /**
- * @brief RGBValue of point clouds, accessable as float or long value.
+ * @brief RGBValue of point clouds, accessible as float or long value.
  */
 typedef union {
   struct {
@@ -147,7 +147,7 @@ void ConvertPCLClouds2CvVecs(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>
  * @param pcl_cloud Points cloud in pcl-format.
  * @param cvCloud Point cloud in openCV format.
  * @param random_color Convert cloud with random color.
- * @param z_min Minium z-value
+ * @param z_min Minimum z-value
  * @param z_max Maximum z-value
  */
 void ConvertPCLCloud2CvMat(const pcl::PointCloud<pcl::PointXYZRGBL>::Ptr &pcl_cloud, cv::Mat_<cv::Vec4f> &cvCloud,
@@ -244,14 +244,14 @@ void ConvertPCLCloud2Mask(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, c
                           double zMax = 10.0);
 
 /**
- * @brief Copy one point cloud to another WITHOUT loosing the array structure.
+ * @brief Copy one point cloud to another WITHOUT losing the array structure.
  * @param src Source point cloud to copy.
  * @param dst Destination point cloud.
  */
 void CopyPointCloud(const pcl::PointCloud<pcl::PointXYZRGB> &src, pcl::PointCloud<pcl::PointXYZRGB> &dst);
 
 /**
- * @brief Copy one point cloud to another WITHOUT loosing the array structure.
+ * @brief Copy one point cloud to another WITHOUT losing the array structure.
  * @param src Source point cloud to copy.
  * @param dst Destination point cloud.
  */
@@ -259,8 +259,8 @@ void CopyPointCloud(const pcl::PointCloud<pcl::PointXYZRGBA> &src, pcl::PointClo
 
 void CopyPointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &src, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &dst);
 
-/** TODO Experimental => Without loosing the array structure => setting other points to NAN
- * @brief Copy one point cloud to another without loosing the array structure
+/** TODO Experimental => Without losing the array structure => setting other points to NAN
+ * @brief Copy one point cloud to another without losing the array structure
  * and using point indices
  * @param src Source point cloud to copy.
  * @param indices Point indices
@@ -370,13 +370,13 @@ void ProjectPC2Model(const int model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_p
  * @brief Normal space sampling filter for organized point clouds.
  */
 void NormalSpaceSampling(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_out,
-                         pcl::PointCloud<pcl::Normal>::Ptr &normals, std::vector<int> &indices);
+                         pcl::PointCloud<pcl::Normal>::Ptr &normals);
 
 /**
  * @brief Clip the depth values on the border of the image.
  */
 V4R_EXPORTS void ClipDepthImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr _pcl_cloud);
 
-}  // v4r end
+}  // namespace v4r
 
 #endif

@@ -1,5 +1,7 @@
 #include <v4r/common/pcl_visualization_utils.h>
 
+namespace po = boost::program_options;
+
 namespace v4r {
 std::vector<int> pcl_visualizer::visualization_framework(pcl::visualization::PCLVisualizer &vis, size_t number_of_views,
                                                          size_t number_of_subwindows_per_view,
@@ -31,4 +33,17 @@ std::vector<int> pcl_visualizer::visualization_framework(pcl::visualization::PCL
   }
   return viewportNr;
 }
+
+void PCLVisualizationParams::init(boost::program_options::options_description &desc, const std::string &section_name) {
+  desc.add_options()((section_name + ".no_text").c_str(), po::value<bool>(&no_text_)->default_value(no_text_),
+                     "optimizes visualization for paper (no text labels...)");
+  desc.add_options()((section_name + ".vis_pt_size").c_str(),
+                     po::value<int>(&vis_pt_size_)->default_value(vis_pt_size_),
+                     "point size used for visualizing point clouds");
+  desc.add_options()((section_name + ".fontsize").c_str(), po::value<int>(&fontsize_)->default_value(fontsize_),
+                     "fontsize used for text in visualization");
+  desc.add_options()((section_name + ".coordinate_axis_scale").c_str(),
+                     po::value<float>(&coordinate_axis_scale_)->default_value(coordinate_axis_scale_),
+                     "scale of coordinate axis in PCL visualization");
 }
+}  // namespace v4r

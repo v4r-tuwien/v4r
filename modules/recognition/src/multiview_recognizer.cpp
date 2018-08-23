@@ -9,10 +9,12 @@
 #include <pcl/common/time.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 
+namespace po = boost::program_options;
+
 namespace v4r {
 
 template <typename PointT>
-void MultiviewRecognizer<PointT>::do_recognize() {
+void MultiviewRecognizer<PointT>::do_recognize(const std::vector<std::string> &model_ids_to_search) {
   local_obj_hypotheses_.clear();
 
   View v;
@@ -24,7 +26,7 @@ void MultiviewRecognizer<PointT>::do_recognize() {
   if (table_plane_set_)
     recognition_pipeline_->setTablePlane(table_plane_);
 
-  recognition_pipeline_->recognize();
+  recognition_pipeline_->recognize(model_ids_to_search);
   v.obj_hypotheses_ = recognition_pipeline_->getObjectHypothesis();
 
   table_plane_set_ = false;
@@ -41,7 +43,7 @@ void MultiviewRecognizer<PointT>::do_recognize() {
       if (param_.transfer_keypoint_correspondences_ && !ohg_tmp.global_hypotheses_)
         continue;
 
-      for (const typename ObjectHypothesis::Ptr &oh_tmp : ohg_tmp.ohs_) {
+      for (const ObjectHypothesis::Ptr &oh_tmp : ohg_tmp.ohs_) {
         if (!param_.transfer_only_verified_hypotheses_ || oh_tmp->is_verified_) {
           // check if this hypotheses is not already transferred by any other view
           if (std::find(hypotheses_ids.begin(), hypotheses_ids.end(), oh_tmp->unique_id_) == hypotheses_ids.end()) {
@@ -55,7 +57,7 @@ void MultiviewRecognizer<PointT>::do_recognize() {
         ObjectHypothesesGroup ohg;
         ohg.global_hypotheses_ = ohg_tmp.global_hypotheses_;
 
-        for (const typename ObjectHypothesis::Ptr &oh_tmp : ohg_tmp.ohs_) {
+        for (const ObjectHypothesis::Ptr &oh_tmp : ohg_tmp.ohs_) {
           if (param_.transfer_only_verified_hypotheses_ && !oh_tmp->is_verified_)
             continue;
 
@@ -66,7 +68,7 @@ void MultiviewRecognizer<PointT>::do_recognize() {
 
           // create a copy (since we want to reset verification status and update transform but keep the status for old
           // view)
-          typename ObjectHypothesis::Ptr oh_copy(new ObjectHypothesis(*oh_tmp));
+          ObjectHypothesis::Ptr oh_copy(new ObjectHypothesis(*oh_tmp));
           oh_copy->is_verified_ = false;
           oh_copy->transform_ =
               v.camera_pose_.inverse() * v_old.camera_pose_ * oh_copy->pose_refinement_ * oh_copy->transform_;
@@ -84,14 +86,14 @@ void MultiviewRecognizer<PointT>::do_recognize() {
   if (param_.transfer_keypoint_correspondences_) {
     // get local keypoints and feature matches
     typename MultiRecognitionPipeline<PointT>::Ptr mp_recognizer =
-        boost::dynamic_pointer_cast<MultiRecognitionPipeline<PointT>>(recognition_pipeline_);
+        std::dynamic_pointer_cast<MultiRecognitionPipeline<PointT>>(recognition_pipeline_);
 
     CHECK(mp_recognizer);
 
     std::vector<typename RecognitionPipeline<PointT>::Ptr> sv_rec_pipelines = mp_recognizer->getRecognitionPipelines();
     for (const typename RecognitionPipeline<PointT>::Ptr &rec_pipeline : sv_rec_pipelines) {
       typename LocalRecognitionPipeline<PointT>::Ptr local_rec_pipeline =
-          boost::dynamic_pointer_cast<LocalRecognitionPipeline<PointT>>(rec_pipeline);
+          std::dynamic_pointer_cast<LocalRecognitionPipeline<PointT>>(rec_pipeline);
 
       if (local_rec_pipeline) {
         v.local_obj_hypotheses_ = local_rec_pipeline->getKeypointCorrespondences();
@@ -231,7 +233,7 @@ void MultiviewRecognizer<PointT>::do_recognize() {
 
     if (param_.visualize_)
       visualize();
-    correspondenceGrouping();
+    correspondenceGrouping(model_ids_to_search);
   }
 
   v.obj_hypotheses_ = obj_hypotheses_;
@@ -331,7 +333,7 @@ void MultiviewRecognizer<PointT>::visualize() {
       // Graph-based correspondence grouping requires normals but interface does not exist in base class - so need to
       // try pointer casting
       typename GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gcg_algorithm =
-          boost::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
+          std::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
       if (gcg_algorithm)
         gcg_algorithm->setInputAndSceneNormals(model_kp_normals, scene_cloud_normals_merged_);
 
@@ -481,13 +483,19 @@ void MultiviewRecognizer<PointT>::visualize() {
 }
 
 template <typename PointT>
-void MultiviewRecognizer<PointT>::correspondenceGrouping() {
+void MultiviewRecognizer<PointT>::correspondenceGrouping(const std::vector<std::string> &model_ids_to_search) {
   pcl::StopWatch t;
 
   //#pragma omp parallel for schedule(dynamic)
   typename std::map<std::string, LocalObjectHypothesis<PointT>>::const_iterator it;
   for (it = local_obj_hypotheses_.begin(); it != local_obj_hypotheses_.end(); ++it) {
     const std::string &model_id = it->first;
+
+    if (!model_ids_to_search.empty() &&
+        std::find(model_ids_to_search.begin(), model_ids_to_search.end(), model_id) == model_ids_to_search.end()) {
+      continue;
+    }
+
     const LocalObjectHypothesis<PointT> &loh = it->second;
 
     std::stringstream desc;
@@ -511,7 +519,7 @@ void MultiviewRecognizer<PointT>::correspondenceGrouping() {
     // Graph-based correspondence grouping requires normals but interface does not exist in base class - so need to try
     // pointer casting
     typename GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gcg_algorithm =
-        boost::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
+        std::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
     if (gcg_algorithm)
       gcg_algorithm->setInputAndSceneNormals(model_kp_normals, scene_cloud_normals_merged_);
 
@@ -578,7 +586,7 @@ void MultiviewRecognizer<PointT>::correspondenceGrouping() {
 #pragma omp critical
       {
         for (size_t jj = 0; jj < merged_transforms.size(); jj++) {
-          typename ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
+          ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
           new_oh->model_id_ = loh.model_id_;
           new_oh->class_id_ = "";
           new_oh->transform_ = merged_transforms[jj];
@@ -597,7 +605,7 @@ void MultiviewRecognizer<PointT>::correspondenceGrouping() {
 #pragma omp critical
       {
         for (size_t jj = 0; jj < new_transforms.size(); jj++) {
-          typename ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
+          ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
           new_oh->model_id_ = loh.model_id_;
           new_oh->class_id_ = "";
           new_oh->transform_ = new_transforms[jj];
@@ -625,14 +633,14 @@ void MultiviewRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retra
                                                   // multi-pipeline
   {
     typename MultiRecognitionPipeline<PointT>::Ptr mp_recognizer =
-        boost::dynamic_pointer_cast<MultiRecognitionPipeline<PointT>>(recognition_pipeline_);
+        std::dynamic_pointer_cast<MultiRecognitionPipeline<PointT>>(recognition_pipeline_);
 
     CHECK(mp_recognizer);
 
     std::vector<typename RecognitionPipeline<PointT>::Ptr> sv_rec_pipelines = mp_recognizer->getRecognitionPipelines();
     for (typename RecognitionPipeline<PointT>::Ptr &rec_pipeline : sv_rec_pipelines) {
       typename LocalRecognitionPipeline<PointT>::Ptr local_rec_pipeline =
-          boost::dynamic_pointer_cast<LocalRecognitionPipeline<PointT>>(rec_pipeline);
+          std::dynamic_pointer_cast<LocalRecognitionPipeline<PointT>>(rec_pipeline);
 
       if (local_rec_pipeline)
         local_rec_pipeline->disableHypothesesGeneration();
@@ -640,5 +648,35 @@ void MultiviewRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retra
   }
 }
 
-template class V4R_EXPORTS MultiviewRecognizer<pcl::PointXYZRGB>;
+void MultiviewRecognizerParameter::init(boost::program_options::options_description &desc,
+                                        const std::string &section_name) {
+  desc.add_options()(
+      (section_name + ".transfer_only_verified_hypotheses").c_str(),
+      po::value<bool>(&transfer_only_verified_hypotheses_)->default_value(transfer_only_verified_hypotheses_),
+      "if true, transfers only verified hypotheses into multiview recognition");
+  desc.add_options()((section_name + ".max_views").c_str(), po::value<size_t>(&max_views_)->default_value(max_views_),
+                     "maximum number of views used for multi-view recognition (if more views are available, "
+                     "information from oldest views will be ignored)");
+  desc.add_options()(
+      (section_name + ".transfer_keypoint_correspondences").c_str(),
+      po::value<bool>(&transfer_keypoint_correspondences_)->default_value(transfer_keypoint_correspondences_),
+      "if true, transfers keypoint correspondences instead of full hypotheses "
+      "(requires correspondence grouping - see Faeulhammer et al, ICRA 2015)");
+  desc.add_options()((section_name + ".merge_close_hypotheses").c_str(),
+                     po::value<bool>(&merge_close_hypotheses_)->default_value(merge_close_hypotheses_), "");
+  desc.add_options()((section_name + ".merge_close_hypotheses_dist").c_str(),
+                     po::value<float>(&merge_close_hypotheses_dist_)->default_value(merge_close_hypotheses_dist_),
+                     "defines the maximum distance of the centroids in meter for clusters to be merged");
+  desc.add_options()((section_name + ".merge_close_hypotheses_angle").c_str(),
+                     po::value<float>(&merge_close_hypotheses_angle_)->default_value(merge_close_hypotheses_angle_),
+                     "defines the maximum angle in degrees for clusters to be merged");
+  desc.add_options()((section_name + ".min_dist").c_str(), po::value<float>(&min_dist_)->default_value(min_dist_),
+                     "minimum distance two points need to be apart to be counted as redundant");
+  desc.add_options()((section_name + ".max_dotp").c_str(), po::value<float>(&max_dotp_)->default_value(max_dotp_),
+                     "maximum dot-product between the surface normals of two oriented points to be counted redundant");
+  desc.add_options()((section_name + ".visualize").c_str(), po::value<bool>(&visualize_)->default_value(visualize_),
+                     "visualize keypoint correspondences");
 }
+
+template class V4R_EXPORTS MultiviewRecognizer<pcl::PointXYZRGB>;
+}  // namespace v4r

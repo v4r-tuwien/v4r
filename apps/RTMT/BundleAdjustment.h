@@ -51,6 +51,7 @@
 #ifndef Q_MOC_RUN
 #include <QMutex>
 #include <QThread>
+
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -58,7 +59,6 @@
 #include <boost/shared_ptr.hpp>
 #include <opencv2/opencv.hpp>
 #include <queue>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 #include <v4r/keypoints/impl/invPose.hpp>
 #include "params.h"
@@ -79,9 +79,9 @@ class BundleAdjustment : public QThread {
   bool isRunning();
 
   void optimizeCamStructProj(
-      v4r::Object::Ptr &_model, boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory,
-      boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_log_clouds,
-      boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
+      v4r::Object::Ptr &_model, std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory,
+      std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_log_clouds,
+      std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
   bool restoreCameras();
 
  public slots:
@@ -89,8 +89,8 @@ class BundleAdjustment : public QThread {
 
  signals:
   void printStatus(const std::string &_txt);
-  void update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
-  void update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
+  void update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
+  void update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
   void update_visualization();
   void finishedOptimizeCameras(int num_cameras);
 
@@ -106,9 +106,9 @@ class BundleAdjustment : public QThread {
   CamaraTrackerParameter cam_tracker_params;
 
   v4r::Object::Ptr model;
-  boost::shared_ptr<std::vector<Sensor::CameraLocation>> cam_trajectory;
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> log_clouds;
-  boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
+  std::shared_ptr<std::vector<Sensor::CameraLocation>> cam_trajectory;
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> log_clouds;
+  std::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
 
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> stored_cameras;
   std::vector<std::vector<double>> stored_camera_parameter;

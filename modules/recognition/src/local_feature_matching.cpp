@@ -1,53 +1,32 @@
-#include <pcl_1_8/features/organized_edge_detection.h>
-#include <v4r/common/miscellaneous.h>
-#include <v4r/io/eigen.h>
-#include <v4r/io/filesystem.h>
-#include <v4r/recognition/local_feature_matching.h>
-
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-
 #include <glog/logging.h>
-
 #include <pcl/common/time.h>
 #include <pcl/common/transforms.h>
 #include <pcl/features/boundary.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl_1_8/features/organized_edge_detection.h>
+#include <v4r/common/miscellaneous.h>
+#include <v4r/io/cv.h>
+#include <v4r/io/eigen.h>
+#include <v4r/io/filesystem.h>
+#include <v4r/recognition/local_feature_matching.h>
 
 #include <opencv2/opencv.hpp>
 
 #include <omp.h>
 
+namespace po = boost::program_options;
+
 namespace v4r {
-
-void LocalRecognizerParameter::load(const bf::path &filename) {
-  CHECK(v4r::io::existsFile(filename)) << "Given config file " << filename.string()
-                                       << " does not exist! Current working directory is "
-                                       << boost::filesystem::current_path().string() + ".";
-
-  VLOG(1) << "Loading parameters from file " << filename.string();
-  std::ifstream ifs(filename.string());
-  boost::archive::xml_iarchive ia(ifs);
-  ia >> boost::serialization::make_nvp("LocalRecognizerParameter", *this);
-  ifs.close();
-}
 
 template <typename PointT>
 void LocalFeatureMatcher<PointT>::validate() {
-  for (const auto &est : estimators_) {
-    if (est->getFeatureType() == FeatureType::SIFT_GPU ||
-        est->getFeatureType() == FeatureType::SIFT_OPENCV)  // for SIFT we do not need to extract keypoints explicitly
-    {
-      have_sift_estimator_ = true;
-      break;
-    }
-  }
-  CHECK(estimators_.size() <= 1 || !have_sift_estimator_)
-      << "SIFT is not allowed to be mixed with other feature descriptors.";
+  CHECK(estimators_.size() <= 1 || needKeypointDetector())
+      << "Given feature estimator is not allowed to be mixed with other feature descriptors.";
 
-  CHECK(!have_sift_estimator_ || param_.train_on_individual_views_)
-      << "SIFT needs organized point clouds. Therefore training from a full model is not supported! " << std::endl;
+  CHECK(needKeypointDetector() || param_.train_on_individual_views_)
+      << "Feature estimator needs organized point clouds. Therefore training from a full model is not supported! "
+      << std::endl;
 }
 
 template <typename PointT>
@@ -139,13 +118,12 @@ std::vector<int> LocalFeatureMatcher<PointT>::getInlier(const std::vector<Keypoi
         kp_is_kept.reset(i);
     }
 
-    float time = t.getTime();
-    VLOG(1) << "Computing planar keypoints took " << time << " ms.";
+    VLOG(1) << "Filtering planar keypoints took " << t.getTime() << " ms.";
   }
 
   if (param_.filter_border_pts_) {
-    pcl::StopWatch t;
     if (scene_->isOrganized()) {
+      pcl::StopWatch t;
       // compute depth discontinuity edges
       pcl_1_8::OrganizedEdgeBase<PointT, pcl::Label> oed;
       oed.setDepthDisconThreshold(0.05f);  // at 1m, adapted linearly with depth
@@ -187,7 +165,6 @@ std::vector<int> LocalFeatureMatcher<PointT>::getInlier(const std::vector<Keypoi
       cv::Mat boundary_mask_dilated;
       cv::dilate(boundary_mask, boundary_mask_dilated, element);
 
-      // kept = 0;
       for (size_t i = 0; i < input_keypoints.size(); i++) {
         int idx = input_keypoints[i];
         int u = idx % scene_->width;
@@ -196,11 +173,9 @@ std::vector<int> LocalFeatureMatcher<PointT>::getInlier(const std::vector<Keypoi
         if (boundary_mask_dilated.at<unsigned char>(v, u))
           kp_is_kept.reset(i);
       }
+      VLOG(1) << "Computing boundary points took " << t.getTime() << " ms.";
     } else
       LOG(ERROR) << "Input scene is not organized so cannot extract edge points.";
-
-    double time = t.getTime();
-    VLOG(1) << "Computing boundary points took " << time << " ms.";
   }
 
   return createIndicesFromMask<int>(kp_is_kept);
@@ -250,8 +225,7 @@ std::vector<int> LocalFeatureMatcher<PointT>::extractKeypoints(const std::vector
     }
   }
 
-  float time = t.getTime();
-  VLOG(1) << "Extracting all keypoints with filtering took " << time << " ms.";
+  VLOG(1) << "Extracting all keypoints with filtering took " << t.getTime() << " ms.";
 
   return createIndicesFromMask<int>(kp_mask);
 }
@@ -267,7 +241,7 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
 
   for (size_t est_id = 0; est_id < estimators_.size(); est_id++) {
     LocalObjectModelDatabase::Ptr lomdb(new LocalObjectModelDatabase);
-    std::vector<FeatureDescriptor> all_signatures;  ///< all signatures extracted from all objects in the model database
+    cv::Mat all_signatures_;  ///< all signatures from all objects in the database
 
     typename LocalEstimator<PointT>::Ptr &est = estimators_[est_id];
 
@@ -282,7 +256,7 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
         continue;
       }
 
-      std::vector<FeatureDescriptor> model_signatures;
+      cv::Mat model_signatures;
       pcl::PointCloud<pcl::PointXYZ>::Ptr model_keypoints(new pcl::PointCloud<pcl::PointXYZ>);
       pcl::PointCloud<pcl::Normal>::Ptr model_kp_normals(new pcl::PointCloud<pcl::Normal>);
 
@@ -291,13 +265,11 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
       const bf::path signatures_path = trained_path_feat / "signatures.dat";
 
       if (!retrain && io::existsFile(kp_path) && io::existsFile(kp_normals_path) && io::existsFile(signatures_path)) {
+        // load trained models (keypoints and signatures) from disk
         pcl::io::loadPCDFile(kp_path.string(), *model_keypoints);
         pcl::io::loadPCDFile(kp_normals_path.string(), *model_kp_normals);
-        ifstream is(signatures_path.string(), ios::binary);
-        boost::archive::binary_iarchive iar(is);
-        iar >> model_signatures;
-        is.close();
-      } else {
+        model_signatures = io::readMatBinary(signatures_path);
+      } else {  // train object model from training data
         const auto training_views = m->getTrainingViews();
         std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> existing_poses;
 
@@ -317,13 +289,12 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
               pose = tv->pose_;
             } else {
               typename pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
-              pcl::io::loadPCDFile(tv->filename_, *cloud);
+              pcl::io::loadPCDFile(tv->filename_.string(), *cloud);
 
               try {
                 pose = io::readMatrixFromFile(tv->pose_filename_);
               } catch (const std::runtime_error &e) {
-                LOG(ERROR) << "Could not read pose from file " << tv->pose_filename_ << "! Setting it to identity"
-                           << std::endl;
+                LOG(ERROR) << "Could not read pose from file " << tv->pose_filename_ << "! Setting it to identity";
                 pose = Eigen::Matrix4f::Identity();
               }
 
@@ -331,10 +302,10 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
               obj_indices.clear();
               if (!io::existsFile(tv->indices_filename_)) {
                 LOG(WARNING) << "No object indices " << tv->indices_filename_ << " found for object " << m->class_
-                             << "/" << m->id_ << " / " << tv->filename_ << "! Taking whole cloud as object of interest!"
-                             << std::endl;
+                             << "/" << m->id_ << " / " << tv->filename_
+                             << "! Taking whole cloud as object of interest!";
               } else {
-                std::ifstream mi_f(tv->indices_filename_);
+                std::ifstream mi_f(tv->indices_filename_.string());
                 int idx;
                 while (mi_f >> idx)
                   obj_indices.push_back(idx);
@@ -351,8 +322,8 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
 
               scene_ = cloud;
 
-              if (1)  // always needs normals since we never know if correspondence grouping does! .....
-                      // this->needNormals() )
+              if (true)  // always needs normals since we never know if correspondence grouping does! .....
+                         // this->needNormals() )
               {
                 normal_estimator_->setInputCloud(cloud);
                 pcl::PointCloud<pcl::Normal>::Ptr normals;
@@ -382,7 +353,8 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
             if (!similar_pose_exists) {
               std::vector<int> filtered_kp_indices;
 
-              if (have_sift_estimator_)  // for SIFT we do not need to extract keypoints explicitly
+              if (est->detectsKeypoints())  // for some feature descriptor we do not need to extract keypoints
+                                            // explicitly
                 filtered_kp_indices = obj_indices;
               else {
                 const std::vector<KeypointIndex> keypoint_indices = extractKeypoints(obj_indices);
@@ -393,25 +365,23 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
                   visualizeKeypoints(filtered_kp_indices, keypoint_indices);
               }
 
-              std::vector<FeatureDescriptor> signatures_view;
+              cv::Mat signatures_view;
               featureEncoding(*est, filtered_kp_indices, filtered_kp_indices, signatures_view);
 
-              if (have_sift_estimator_)  // for SIFT we do not need to extract keypoints explicitly
-              {
-                std::vector<int> inlier = getInlier(filtered_kp_indices);
+              if (est->detectsKeypoints()) {  // for SIFT we do not need to extract keypoints explicitly
+                const std::vector<int> inlier = getInlier(filtered_kp_indices);
                 filtered_kp_indices = filterVector<KeypointIndex>(filtered_kp_indices, inlier);
-                signatures_view = filterVector<FeatureDescriptor>(signatures_view, inlier);
+                signatures_view = filterCvMat(signatures_view, inlier);
               }
 
               if (filtered_kp_indices.empty())
                 continue;
 
               existing_poses.push_back(pose);
-              LOG(INFO) << "Adding " << signatures_view.size() << " " << est->getFeatureDescriptorName()
-                        << " (with id \"" << est->getUniqueId() << ")\" descriptors to the model database. "
-                        << std::endl;
+              LOG(INFO) << "Adding " << signatures_view.rows << " " << est->getFeatureDescriptorName() << " (with id \""
+                        << est->getUniqueId() << "\") descriptors to the model database. " << std::endl;
 
-              CHECK(signatures_view.size() == filtered_kp_indices.size());
+              CHECK(signatures_view.rows == (int)filtered_kp_indices.size());
 
               pcl::PointCloud<pcl::PointXYZ> model_keypoints_tmp;
               pcl::PointCloud<pcl::Normal> model_keypoint_normals_tmp;
@@ -421,16 +391,19 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
               v4r::transformNormals(model_keypoint_normals_tmp, model_keypoint_normals_tmp, pose);
               *model_keypoints += model_keypoints_tmp;
               *model_kp_normals += model_keypoint_normals_tmp;
-              model_signatures.insert(model_signatures.end(), signatures_view.begin(), signatures_view.end());
+
+              if (model_signatures.empty())
+                model_signatures = signatures_view;
+              else
+                cv::vconcat(model_signatures, signatures_view, model_signatures);
 
               indices_.clear();
             } else
               LOG(INFO) << "Ignoring view " << tv->filename_ << " because a similar camera pose exists.";
 
-            float time = t.getTime();
-            LOG(INFO) << "Training " + est->getFeatureDescriptorName() + " (with id \"" + est->getUniqueId() +
-                             "\") on view " + m->class_ + "/" + m->id_ + "/" + tv->filename_
-                      << ") took " << time << " ms.";
+            LOG(INFO) << "Training " << est->getFeatureDescriptorName() << " (with id " << est->getUniqueId()
+                      << ") on view " << m->class_ << "/" << m->id_ << "/" << tv->filename_ << ") took " << t.getTime()
+                      << " ms.";
           }
         } else {
           scene_ = m->getAssembled(1);
@@ -443,7 +416,7 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
           if (visualize_keypoints_)
             visualizeKeypoints(filtered_kp_indices, keypoint_indices);
 
-          std::vector<FeatureDescriptor> signatures;
+          cv::Mat signatures;
           featureEncoding(*est, filtered_kp_indices, filtered_kp_indices, signatures);
 
           if (filtered_kp_indices.empty())
@@ -452,7 +425,7 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
           LOG(INFO) << "Adding " << signatures.size() << " " << est->getFeatureDescriptorName() << " (with id \""
                     << est->getUniqueId() << "\") descriptors to the model database. ";
 
-          CHECK(signatures.size() == filtered_kp_indices.size());
+          CHECK(signatures.rows == (int)filtered_kp_indices.size());
 
           pcl::PointCloud<pcl::PointXYZ> model_keypoints_tmp;
           pcl::PointCloud<pcl::Normal> model_keypoint_normals_tmp;
@@ -460,24 +433,26 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
           pcl::copyPointCloud(*scene_normals_, filtered_kp_indices, model_keypoint_normals_tmp);
           *model_keypoints += model_keypoints_tmp;
           *model_kp_normals += model_keypoint_normals_tmp;
-          model_signatures.insert(model_signatures.end(), signatures.begin(), signatures.end());
+          if (model_signatures.empty())
+            model_signatures = signatures;
+          else
+            cv::vconcat(model_signatures, signatures, model_signatures);
         }
 
+        // save keypoints and signatures to disk
         io::createDirForFileIfNotExist(kp_path.string());
         pcl::io::savePCDFileBinaryCompressed(kp_path.string(), *model_keypoints);
         pcl::io::savePCDFileBinaryCompressed(kp_normals_path.string(), *model_kp_normals);
-        ofstream os(signatures_path.string(), ios::binary);
-        boost::archive::binary_oarchive oar(os);
-        oar << model_signatures;
-        os.close();
+        io::writeMatBinary(signatures_path, model_signatures);
       }
 
-      //        assert(lom->keypoints_->points.size() == model_signatures.size());
+      if (all_signatures_.empty())
+        all_signatures_ = model_signatures;
+      else
+        cv::vconcat(all_signatures_, model_signatures, all_signatures_);
 
-      all_signatures.insert(all_signatures.end(), model_signatures.begin(), model_signatures.end());
-
-      std::vector<LocalObjectModelDatabase::flann_model> flann_models_tmp(model_signatures.size());
-      for (size_t f = 0; f < model_signatures.size(); f++) {
+      std::vector<LocalObjectModelDatabase::flann_model> flann_models_tmp(model_signatures.rows);
+      for (int f = 0; f < model_signatures.rows; f++) {
         flann_models_tmp[f].model_id_ = m->id_;
         flann_models_tmp[f].keypoint_id_ = f;
       }
@@ -489,42 +464,53 @@ void LocalFeatureMatcher<PointT>::initialize(const bf::path &trained_dir, bool r
       lomdb->l_obj_models_[m->id_] = lom;
     }
 
-    CHECK(lomdb->flann_models_.size() == all_signatures.size());
+    CHECK((int)lomdb->flann_models_.size() == all_signatures_.rows);
 
-    lomdb->flann_data_.reset(new flann::Matrix<float>(new float[all_signatures.size() * all_signatures[0].size()],
-                                                      all_signatures.size(), all_signatures[0].size()));
+    LOG(INFO) << "Building the kdtree index for " << est->getFeatureDescriptorName() << " (with id "
+              << est->getUniqueId() << ") for " << all_signatures_.rows << " elements.";
 
-    for (size_t i = 0; i < lomdb->flann_data_->rows; i++)
-      for (size_t j = 0; j < lomdb->flann_data_->cols; j++)
-        lomdb->flann_data_->ptr()[i * lomdb->flann_data_->cols + j] = all_signatures[i][j];
-
-    LOG(INFO) << "Building the kdtree index for " << lomdb->flann_data_->rows << " elements.";
-
-    if (param_.distance_metric_ == 2) {
-      lomdb->flann_index_l2_.reset(new ::flann::Index<::flann::L2<float>>(
-          *(lomdb->flann_data_), ::flann::KDTreeIndexParams(param_.kdtree_num_trees_)));
-      //        lomdb_->flann_index_l2_.reset( new flann::Index<flann::L2<float> > (*(lomdb_->flann_data_),
-      //        flann::LinearIndexParams()));
-      lomdb->flann_index_l2_->buildIndex();
-    } else if (param_.distance_metric_ == 3) {
-      lomdb->flann_index_chisquare_.reset(new ::flann::Index<::flann::ChiSquareDistance<float>>(
-          *(lomdb->flann_data_), ::flann::KDTreeIndexParams(param_.kdtree_num_trees_)));
-      lomdb->flann_index_chisquare_->buildIndex();
-    } else if (param_.distance_metric_ == 4) {
-      lomdb->flann_index_hellinger_.reset(new ::flann::Index<::flann::HellingerDistance<float>>(
-          *(lomdb->flann_data_), ::flann::KDTreeIndexParams(param_.kdtree_num_trees_)));
-      lomdb->flann_index_hellinger_->buildIndex();
+    if (param_.use_brute_force_matching_) {
+      switch (param_.distance_metric_) {
+        case DistanceMetric::L1:
+          lomdb->matcher_.reset(new cv::BFMatcher(cv::NORM_L1, param_.cross_check_));
+          break;
+        case DistanceMetric::L2:
+          lomdb->matcher_.reset(new cv::BFMatcher(cv::NORM_L2, param_.cross_check_));
+          break;
+        case DistanceMetric::HAMMING:
+          lomdb->matcher_.reset(new cv::BFMatcher(cv::NORM_HAMMING, param_.cross_check_));
+          break;
+        default:
+          LOG(ERROR) << "Distance metric " << param_.distance_metric_
+                     << " is not implemented for brute force matching!";
+      }
     } else {
-      lomdb->flann_index_l1_.reset(new ::flann::Index<::flann::L1<float>>(
-          *(lomdb->flann_data_), ::flann::KDTreeIndexParams(param_.kdtree_num_trees_)));
-      //        lomdb_->flann_index_l1_.reset( new flann::Index<flann::L1<float> > (*(lomdb_->flann_data_),
-      //        flann::LinearIndexParams()));
-      lomdb->flann_index_l1_->buildIndex();
+      switch (param_.distance_metric_) {
+        case DistanceMetric::HAMMING:
+          lomdb->matcher_.reset(new cv::FlannBasedMatcher(
+              new cv::flann::LshIndexParams(param_.lsh_index_table_number_, param_.lsh_index_key_index_,
+                                            param_.lsh_index_multi_probe_level_),
+              new cv::flann::SearchParams(param_.kdtree_search_checks_, 0, true)));
+          break;
+        default:
+          lomdb->matcher_.reset(
+              new cv::FlannBasedMatcher(new cv::flann::KDTreeIndexParams(param_.kdtree_num_trees_),
+                                        new cv::flann::SearchParams(param_.kdtree_search_checks_, 0, true)));
+      }
     }
+    std::vector<cv::Mat> descriptors;
+    descriptors.push_back(all_signatures_);
+    lomdb->matcher_->add(descriptors);
+    lomdb->matcher_->train();
+
     lomdbs_[est_id] = lomdb;
+
+    VLOG(2) << "Initialized local recognition pipeline - Size of matcher object " << sizeof(*lomdb->matcher_)
+            << "bytes, size of flann models: " << sizeof(lomdb->flann_models_) << " bytes.";
   }
 
   mergeKeypointsFromMultipleEstimators();
+
   indices_.clear();
 }
 
@@ -543,13 +529,11 @@ void LocalFeatureMatcher<PointT>::mergeKeypointsFromMultipleEstimators() {
       std::map<std::string, typename LocalObjectModel::ConstPtr>::const_iterator it_loh =
           model_keypoints_.find(model_id);
 
-      if (it_loh != model_keypoints_.end())  // append keypoints to existing ones
-      {
+      if (it_loh != model_keypoints_.end()) {  // append keypoints to existing ones
         model_kp_idx_range_start_[est_id][model_id] = it_loh->second->keypoints_->points.size();
         *(it_loh->second->keypoints_) += *(lom.keypoints_);
         *(it_loh->second->kp_normals_) += *(lom.kp_normals_);
-      } else  // keypoints do not exist yet for this model
-      {
+      } else {  // keypoints do not exist yet for this model
         model_kp_idx_range_start_[est_id][model_id] = 0;
         LocalObjectModel::Ptr lom_copy(new LocalObjectModel);
         *(lom_copy->keypoints_) = *(lom.keypoints_);
@@ -562,48 +546,32 @@ void LocalFeatureMatcher<PointT>::mergeKeypointsFromMultipleEstimators() {
 
 template <typename PointT>
 void LocalFeatureMatcher<PointT>::featureMatching(const std::vector<KeypointIndex> &kp_indices,
-                                                  const std::vector<FeatureDescriptor> &signatures,
+                                                  const cv::Mat &signatures,
                                                   const LocalObjectModelDatabase::ConstPtr &lomdb,
                                                   size_t model_keypoint_offset) {
-  CHECK(signatures.size() == kp_indices.size());
+  CHECK(signatures.rows == (int)kp_indices.size());
 
-  LOG(INFO) << "computing " << signatures.size() << " matches.";
+  cv::Mat indices;
+  cv::Mat distances;
+  std::vector<std::vector<cv::DMatch>> matches;
+  lomdb->matcher_->knnMatch(signatures, matches, param_.knn_);
 
-  int size_feat = signatures[0].size();
+  for (const auto &mm : matches) {
+    for (const cv::DMatch &m : mm) {
+      // if (m.distance > param_.max_descriptor_distance_){
+      //  VLOG(0) << "m.distance: " << m.distance << ", param max dist: " << param_.max_descriptor_distance_;
+      //  continue;
+      //}
 
-  ::flann::Matrix<float> distances(new float[param_.knn_], 1, param_.knn_);
-  ::flann::Matrix<int> indices(new int[param_.knn_], 1, param_.knn_);
-  ::flann::Matrix<float> query_desc(new float[size_feat], 1, size_feat);
+      const typename LocalObjectModelDatabase::flann_model &f = lomdb->flann_models_[m.trainIdx];
+      float m_dist = param_.correspondence_distance_weight_;  // * m.distance;
 
-  for (size_t idx = 0; idx < signatures.size(); idx++) {
-    memcpy(&query_desc.ptr()[0], &signatures[idx][0], size_feat * sizeof(float));
-
-    if (param_.distance_metric_ == 2)
-      lomdb->flann_index_l2_->knnSearch(query_desc, indices, distances, param_.knn_,
-                                        ::flann::SearchParams(param_.kdtree_splits_));
-    else if (param_.distance_metric_ == 3)
-      lomdb->flann_index_chisquare_->knnSearch(query_desc, indices, distances, param_.knn_,
-                                               ::flann::SearchParams(param_.kdtree_splits_));
-    else if (param_.distance_metric_ == 4)
-      lomdb->flann_index_hellinger_->knnSearch(query_desc, indices, distances, param_.knn_,
-                                               ::flann::SearchParams(param_.kdtree_splits_));
-    else
-      lomdb->flann_index_l1_->knnSearch(query_desc, indices, distances, param_.knn_,
-                                        ::flann::SearchParams(param_.kdtree_splits_));
-
-    if (distances[0][0] > param_.max_descriptor_distance_)
-      continue;
-
-    for (size_t i = 0; i < param_.knn_; i++) {
-      const typename LocalObjectModelDatabase::flann_model &f = lomdb->flann_models_[indices[0][i]];
-      float m_dist = param_.correspondence_distance_weight_ * distances[0][i];
-
-      typename std::map<std::string, LocalObjectModel::ConstPtr>::const_iterator it =
-          model_keypoints_.find(f.model_id_);
+      // typename std::map<std::string, LocalObjectModel::ConstPtr>::const_iterator it =
+      //    model_keypoints_.find(f.model_id_);
       //            const LocalObjectModel &m_kps = *(it->second);
 
       KeypointIndex m_idx = f.keypoint_id_ + model_keypoint_offset;
-      KeypointIndex s_idx = kp_indices[idx];
+      KeypointIndex s_idx = kp_indices[m.queryIdx];
       //            CHECK ( m_idx < m_kps.keypoints_->points.size() );
       //            CHECK ( kp_indices[idx] < scene_->points.size() );
 
@@ -621,18 +589,29 @@ void LocalFeatureMatcher<PointT>::featureMatching(const std::vector<KeypointInde
       }
     }
   }
-
-  delete[] indices.ptr();
-  delete[] distances.ptr();
-  delete[] query_desc.ptr();
 }
 
 template <typename PointT>
+void LocalFeatureMatcher<PointT>::removeNaNSignatures(cv::Mat &signatures,
+                                                      std::vector<KeypointIndex> &keypoint_indices) const {
+  size_t kept = 0;
+  for (int sig_id = 0; sig_id < signatures.rows; sig_id++) {
+    cv::Mat mask = cv::Mat(signatures.row(sig_id) != signatures.row(sig_id));
+    if (!cv::countNonZero(mask)) {
+      signatures.row(sig_id).copyTo(signatures.row(kept));
+      keypoint_indices[kept] = keypoint_indices[sig_id];
+      kept++;
+    }
+  }
+  keypoint_indices.resize(kept);
+  signatures.resize(kept);
+}
 
+template <typename PointT>
 void LocalFeatureMatcher<PointT>::featureEncoding(LocalEstimator<PointT> &est,
                                                   const std::vector<KeypointIndex> &keypoint_indices,
                                                   std::vector<KeypointIndex> &filtered_keypoint_indices,
-                                                  std::vector<FeatureDescriptor> &signatures) {
+                                                  cv::Mat &signatures) {
   {
     pcl::StopWatch t;
     est.setInputCloud(scene_);
@@ -641,78 +620,135 @@ void LocalFeatureMatcher<PointT>::featureEncoding(LocalEstimator<PointT> &est,
     est.compute(signatures);
     filtered_keypoint_indices = est.getKeypointIndices();
 
-    float time = t.getTime();
-    VLOG(1) << "Feature encoding for " << est.getFeatureDescriptorName() << " with id " << est.getUniqueId() << " took "
-            << time << " ms.";
+    CHECK((int)filtered_keypoint_indices.size() == signatures.rows);
+
+    VLOG(1) << "Feature encoding for " << est.getFeatureDescriptorName() << " (with id " << est.getUniqueId()
+            << ") took " << t.getTime() << " ms.";
   }
-
-  CHECK(filtered_keypoint_indices.size() == signatures.size());
-
-  // remove signatures (with corresponding keypoints) with nan elements
-  size_t kept = 0;
-  for (size_t sig_id = 0; sig_id < signatures.size(); sig_id++) {
-    bool keep_this = true;
-    for (size_t dim = 0; dim < signatures[sig_id].size(); dim++) {
-      if (std::isnan(signatures[sig_id][dim]) || !std::isfinite(signatures[sig_id][dim])) {
-        keep_this = false;
-        LOG(ERROR) << "DOES THIS REALLY HAPPEN?";
-        break;
-      }
-    }
-
-    if (keep_this) {
-      signatures[kept] = signatures[sig_id];
-      filtered_keypoint_indices[kept] = filtered_keypoint_indices[sig_id];
-      kept++;
-    }
-  }
-  filtered_keypoint_indices.resize(kept);
-  signatures.resize(kept);
+  removeNaNSignatures(signatures, filtered_keypoint_indices);
 }
 
 template <typename PointT>
 void LocalFeatureMatcher<PointT>::recognize() {
+  pcl::StopWatch t_total;
   corrs_.clear();
   keypoint_indices_.clear();
 
   const std::vector<KeypointIndex> keypoint_indices = extractKeypoints(indices_);
   std::vector<KeypointIndex> filtered_kp_indices;
 
-  if (!have_sift_estimator_)  // for SIFT we do not need to extract keypoints explicitly
-  {
+  if (needKeypointDetector()) {
     std::vector<int> inlier = getInlier(keypoint_indices);
     filtered_kp_indices = filterVector<KeypointIndex>(keypoint_indices, inlier);
   }
-
+  std::string feature_descriptor_name = "";
   for (size_t est_id = 0; est_id < estimators_.size(); est_id++) {
     typename LocalEstimator<PointT>::Ptr &est = estimators_[est_id];
-
+    feature_descriptor_name = estimators_[est_id]->getFeatureDescriptorName();
     std::vector<KeypointIndex> filtered_kp_indices_tmp;
-    std::vector<FeatureDescriptor> signatures_tmp;
+    cv::Mat signatures_tmp;
     featureEncoding(*est, filtered_kp_indices, filtered_kp_indices_tmp, signatures_tmp);
 
-    if (have_sift_estimator_)  // for SIFT we do not need to filter keypoints after detection (which includes kp
-                               // extraction)
+    if (est->detectsKeypoints())  // for SIFT we do not need to filter keypoints after detection (which includes kp
+                                  // extraction)
     {
       std::vector<int> inlier = getInlier(filtered_kp_indices_tmp);
       filtered_kp_indices_tmp = filterVector<KeypointIndex>(filtered_kp_indices_tmp, inlier);
-      signatures_tmp = filterVector<FeatureDescriptor>(signatures_tmp, inlier);
+      signatures_tmp = filterCvMat(signatures_tmp, inlier);
     }
 
     if (filtered_kp_indices_tmp.empty())
       continue;
 
-    LOG(INFO) << "Number of " << est->getFeatureDescriptorName() << " features: " << filtered_kp_indices_tmp.size();
-
     if (visualize_keypoints_)
       visualizeKeypoints(filtered_kp_indices_tmp, keypoint_indices);
 
-    featureMatching(filtered_kp_indices_tmp, signatures_tmp, lomdbs_[est_id]);
+    {
+      pcl::StopWatch t;
+      featureMatching(filtered_kp_indices_tmp, signatures_tmp, lomdbs_[est_id]);
+      VLOG(1) << "Matching " << filtered_kp_indices_tmp.size() << " " << est->getFeatureDescriptorName()
+              << " features (with id " << est->getUniqueId() << ") took " << t.getTime() << " ms.";
+    }
     indices_.clear();
   }
+  VLOG(1) << "Estimating the current feature (" << feature_descriptor_name << ") took " << t_total.getTime() << " ms.";
   indices_.clear();
+}
+
+void LocalRecognizerParameter::init(boost::program_options::options_description &desc,
+                                    const std::string &section_name) {
+  desc.add_options()((section_name + ".kdtree_splits").c_str(),
+                     po::value<int>(&kdtree_splits_)->default_value(kdtree_splits_), "kdtree splits");
+  desc.add_options()((section_name + ".kdtree_num_trees").c_str(),
+                     po::value<int>(&kdtree_num_trees_)->default_value(kdtree_num_trees_),
+                     "number of trees for FLANN approximate nearest neighbor search");
+  desc.add_options()((section_name + ".kdtree_search_checks").c_str(),
+                     po::value<int>(&kdtree_search_checks_)->default_value(kdtree_search_checks_),
+                     "The number of times the tree(s) in the index should be recursively traversed. A higher value for "
+                     "this parameter would give better search precision, but also take more time.");
+  desc.add_options()((section_name + ".lsh_index_table_number").c_str(),
+                     po::value<int>(&lsh_index_table_number_)->default_value(lsh_index_table_number_),
+                     "Number of hash tables to use, usually 10-30");
+  desc.add_options()((section_name + ".lsh_index_key_index").c_str(),
+                     po::value<int>(&lsh_index_key_index_)->default_value(lsh_index_key_index_),
+                     "key bits, usually 10-20");
+  desc.add_options()((section_name + ".lsh_index_multi_probe_level").c_str(),
+                     po::value<int>(&lsh_index_multi_probe_level_)->default_value(lsh_index_multi_probe_level_),
+                     "controls how neighboring buckets are searched. Recommended value is 2. If set to 0, the "
+                     "algorithm will degenerate into non-multiprobe LSH");
+  desc.add_options()((section_name + ".knn").c_str(), po::value<size_t>(&knn_)->default_value(knn_),
+                     "nearest neighbors to search for when checking feature descriptions of the scene");
+  desc.add_options()((section_name + ".max_descriptor_distance").c_str(),
+                     po::value<float>(&max_descriptor_distance_)->default_value(max_descriptor_distance_),
+                     "maximum distance of the descriptor in the respective norm (L1 or L2) to create a correspondence");
+  desc.add_options()((section_name + ".correspondence_distance_weight").c_str(),
+                     po::value<float>(&correspondence_distance_weight_)->default_value(correspondence_distance_weight_),
+                     "weight factor for correspondences distances. This is done to favour correspondences "
+                     "from different pipelines that are more reliable than other "
+                     "(SIFT and SHOT corr. simultaneously fed into CG)");
+  desc.add_options()(
+      (section_name + ".use_brute_force_matching").c_str(),
+      po::value<bool>(&use_brute_force_matching_)->default_value(use_brute_force_matching_),
+      "if true, runs brute force feature matching. Otherwise, uses FLANN approximate nearest neighbor search");
+  desc.add_options()((section_name + ".distance_metric").c_str(),
+                     po::value<DistanceMetric>(&distance_metric_)->default_value(distance_metric_),
+                     "defines the norm used for feature matching (L1 norm, L2 norm, ChiSquare, Hellinger, Hamming)");
+  desc.add_options()((section_name + ".max_keypoint_distance_z").c_str(),
+                     po::value<float>(&max_keypoint_distance_z_)->default_value(max_keypoint_distance_z_),
+                     "maximum distance of an extracted keypoint to be accepted");
+  desc.add_options()((section_name + ".filter_planar").c_str(),
+                     po::value<bool>(&filter_planar_)->default_value(filter_planar_),
+                     "Filter keypoints on a planar surface");
+  desc.add_options()((section_name + ".min_plane_size").c_str(),
+                     po::value<int>(&min_plane_size_)->default_value(min_plane_size_),
+                     "Minimum number of points for a plane to be checked if filter only points above table plane");
+  desc.add_options()((section_name + ".planar_support_radius").c_str(),
+                     po::value<float>(&planar_support_radius_)->default_value(planar_support_radius_),
+                     "Radius used to check keypoints for planarity.");
+  desc.add_options()(
+      (section_name + ".threshold_planar").c_str(),
+      po::value<float>(&threshold_planar_)->default_value(threshold_planar_),
+      "threshold ratio used for deciding if patch is planar. Ratio defined as largest eigenvalue to all others.");
+  desc.add_options()(
+      (section_name + ".filter_border_pts").c_str(),
+      po::value<int>(&filter_border_pts_)->default_value(filter_border_pts_),
+      "Filter keypoints at the boundary (value according to the edge types defined in "
+      "\"pcl::OrganizedEdgeBase (EDGELABEL_OCCLUDING  | EDGELABEL_OCCLUDED | EDGELABEL_NAN_BOUNDARY))\"");
+  desc.add_options()((section_name + ".boundary_width").c_str(),
+                     po::value<int>(&boundary_width_)->default_value(boundary_width_),
+                     "Width in pixel of the depth discontinuity");
+  desc.add_options()((section_name + ".required_viewpoint_change_deg").c_str(),
+                     po::value<float>(&required_viewpoint_change_deg_)->default_value(required_viewpoint_change_deg_),
+                     "required viewpoint change in degree for a new training view to be used for "
+                     "feature extraction. Training views will be sorted incrementally by their "
+                     "filename and if the camera pose of a training view is close to the camera "
+                     "pose of an already existing training view, it will be discarded for training.");
+  desc.add_options()(
+      (section_name + ".train_on_individual_views").c_str(),
+      po::value<bool>(&train_on_individual_views_)->default_value(train_on_individual_views_),
+      "if true, extracts features from each view of the object model. Otherwise will use the full 3d cloud");
 }
 
 // template class V4R_EXPORTS LocalFeatureMatcher<pcl::PointXYZ>;
 template class V4R_EXPORTS LocalFeatureMatcher<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

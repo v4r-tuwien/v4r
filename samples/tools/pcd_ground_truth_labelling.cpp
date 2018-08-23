@@ -329,7 +329,8 @@ void PcdGtAnnotator<PointT>::save_to_disk(const bf::path &path_bf) {
     if (visible_model_aligned->points.empty())
       continue;
 
-    pcl::io::savePCDFileBinary((path_bf / bf::path(model_id_[m_id] + ".pcd")).string(), *visible_model_aligned);
+    pcl::io::savePCDFileBinaryCompressed((path_bf / bf::path(model_id_[m_id] + ".pcd")).string(),
+                                         *visible_model_aligned);
 
     if (pixel_annotated_obj_in_first_view_.size() > m_id) {
       std::ofstream obj_indices_f((path_bf / bf::path(model_id_[m_id] + "_mask.txt")).string().c_str());
@@ -342,7 +343,7 @@ void PcdGtAnnotator<PointT>::save_to_disk(const bf::path &path_bf) {
   }
   //    vis.spin();
 }
-}
+}  // namespace v4r
 
 int main(int argc, char **argv) {
   srand(time(NULL));

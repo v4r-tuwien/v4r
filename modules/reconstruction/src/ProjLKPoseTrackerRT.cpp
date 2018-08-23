@@ -86,7 +86,7 @@ double ProjLKPoseTrackerRT::detect(const cv::Mat &image, const DataMatrix2D<Eige
 #endif
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -203,4 +203,4 @@ void ProjLKPoseTrackerRT::setTargetCameraParameter(const cv::Mat &_intrinsic, co
   }
   plk->setTargetCameraParameter(tgt_intrinsic, tgt_dist_coeffs);
 }
-}
+}  // namespace v4r

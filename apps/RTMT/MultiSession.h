@@ -49,12 +49,13 @@
 #define _MULTI_SESSION_H
 
 #ifndef Q_MOC_RUN
+#include <QMutex>
 #include <QObject>
+#include <QThread>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <v4r/registration/noise_model_based_cloud_integration.h>
-#include <QMutex>
-#include <QThread>
 #include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include "sensor.h"
@@ -76,13 +77,13 @@ class MultiSession : public QThread {
   void optimizeSequences();
   void addSequences(
       const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-      const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
+      const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
       const std::vector<std::vector<int>> &_object_indices,
       const Eigen::Matrix4f &_object_base_transform = Eigen::Matrix4f::Identity());
   const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &getCameras() {
     return cameras;
   }
-  const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &getClouds() const {
+  const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &getClouds() const {
     return clouds;
   }
   const std::vector<cv::Mat_<unsigned char>> &getMasks() {
@@ -103,7 +104,7 @@ class MultiSession : public QThread {
  signals:
   void printStatus(const std::string &_txt);
   void finishedAlignment(bool ok);
-  void update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
+  void update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
   void update_visualization();
 
  private:
@@ -113,7 +114,7 @@ class MultiSession : public QThread {
   ObjectModelling om_params;
 
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> cameras;
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
   std::vector<cv::Mat_<unsigned char>> masks;
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> output_poses;
 
@@ -133,7 +134,7 @@ class MultiSession : public QThread {
   double max_point_dist;
 
   pcl::PointCloud<pcl::Normal>::Ptr big_normals;
-  boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
+  std::shared_ptr<Sensor::AlignedPointXYZRGBVector> oc_cloud;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr octree_cloud;
   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr ncloud_filt;
 

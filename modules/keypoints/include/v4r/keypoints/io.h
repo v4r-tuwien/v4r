@@ -60,7 +60,7 @@ namespace v4r {
 namespace io {
 V4R_EXPORTS bool write(const std::string &file, const ArticulatedObject::Ptr &model);
 V4R_EXPORTS bool read(const std::string &file, ArticulatedObject::Ptr &model);
-}
-}
+}  // namespace io
+}  // namespace v4r
 
 #endif

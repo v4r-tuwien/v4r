@@ -222,11 +222,6 @@ void IOL::visualize() {
     vis_->addPointCloud(cloud_trans_filtered, rgb_handler1, cloud_name.str(),
                         vis_viewpoint_[view_id * num_subwindows + subwindow_id++]);
 
-    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr sv_trans(new pcl::PointCloud<pcl::PointXYZRGBA>());
-    pcl::transformPointCloud(*grph_[view_id].supervoxel_cloud_, *sv_trans, grph_[view_id].camera_pose_);
-    cloud_name << "_supervoxellized";
-    vis_->addPointCloud(sv_trans, cloud_name.str(), vis_viewpoint_[view_id * num_subwindows + subwindow_id++]);
-
     for (size_t step_id = 0; step_id < grph_[view_id].obj_mask_step_.size(); step_id++) {
       if (grph_[view_id].is_pre_labelled_ && step_id == 0)  // initial indices already shown in other subwindow
       {
@@ -249,18 +244,12 @@ void IOL::visualize() {
 void IOL::writeImagesToDisk(const std::string &path) {
   v4r::io::createDirIfNotExist(path);
   PCLOpenCVConverter<pcl::PointXYZRGB> pcl_opencv_converter;
-  PCLOpenCVConverter<pcl::PointXYZRGBA> pcl_opencv_converter2;
 
   for (size_t view_id = 0; view_id < grph_.size(); view_id++) {
     std::stringstream filename;
     filename << path << "/" << view_id << ".jpg";
     pcl_opencv_converter.setInputCloud(grph_[view_id].cloud_);
     cv::imwrite(filename.str(), pcl_opencv_converter.getRGBImage());
-
-    std::stringstream filename_sv;
-    filename_sv << path << "/" << view_id << "_sv.jpg";
-    pcl_opencv_converter2.setInputCloud(grph_[view_id].supervoxel_cloud_organized_);
-    cv::imwrite(filename_sv.str(), pcl_opencv_converter2.getRGBImage());
 
     std::stringstream filename_filtered;
     filename_filtered << path << "/" << view_id << "_filtered.jpg";
@@ -312,5 +301,5 @@ void IOL::writeImagesToDisk(const std::string &path) {
     }
   }
 }
-}
-}
+}  // namespace object_modelling
+}  // namespace v4r

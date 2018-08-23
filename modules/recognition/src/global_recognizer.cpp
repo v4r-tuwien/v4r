@@ -16,9 +16,54 @@
 #include <glog/logging.h>
 #include <omp.h>
 
+namespace po = boost::program_options;
 //#define _VISUALIZE_
 
 namespace v4r {
+
+void GlobalRecognizerParameter::init(boost::program_options::options_description &desc,
+                                     const std::string &section_name) {
+  desc.add_options()((section_name + ".check_elongations").c_str(),
+                     po::value<bool>(&check_elongations_)->default_value(check_elongations_),
+                     "if true, checks if the elongation of the segmented cluster fits approximately the "
+                     "elongation of the matched object hypothesis");
+  desc.add_options()((section_name + ".max_elongation_ratio").c_str(),
+                     po::value<float>(&max_elongation_ratio_)->default_value(max_elongation_ratio_),
+                     "if the elongation of the segment w.r.t. to the matched hypotheses is above this threshold, it "
+                     "will be rejected (used only if \"check_elongations\" is true.");
+  desc.add_options()(
+      (section_name + ".min_elongation_ratio").c_str(),
+      po::value<float>(&min_elongation_ratio_)->default_value(min_elongation_ratio_),
+      "if the elongation of the segment w.r.t. to the matched hypotheses is below this threshold, it "
+      "will be rejected (used only if \"check_elongations\" is true). Please take potential occlusion into account.");
+  desc.add_options()((section_name + ".use_table_plane_for_alignment").c_str(),
+                     po::value<bool>(&use_table_plane_for_alignment_)->default_value(use_table_plane_for_alignment_),
+                     "if true, aligns the matched object model such that the centroid corresponds to the centroid "
+                     "of the segmented cluster downprojected onto the found table plane. The z-axis corresponds to "
+                     "the normal axis of "
+                     "the table plane and the remaining axis build a orthornmal system. Rotation is then sampled in "
+                     "equidistant angles "
+                     "around the z-axis. ATTENTION: This assumes the models are in a coordinate system with the "
+                     "z-axis alinging with "
+                     "the typical upright position of the object.");
+  desc.add_options()(
+      (section_name + ".z_angle_sampling_density_degree").c_str(),
+      po::value<float>(&z_angle_sampling_density_degree_)->default_value(z_angle_sampling_density_degree_),
+      "if use_table_plane_for_alignment_, this value will generate object "
+      "hypotheses at each multiple of this value.");
+  desc.add_options()(
+      (section_name + ".required_viewpoint_change_deg").c_str(),
+      po::value<float>(&required_viewpoint_change_deg_)->default_value(required_viewpoint_change_deg_),
+      "required viewpoint change in degree for a new training view to be used for feature extraction. "
+      "Training views will be sorted incrementally by their filename and if the camera pose of a training view is "
+      "close to the camera pose of an already existing training view, it will be discarded for training.");
+  desc.add_options()((section_name + ".estimate_pose").c_str(),
+                     po::value<bool>(&estimate_pose_)->default_value(estimate_pose_),
+                     "if true, tries to estimate a coarse pose of the object based on the other parameters");
+  desc.add_options()((section_name + ".classify_instances").c_str(),
+                     po::value<bool>(&classify_instances_)->default_value(classify_instances_),
+                     "if true, classifier learns to distinguish between model instances instead of categories");
+}
 
 template <typename PointT>
 void GlobalRecognizer<PointT>::validate() const {
@@ -52,9 +97,8 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
     else
       label_name = m->class_;
 
-    if (!object_instances_to_load.empty() &&
-        std::find(object_instances_to_load.begin(), object_instances_to_load.end(), label_name) ==
-            object_instances_to_load.end()) {
+    if (!object_instances_to_load.empty() && std::find(object_instances_to_load.begin(), object_instances_to_load.end(),
+                                                       label_name) == object_instances_to_load.end()) {
       LOG(INFO) << "Skipping object " << m->id_ << " because it is not in the lists of objects to load.";
       continue;
     }
@@ -85,20 +129,13 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
 
     GlobalObjectModel::Ptr gom(new GlobalObjectModel);
 
-    bf::path trained_path_feat = trained_dir;  // directory where feature descriptors and keypoints are stored
-    trained_path_feat /= m->class_;
-    trained_path_feat /= m->id_;
-    trained_path_feat /= getFeatureName();
-
-    bf::path signatures_path = trained_path_feat;
-    signatures_path /= "signatures.dat";
-
-    if (retrain || !io::existsFile(signatures_path.string())) {
+    bf::path signatures_path = trained_dir / m->class_ / m->id_ / getFeatureName() / "signatures.dat";
+    if (retrain || !io::existsFile(signatures_path)) {
       const auto training_views = m->getTrainingViews();
 
       for (const auto &tv : training_views) {
         std::string txt = "Training " + estimator_->getFeatureDescriptorName() + " on view " + m->class_ + "/" +
-                          m->id_ + "/" + tv->filename_;
+                          m->id_ + "/" + tv->filename_.string();
         pcl::ScopeTime t(txt.c_str());
 
         Eigen::Matrix4f pose;
@@ -112,7 +149,7 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
           pose = tv->pose_;
         } else {
           typename pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
-          pcl::io::loadPCDFile(tv->filename_, *cloud);
+          pcl::io::loadPCDFile(tv->filename_.string(), *cloud);
           scene_ = cloud;
 
           // read pose from file (if exists)
@@ -124,7 +161,7 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
           }
 
           // read object mask from file
-          std::ifstream mi_f(tv->indices_filename_);
+          std::ifstream mi_f(tv->indices_filename_.string());
           int idx;
           while (mi_f >> idx)
             indices.push_back(idx);
@@ -251,13 +288,13 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
       io::createDirForFileIfNotExist(signatures_path.string());
       ofstream os(signatures_path.string(), ios::binary);
       boost::archive::binary_oarchive oar(os);
-      oar << gom;
+      oar << *gom;
       os.close();
     }
 
     ifstream is(signatures_path.string(), ios::binary);
     boost::archive::binary_iarchive iar(is);
-    iar >> gom;
+    iar >> *gom;
     is.close();
 
     gomdb_.global_models_[m->id_] = gom;
@@ -287,7 +324,7 @@ void GlobalRecognizer<PointT>::doInit(const bf::path &trained_dir, bool retrain,
 }
 
 template <typename PointT>
-void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
+void GlobalRecognizer<PointT>::featureEncodingAndMatching(const std::vector<std::string> &model_ids_to_search) {
   Eigen::MatrixXf query_sig;
 
   estimator_->setInputCloud(scene_);
@@ -310,18 +347,26 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
 
   if (!param_.estimate_pose_) {
     obj_hyps_filtered_.resize(predicted_label.rows() * predicted_label.cols());
+    size_t kept = 0;
     for (int query_id = 0; query_id < predicted_label.rows(); query_id++) {
       for (int k = 0; k < predicted_label.cols(); k++) {
         int lbl = predicted_label(query_id, k);
         const std::string &model_name = id_to_model_name_[lbl];
         const std::string &class_name = "";
 
-        typename ObjectHypothesis::Ptr oh(new ObjectHypothesis);
+        ObjectHypothesis::Ptr oh(new ObjectHypothesis);
         oh->model_id_ = model_name;
         oh->class_id_ = class_name;
-        obj_hyps_filtered_[query_id * predicted_label.cols() + k] = oh;
+
+        if (!model_ids_to_search.empty() && std::find(model_ids_to_search.begin(), model_ids_to_search.end(),
+                                                      model_name) == model_ids_to_search.end()) {
+          continue;
+        }
+
+        obj_hyps_filtered_[kept++] = oh;
       }
     }
+    obj_hyps_filtered_.resize(kept);
     return;
   } else if (!descriptor_transforms.empty())  // this will be true for OURCVFH - we can estimate the object pose from
                                               // the computed SGURF (semi-global unique reference frame)
@@ -331,6 +376,7 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
     classifier_->getTrainingSampleIDSforPredictions(knn_indices, knn_distances);
 
     obj_hyps_filtered_.resize(predicted_label.rows() * predicted_label.cols());
+    size_t kept = 0;
     for (int query_id = 0; query_id < predicted_label.rows(); query_id++) {
       for (int k = 0; k < predicted_label.cols(); k++) {
         const GlobalObjectModelDatabase::flann_model &f = gomdb_.flann_models_[knn_indices(query_id, k)];
@@ -340,14 +386,19 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
             << "could not find model " << f.instance_name_
             << ". There was something wrong with the model initialiazation. Maybe retraining the database helps.";
 
+        if (!model_ids_to_search.empty() && std::find(model_ids_to_search.begin(), model_ids_to_search.end(),
+                                                      f.instance_name_) == model_ids_to_search.end()) {
+          continue;
+        }
+
         const GlobalObjectModel::ConstPtr &gom = it->second;
 
-        typename ObjectHypothesis::Ptr oh(new ObjectHypothesis);
+        ObjectHypothesis::Ptr oh(new ObjectHypothesis);
         oh->model_id_ = f.instance_name_;
         oh->class_id_ = f.class_name_;
         oh->transform_ = 1.f * descriptor_transforms[query_id].inverse() * gom->descriptor_transforms_[view_id] *
                          gom->model_poses_[view_id].inverse();
-        obj_hyps_filtered_[query_id * predicted_label.cols() + k] = oh;
+        obj_hyps_filtered_[kept++] = oh;
 
 #ifdef _VISUALIZE_
         pcl::visualization::PCLVisualizer vis;
@@ -391,6 +442,7 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
 #endif
       }
     }
+    obj_hyps_filtered_.resize(kept);
     return;
   } else  // estimate pose using some prior assumptions
   {
@@ -447,6 +499,11 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
     for (int query_id = 0; query_id < predicted_label.rows(); query_id++) {
       for (int k = 0; k < predicted_label.cols(); k++) {
         int lbl = predicted_label(query_id, k);
+
+        if (!model_ids_to_search.empty() && std::find(model_ids_to_search.begin(), model_ids_to_search.end(),
+                                                      id_to_model_name_[lbl]) == model_ids_to_search.end()) {
+          continue;
+        }
 
         std::string model_name = "", class_name = "";
         if (param_.classify_instances_)
@@ -627,7 +684,7 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
               const Eigen::Matrix4f alignment_tf =
                   align_cluster.inverse() * rot_tmp * tf_om_shift2origin2 * tf_om_shift2origin;
 
-              typename ObjectHypothesis::Ptr h(new ObjectHypothesis);
+              ObjectHypothesis::Ptr h(new ObjectHypothesis);
               h->transform_ = alignment_tf;  // tf_trans * tf_rot  * rot_tmp;
               h->confidence_ = 0.f;
               h->model_id_ = model_name;
@@ -671,7 +728,7 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
           Eigen::Matrix4f tf_trans = Eigen::Matrix4f::Identity();
           tf_trans.block<3, 1>(0, 3) = cluster_->centroid_.topRows(3);
 
-          // there are four possibilites (due to sign ambiguity of eigenvector)
+          // there are four possibilities (due to sign ambiguity of eigenvector)
           Eigen::Matrix3f eigenBasis, sign_operator;
           Eigen::Matrix3f identity = Eigen::Matrix3f::Identity();
 
@@ -738,16 +795,16 @@ void GlobalRecognizer<PointT>::featureEncodingAndMatching() {
 }
 
 template <typename PointT>
-void GlobalRecognizer<PointT>::recognize() {
+void GlobalRecognizer<PointT>::recognize(const std::vector<std::string> &model_ids_to_search) {
   CHECK(!param_.estimate_pose_ || (param_.estimate_pose_ && cluster_))
       << "Cluster that needs to be classified is not set!";
 
   obj_hyps_filtered_.clear();
   all_obj_hyps_.clear();
-  featureEncodingAndMatching();
+  featureEncodingAndMatching(model_ids_to_search);
   cluster_.reset();
 }
 
 template class V4R_EXPORTS GlobalRecognizer<pcl::PointXYZ>;
 template class V4R_EXPORTS GlobalRecognizer<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

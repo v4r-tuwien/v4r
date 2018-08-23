@@ -22,7 +22,6 @@
 #include <opencv2/core/core.hpp>
 #include <v4r/camera_tracking_and_mapping/Surfel.hh>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/keypoints/impl/triple.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/video/tracking.hpp"
 
@@ -51,6 +50,8 @@ class V4R_EXPORTS TSFilterCloudsXYZRGB {
     : batch_size_clouds(15), cam_distance_select_frame(0.), angle_select_frame(0.), inv_depth_cut_off(0.01), type(3) {}
   };
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
  private:
   Parameter param;
 
@@ -66,7 +67,15 @@ class V4R_EXPORTS TSFilterCloudsXYZRGB {
   Eigen::Matrix4f sf_pose;
   v4r::DataMatrix2D<v4r::Surfel> sf_cloud;
   int sf_nb_frames;
-  std::list<v4r::triple<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Eigen::Matrix4f, double>> frames;
+
+  struct Frame {
+    double timestamp;
+    Eigen::Matrix4f pose;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+  };
+
+  using FrameList = std::list<Frame, Eigen::aligned_allocator<Frame>>;
+  FrameList frames;
 
   pcl::PointCloud<pcl::PointXYZRGB> tmp_cloud;
   cv::Mat_<float> depth;
@@ -147,8 +156,8 @@ class V4R_EXPORTS TSFilterCloudsXYZRGB {
   void setCameraParameter(const cv::Mat &_intrinsic);
   void setParameter(const Parameter &p);
 
-  typedef boost::shared_ptr<::v4r::TSFilterCloudsXYZRGB> Ptr;
-  typedef boost::shared_ptr<::v4r::TSFilterCloudsXYZRGB const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TSFilterCloudsXYZRGB> Ptr;
+  typedef std::shared_ptr<::v4r::TSFilterCloudsXYZRGB const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -239,6 +248,6 @@ inline bool TSFilterCloudsXYZRGB::getInterpolatedRGB(const pcl::PointCloud<pcl::
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

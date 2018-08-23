@@ -50,11 +50,11 @@ inline float frand() {
 }
 
 inline float expPdf(float lambda) {
-  float dum;
+  float dumb;
   do
-    dum = frand();
-  while (dum == 0.);
-  return -log(dum) / lambda;
+    dumb = frand();
+  while (dumb == 0.);
+  return -log(dumb) / lambda;
 }
 
 /**
@@ -100,6 +100,6 @@ inline void getExpRandIdx(int size, int num, std::vector<int> &idx) {
   }
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -60,8 +60,6 @@ void StructuralRelations::init() {
   }
 
   std::vector<std::vector<Relation>> relations;
-  //   v4r::Relation rel;
-  //   rel.valid = false;
   relations.resize(surfaces.size());
 
 #pragma omp parallel for
@@ -74,9 +72,7 @@ void StructuralRelations::init() {
       r.type = STRUCTURAL_RELATIONS;  // structural level = 1
       r.id_0 = i;
       r.id_1 = j;
-
       r.valid = false;
-      //       surfaceRelations.push_back(r);
       relations.at(i).at(j) = r;
     }
   }
@@ -86,8 +82,6 @@ void StructuralRelations::init() {
   for (unsigned int i = 0; i < surfaces.size(); i++) {
     for (unsigned int j = i + 1; j < surfaces.size(); j++) {
       surfaceRelations.push_back(relations.at(i).at(j));
-      //       printf("r_st_l: [%u][%u]: ", relations.at(i).at(j).id_0, relations.at(i).at(j).id_1);
-      //       printf("\n");
     }
   }
 
@@ -95,16 +89,15 @@ void StructuralRelations::init() {
   pcl::copyPointCloud(*cloud, *cloud_model);
 
   // for the texture
-  // v4r::PointCloudXYZRGB2RGB(cloud,matImage);
   v4r::pointCloud_2_rgb(matImage, cloud, cloud->width, cloud->height);
 
   double lowThreshold = 5.;
   double highThreshold = 140.;
   int kernel_size = 3;
 
-  cv::cvtColor(matImage, gray_image, CV_BGR2GRAY);
+  cv::cvtColor(matImage, gray_image, cv::COLOR_BGR2GRAY);
   //
-  cv::cvtColor(matImage, gray_image2, CV_RGB2GRAY);
+  cv::cvtColor(matImage, gray_image2, cv::COLOR_RGB2GRAY);
   cv::blur(gray_image, edges, cv::Size(3, 3));
   cv::Canny(edges, edges, lowThreshold, highThreshold, kernel_size);
 
@@ -165,12 +158,6 @@ void StructuralRelations::setSurfaces(const std::vector<SurfaceModel::Ptr> _surf
   surfaces = _surfaces;
   have_surfaces = true;
 }
-
-// void StructuralRelations::setRelations(const std::vector<Relation> _surfaceRelations)
-// {
-//   surfaceRelations = _surfaceRelations;
-//   have_relations = true;
-// }
 
 void StructuralRelations::setNeighbours2D(
     const std::map<borderIdentification, std::vector<neighboringPair>> _ngbr2D_map) {
@@ -271,11 +258,6 @@ void StructuralRelations::compute() {
   if (usedRelations & R_GS) {
     Gabor::Ptr permanentGabor2 = permanentGabor;
 
-//     Gabor::Ptr permanentGabor;
-//     permanentGabor.reset( new Gabor() );
-//     permanentGabor->setInputImage(gray_image2); //gray_image
-//     permanentGabor->computeGaborFilters();
-
 #pragma omp parallel for shared(permanentGabor2)
     for (unsigned int i = 0; i < surfaces.size(); i++) {
       if ((!(surfaces.at(i)->selected)) || (!(surfaces.at(i)->isNew))) {
@@ -318,7 +300,6 @@ void StructuralRelations::compute() {
     }
 
     if ((!(surfaces.at(p0)->isNew)) && (!(surfaces.at(p1)->isNew))) {
-      //       std::cerr << "Attention! " << p0 << " and " << p1 << std::endl;
       if (surfaceRelations.at(i).valid) {
 #pragma omp critical
         { validRelations.push_back(surfaceRelations.at(i)); }
@@ -430,27 +411,6 @@ void StructuralRelations::compute() {
       { validRelations.push_back(r); }
     }
   }
-
-  //   std::vector<Relation> newSurfaceRelations;
-  //   for(int i = 0; i < surfaceRelations.size(); ++i)
-  //   {
-  //     if(surfaceRelations.at(i).valid)
-  //     {
-  //       newSurfaceRelations.push_back(surfaceRelations.at(i));
-  //     }
-  //   }
-  //
-  //   surfaceRelations = newSurfaceRelations;
-
-  // copy relations to view
-  for (unsigned int i = 0; i < validRelations.size(); i++) {
-    if (validRelations.at(i).valid) {
-      printf("r_st_l: [%u][%u]: ", validRelations.at(i).id_0, validRelations.at(i).id_1);
-      for (unsigned int ridx = 0; ridx < validRelations.at(i).rel_value.size(); ridx++)
-        printf("%4.3f ", validRelations.at(i).rel_value[ridx]);
-      printf("\n");
-    }
-  }
 }
 
-}  // end surface models
+}  // namespace v4r

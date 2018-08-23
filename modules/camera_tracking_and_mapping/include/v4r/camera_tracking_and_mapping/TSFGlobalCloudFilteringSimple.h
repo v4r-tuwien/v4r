@@ -131,8 +131,8 @@ class V4R_EXPORTS TSFGlobalCloudFilteringSimple {
   inline void getInterpolatedRGB(const v4r::DataMatrix2D<v4r::Surfel> &cloud, const cv::Point2f &pt, unsigned char &r,
                                  unsigned char &g, unsigned char &b);
 
-  typedef boost::shared_ptr<::v4r::TSFGlobalCloudFilteringSimple> Ptr;
-  typedef boost::shared_ptr<::v4r::TSFGlobalCloudFilteringSimple const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TSFGlobalCloudFilteringSimple> Ptr;
+  typedef std::shared_ptr<::v4r::TSFGlobalCloudFilteringSimple const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -166,6 +166,6 @@ inline void TSFGlobalCloudFilteringSimple::getInterpolatedRGB(const v4r::DataMat
   }
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

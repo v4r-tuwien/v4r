@@ -58,24 +58,6 @@ namespace Ui {
 class Params;
 }
 
-class RGBDCameraParameter {
- public:
-  double f[2];
-  double c[2];
-  int width, height;
-  double range[2];
-  RGBDCameraParameter() {
-    f[0] = 525;
-    f[1] = 525;
-    c[0] = 320;
-    c[1] = 240;
-    width = 640;
-    height = 480;
-    range[0] = 0.1;
-    range[1] = 3.14;
-  }
-};
-
 /**
  * @brief The Params class
  */
@@ -90,11 +72,11 @@ class Params : public QDialog {
   ~Params();
 
   void apply_params();
-  void apply_cam_params();
   std::string get_rgbd_path();
   std::string get_object_name();
   std::string getVGNfile();
   std::string getCRFfile();
+  std::string getStreamURI();
   void set_object_name(const QString &txt);
   bool createPointCloud();
   bool createViews();
@@ -117,7 +99,6 @@ class Params : public QDialog {
 
  signals:
 
-  void cam_params_changed(const RGBDCameraParameter &cam);
   void rgbd_path_changed();
   void set_roi_params(const double &_bbox_scale_xy, const double &_bbox_scale_height, const double &_seg_offs);
   void vignetting_calibration_file_changed();
@@ -129,12 +110,8 @@ class Params : public QDialog {
   void on_pushFindVGNfile_pressed();
   void on_pushFindCRFfile_pressed();
 
-  void on_applyButton_clicked();
-
  private:
   Ui::Params *ui;
-
-  RGBDCameraParameter cam_params;
 
   QString settings_file;
 };

@@ -143,13 +143,13 @@ class V4R_EXPORTS ZAdaptiveNormalsPCL : public NormalEstimator<PointT> {
 
   ~ZAdaptiveNormalsPCL() {}
 
-  pcl::PointCloud<pcl::Normal>::Ptr compute();
+  pcl::PointCloud<pcl::Normal>::Ptr compute() override;
 
-  int getNormalEstimatorType() const {
+  NormalEstimatorType getNormalEstimatorType() const override {
     return NormalEstimatorType::Z_ADAPTIVE;
   }
 
-  typedef boost::shared_ptr<ZAdaptiveNormalsPCL> Ptr;
-  typedef boost::shared_ptr<ZAdaptiveNormalsPCL const> ConstPtr;
+  typedef std::shared_ptr<ZAdaptiveNormalsPCL> Ptr;
+  typedef std::shared_ptr<ZAdaptiveNormalsPCL const> ConstPtr;
 };
-}
+}  // namespace v4r

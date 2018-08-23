@@ -112,6 +112,6 @@ class ViewportChecker {
  private:
   std::vector<ViewVolume<PointType>> volumes;
 };
-}
+}  // namespace v4r
 
 #endif /* VIEWPORT_CHECKER_HPP_ */

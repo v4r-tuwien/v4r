@@ -7,18 +7,6 @@
 
 namespace v4r {
 
-void LocalRecognitionPipelineParameter::load(const bf::path &filename) {
-  CHECK(v4r::io::existsFile(filename)) << "Given config file " << filename.string()
-                                       << " does not exist! Current working directory is "
-                                       << boost::filesystem::current_path().string() + ".";
-
-  VLOG(1) << "Loading parameters from file " << filename.string();
-  std::ifstream ifs(filename.string());
-  boost::archive::xml_iarchive ia(ifs);
-  ia >> boost::serialization::make_nvp("LocalRecognitionPipelineParameter", *this);
-  ifs.close();
-}
-
 template <typename PointT>
 void LocalRecognitionPipeline<PointT>::doInit(const bf::path &trained_dir, bool force_retrain,
                                               const std::vector<std::string> &object_instances_to_load) {
@@ -59,7 +47,7 @@ void LocalRecognitionPipeline<PointT>::doInit(const bf::path &trained_dir, bool 
 }
 
 template <typename PointT>
-void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
+void LocalRecognitionPipeline<PointT>::correspondenceGrouping(const std::vector<std::string> &model_ids_to_search) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::copyPointCloud(*scene_, *scene_cloud_xyz);
 
@@ -67,6 +55,12 @@ void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
   typename std::map<std::string, LocalObjectHypothesis<PointT>>::const_iterator it;
   for (it = local_obj_hypotheses_.begin(); it != local_obj_hypotheses_.end(); ++it) {
     const std::string &model_id = it->first;
+
+    if (!model_ids_to_search.empty() &&
+        std::find(model_ids_to_search.begin(), model_ids_to_search.end(), model_id) == model_ids_to_search.end()) {
+      continue;
+    }
+
     const LocalObjectHypothesis<PointT> &loh = it->second;
 
     pcl::StopWatch t;
@@ -88,7 +82,7 @@ void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
     // Graph-based correspondence grouping requires normals but interface does not exist in base class - so need to try
     // pointer casting
     typename GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gcg_algorithm =
-        boost::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
+        std::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
     if (gcg_algorithm)
       gcg_algorithm->setInputAndSceneNormals(model_kp_normals, scene_normals_);
 
@@ -162,7 +156,7 @@ void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
 #pragma omp critical
       {
         for (size_t jj = 0; jj < merged_transforms.size(); jj++) {
-          typename ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
+          ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
           new_oh->model_id_ = model_id;
           new_oh->class_id_ = "";
           new_oh->transform_ = merged_transforms[jj];
@@ -181,7 +175,7 @@ void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
 #pragma omp critical
       {
         for (size_t jj = 0; jj < new_transforms.size(); jj++) {
-          typename ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
+          ObjectHypothesis::Ptr new_oh(new ObjectHypothesis);
           new_oh->model_id_ = model_id;
           new_oh->class_id_ = "";
           new_oh->transform_ = new_transforms[jj];
@@ -196,14 +190,13 @@ void LocalRecognitionPipeline<PointT>::correspondenceGrouping() {
       }
     }
 
-    float time = t.getTime();
     VLOG(1) << "Correspondence grouping for " << model_id << " ( " << loh.model_scene_corresp_->size() << ") took "
-            << time << " ms.";
+            << t.getTime() << " ms.";
   }
 }
 
 template <typename PointT>
-void LocalRecognitionPipeline<PointT>::do_recognize() {
+void LocalRecognitionPipeline<PointT>::do_recognize(const std::vector<std::string> &model_ids_to_search) {
   CHECK(!generate_hypotheses_ || cg_algorithm_) << "Correspondence grouping algorithm not defined!";
   local_obj_hypotheses_.clear();
 
@@ -221,6 +214,12 @@ void LocalRecognitionPipeline<PointT>::do_recognize() {
 
     for (auto &oh : local_hypotheses) {
       const std::string &model_id = oh.first;
+
+      if (!model_ids_to_search.empty() &&
+          std::find(model_ids_to_search.begin(), model_ids_to_search.end(), model_id) == model_ids_to_search.end()) {
+        continue;
+      }
+
       LocalObjectHypothesis<PointT> &loh = oh.second;
 
       pcl::Correspondences new_corrs = *loh.model_scene_corresp_;
@@ -239,7 +238,7 @@ void LocalRecognitionPipeline<PointT>::do_recognize() {
         for (size_t new_corr_id = 0; new_corr_id < new_corrs.size();
              new_corr_id++)  // add appropriate offset to correspondence index of the model keypoints
         {
-          pcl::Correspondence &new_c = new_corrs[new_corr_id];
+          const pcl::Correspondence &new_c = new_corrs[new_corr_id];
 
           //                    CHECK( new_c.index_match < (int) scene_->points.size() && new_c.index_match >= 0 );
           //                    CHECK( new_c.index_match < (int) scene_normals_->points.size() && new_c.index_match >= 0
@@ -256,7 +255,7 @@ void LocalRecognitionPipeline<PointT>::do_recognize() {
 
           bool is_redundant = false;
           for (size_t old_corr_id = 0; old_corr_id < kept; old_corr_id++) {
-            pcl::Correspondence &exist_c = new_corrs[old_corr_id];
+            const pcl::Correspondence &exist_c = new_corrs[old_corr_id];
 
             //                        CHECK( exist_c.index_match < (int) scene_->points.size() && exist_c.index_match >=
             //                        0 );
@@ -337,8 +336,8 @@ void LocalRecognitionPipeline<PointT>::do_recognize() {
   }
 
   if (generate_hypotheses_)
-    correspondenceGrouping();
+    correspondenceGrouping(model_ids_to_search);
 }
 
 template class V4R_EXPORTS LocalRecognitionPipeline<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

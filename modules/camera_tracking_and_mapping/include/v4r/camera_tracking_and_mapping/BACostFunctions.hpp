@@ -35,6 +35,7 @@
 
 #include <ceres/rotation.h>
 #include <Eigen/Dense>
+#include <iostream>
 #include <v4r/common/impl/Vector.hpp>
 #include <v4r/keypoints/impl/invPose.hpp>
 
@@ -754,6 +755,6 @@ struct PointToPlaneErrorGlobalPoseDeltaPoseCamViewDataOptiPt1 {
   const Eigen::Vector3d n0;
   const double error_weight;
 };
-}
+}  // namespace v4r
 
 #endif

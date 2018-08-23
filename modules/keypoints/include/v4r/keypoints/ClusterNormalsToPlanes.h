@@ -55,7 +55,6 @@
 #include <queue>
 #include <set>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 #include "v4r/keypoints/PlaneEstimationRANSAC.h"
 
@@ -127,8 +126,8 @@ class V4R_EXPORTS ClusterNormalsToPlanes {
     /** Plane **/
     Plane(bool _is_plane = false) : is_plane(_is_plane) {}
     ~Plane() {}
-    typedef SmartPtr<::v4r::ClusterNormalsToPlanes::Plane> Ptr;
-    typedef SmartPtr<::v4r::ClusterNormalsToPlanes::Plane const> ConstPtr;
+    typedef std::shared_ptr<::v4r::ClusterNormalsToPlanes::Plane> Ptr;
+    typedef std::shared_ptr<::v4r::ClusterNormalsToPlanes::Plane const> ConstPtr;
   };
 
  private:
@@ -167,8 +166,8 @@ class V4R_EXPORTS ClusterNormalsToPlanes {
   void compute(const v4r::DataMatrix2D<Eigen::Vector3f> &cloud, const v4r::DataMatrix2D<Eigen::Vector3f> &normals,
                int x, int y, Plane &plane);
 
-  typedef SmartPtr<::v4r::ClusterNormalsToPlanes> Ptr;
-  typedef SmartPtr<::v4r::ClusterNormalsToPlanes const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ClusterNormalsToPlanes> Ptr;
+  typedef std::shared_ptr<::v4r::ClusterNormalsToPlanes const> ConstPtr;
 };
 
 /**
@@ -181,6 +180,6 @@ inline bool ClusterNormalsToPlanes::isnan(const Eigen::Vector3f &pt) {
     return true;
   return false;
 }
-}
+}  // namespace v4r
 
 #endif

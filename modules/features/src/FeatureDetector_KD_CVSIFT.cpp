@@ -51,54 +51,44 @@ namespace v4r {
 
 using namespace std;
 
-/************************************************************************************
- * Constructor/Destructor
- */
-FeatureDetector_KD_CVSIFT::FeatureDetector_KD_CVSIFT(const Parameter &_p) : FeatureDetector(KD_CVSIFT), param(_p) {
+FeatureDetector_KD_CVSIFT::FeatureDetector_KD_CVSIFT(const Parameter &_p)
+: FeatureDetector(FeatureDetector::Type::KD_CVSIFT), param(_p) {
+  descr_name_ = "sift_opencv";
+#if CV_MAJOR_VERSION < 3
   sift = new cv::SIFT(_p.nfeatures, _p.nOctaveLayers, _p.contrastThreshold, _p.edgeThreshold, _p.sigma);
+#else
+  sift = cv::xfeatures2d::SIFT::create();
+#endif
 }
 
-FeatureDetector_KD_CVSIFT::~FeatureDetector_KD_CVSIFT() {}
-
-/***************************************************************************************/
-
-/**
- * detect keypoints and descriptors
- * descriptors is a cv::Mat_<float>
- */
-void FeatureDetector_KD_CVSIFT::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+void FeatureDetector_KD_CVSIFT::detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                                 cv::Mat &descriptors, const cv::Mat &object_mask) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
-  sift->detect(im_gray, keys);
-
-  sift->compute(im_gray, keys, descriptors);
+  sift->detectAndCompute(im_gray_, object_mask, keys, descriptors);
+  computeKeypointIndices(im_gray_, keys);
 }
 
-/**
- * detect keypoints
- */
-void FeatureDetector_KD_CVSIFT::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys) {
+void FeatureDetector_KD_CVSIFT::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                       const cv::Mat &object_mask) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
-  sift->detect(im_gray, keys);
+  sift->detect(im_gray_, keys, object_mask);
+  computeKeypointIndices(im_gray_, keys);
 }
 
-/**
- * extract descriptors
- * descriptors is a cv::Mat_<float>
- */
-void FeatureDetector_KD_CVSIFT::extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+void FeatureDetector_KD_CVSIFT::compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
-  sift->compute(im_gray, keys, descriptors);
+  sift->compute(im_gray_, keys, descriptors);
 }
-}
+}  // namespace v4r

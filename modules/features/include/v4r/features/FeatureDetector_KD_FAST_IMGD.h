@@ -39,14 +39,13 @@
 
 /**
  * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
+ * @author Johann Prankl (prankl@acin.tuwien.ac.at), Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
  */
 
-#ifndef KP_KEYPOINT_DETECTOR_ORB_IMGDESC_HH
-#define KP_KEYPOINT_DETECTOR_ORB_IMGDESC_HH
+#pragma once
 
 #include <v4r/features/ComputeImGradientDescriptors.h>
 #include <v4r/features/FeatureDetector.h>
@@ -75,13 +74,14 @@ class V4R_EXPORTS FeatureDetector_KD_FAST_IMGD : public FeatureDetector {
   };
 
  private:
+  using FeatureDetector::descr_name_;
   Parameter param;
 
   const static int PATCH_SIZE = 15;
 
   int tile_size_w, tile_size_h;
 
-  cv::Mat_<unsigned char> im_gray;
+  cv::Mat_<unsigned char> im_gray_;
 
   std::vector<cv::Point2f> pts;
 
@@ -96,12 +96,14 @@ class V4R_EXPORTS FeatureDetector_KD_FAST_IMGD : public FeatureDetector {
   FeatureDetector_KD_FAST_IMGD(const Parameter &_p = Parameter());
   ~FeatureDetector_KD_FAST_IMGD();
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys);
-  virtual void extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
+  void detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors,
+                        const cv::Mat &object_mask = cv::Mat()) override final;
+  void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+              const cv::Mat &object_mask = cv::Mat()) override final;
+  void compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) override final;
 
-  typedef SmartPtr<::v4r::FeatureDetector_KD_FAST_IMGD> Ptr;
-  typedef SmartPtr<::v4r::FeatureDetector_KD_FAST_IMGD const> ConstPtr;
+  typedef std::shared_ptr<FeatureDetector_KD_FAST_IMGD> Ptr;
+  typedef std::shared_ptr<FeatureDetector_KD_FAST_IMGD const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -134,6 +136,4 @@ inline void FeatureDetector_KD_FAST_IMGD::getExpandedRect(int u, int v, int rows
   rect = cv::Rect(x1, y1, x2 - x1, y2 - y1);
 }
 
-}  //--END--
-
-#endif
+}  // namespace v4r

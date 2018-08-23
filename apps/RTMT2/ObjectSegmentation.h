@@ -52,11 +52,11 @@
 #include <QMutex>
 #include <QObject>
 #include <QThread>
+
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <v4r/surface_texturing/OdmTexturing.h>
 #include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
@@ -87,7 +87,9 @@ class ObjectSegmentation : public QThread {
   void stop();
   bool isRunning();
 
-  void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
+  /// Set camera intrinsics and distortion coefficients.
+  void setCameraParameters(const v4r::Intrinsics &intrinsics, const cv::Mat &dist_coeffs);
+
   void setData(const std::vector<v4r::TSFFrame::Ptr> &_map_frames, const Eigen::Matrix4f &_base_transform,
                const Eigen::Vector3f &_bb_min, const Eigen::Vector3f &_bb_max);
   void setDirectories(const std::string &_folder, const std::string &_modelname);
@@ -131,6 +133,8 @@ class ObjectSegmentation : public QThread {
   void setCRFfile(const std::string &file) {
     path_to_crf_file = file;
   }
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  public slots:
   void set_roi_params(const double &_bbox_scale_xy, const double &_bbox_scale_height, const double &_seg_offs);
@@ -189,7 +193,7 @@ class ObjectSegmentation : public QThread {
   std::string folder, model_name;
   std::string path_to_crf_file;
 
-  RGBDCameraParameter cam_params;
+  v4r::Intrinsics cam_params;
   v4r::TSFOptimizeBundle ba;
   v4r::TSFOptimizeBundle::Parameter ba_param;
   CreateTrackingModel tm;

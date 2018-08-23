@@ -40,7 +40,6 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -86,8 +85,8 @@ class V4R_EXPORTS DataMatrix2D : public DataContainer {
   static void read(const std::string &filename, DataMatrix2D<T> &mat);
   static void read(std::ifstream &in, DataMatrix2D<T> &mat);
 
-  typedef SmartPtr<::v4r::DataMatrix2D<T>> Ptr;
-  typedef SmartPtr<::v4r::DataMatrix2D<T> const> ConstPtr;
+  typedef std::shared_ptr<::v4r::DataMatrix2D<T>> Ptr;
+  typedef std::shared_ptr<::v4r::DataMatrix2D<T> const> ConstPtr;
 };
 
 /**
@@ -104,8 +103,8 @@ class V4R_EXPORTS DataMatrix2Df : public DataMatrix2D<float> {
   virtual inline void setTo(const float &d);
   virtual inline void setZero();
 
-  typedef SmartPtr<::v4r::DataMatrix2Df> Ptr;
-  typedef SmartPtr<::v4r::DataMatrix2Df const> ConstPtr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Df> Ptr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Df const> ConstPtr;
 };
 
 /**
@@ -122,8 +121,8 @@ class V4R_EXPORTS DataMatrix2Db : public DataMatrix2D<unsigned char> {
   virtual inline void setTo(const unsigned char &d);
   virtual inline void setZero();
 
-  typedef SmartPtr<::v4r::DataMatrix2Db> Ptr;
-  typedef SmartPtr<::v4r::DataMatrix2Db const> ConstPtr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Db> Ptr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Db const> ConstPtr;
 };
 
 /**
@@ -140,8 +139,8 @@ class V4R_EXPORTS DataMatrix2Di : public DataMatrix2D<int> {
   virtual inline void setTo(const int &d);
   virtual inline void setZero();
 
-  typedef SmartPtr<::v4r::DataMatrix2Di> Ptr;
-  typedef SmartPtr<::v4r::DataMatrix2Di const> ConstPtr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Di> Ptr;
+  typedef std::shared_ptr<::v4r::DataMatrix2Di const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -411,6 +410,6 @@ inline void DataMatrix2Di::setZero() {
   memset(&data[0], 0, sizeof(int) * data.size());
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

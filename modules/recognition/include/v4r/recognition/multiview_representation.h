@@ -15,13 +15,14 @@ template <typename PointT>
 class V4R_EXPORTS View {
  protected:
   typedef Model<PointT> ModelT;
-  typedef boost::shared_ptr<ModelT> ModelTPtr;
+  typedef std::shared_ptr<ModelT> ModelTPtr;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   View();
-  typename boost::shared_ptr<pcl::PointCloud<PointT>> scene_;
-  //    typename boost::shared_ptr< pcl::PointCloud<PointT> > scene_f_;
-  boost::shared_ptr<pcl::PointCloud<pcl::Normal>> scene_normals_;
+  typename pcl::PointCloud<PointT>::Ptr scene_;
+  //    typename pcl::PointCloud<PointT>::Ptr scene_f_;
+  pcl::PointCloud<pcl::Normal>::Ptr scene_normals_;
   std::vector<int> filtered_scene_indices_;
   Eigen::Matrix4f absolute_pose_;
   typename pcl::PointCloud<PointT>::Ptr scene_kp_;
@@ -39,7 +40,7 @@ class V4R_EXPORTS View {
   /** @brief: generated object hypotheses from correspondence grouping (before verification) */
   std::vector<ModelTPtr> models_;
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transforms_;
-  std::vector<PlaneModel<PointT>> planes_;
+  std::vector<PlaneModel<PointT>, Eigen::aligned_allocator<PlaneModel<PointT>>> planes_;
 
   /** @brief boolean vector defining if model or plane is verified (models are first in the vector and its size is equal
    * to models_) */
@@ -50,27 +51,5 @@ class V4R_EXPORTS View {
 
   std::vector<std::vector<float>> pt_properties_;  ///< noise properties for each point
 };
-
-struct V4R_EXPORTS CamConnect {
-  Eigen::Matrix4f transformation_;
-  float edge_weight_;
-  std::string model_name_;
-  size_t source_id_, target_id_;
-
-  explicit CamConnect(float w) : edge_weight_(w) {}
-  CamConnect() : edge_weight_(std::numeric_limits<float>::max()) {}
-  bool operator<(const CamConnect& e) const {
-    return edge_weight_ < e.edge_weight_;
-  }
-  bool operator<=(const CamConnect& e) const {
-    return edge_weight_ <= e.edge_weight_;
-  }
-  bool operator>(const CamConnect& e) const {
-    return edge_weight_ > e.edge_weight_;
-  }
-  bool operator>=(const CamConnect& e) const {
-    return edge_weight_ >= e.edge_weight_;
-  }
-};
-}
+}  // namespace v4r
 #endif

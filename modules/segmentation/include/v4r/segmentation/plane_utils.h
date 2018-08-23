@@ -46,7 +46,6 @@
  */
 
 #include <pcl/common/common.h>
-#include <v4r/common/camera.h>
 #include <v4r/core/macros.h>
 #include <boost/dynamic_bitset.hpp>
 #include <opencv2/opencv.hpp>
@@ -193,7 +192,7 @@ typename pcl::PointCloud<PointT>::Ptr getConvexHullCloud(const typename pcl::Poi
  * @param[in] plane defined as Vector (a,b,c,d) with a*x + b*y + c*z + d = 0
  * @param[in] threshold inlier threshold in meter
  * @param[in] cluster_tolerance cluster tolerance
- * @param[in] min_cluster_size minimum number of points neccessary to create a cluster
+ * @param[in] min_cluster_size minimum number of points necessary to create a cluster
  * @return indices of the all points belonging to the largest connected component fulfilling the plane equation
  */
 template <typename PointT>
@@ -208,7 +207,7 @@ V4R_EXPORTS std::vector<int> get_largest_connected_plane_inliers(const pcl::Poin
  * @param[in] cloud input cloud
  * @param[in] inlier indices of points that are to be segmented
  * @param[in] cluster_tolerance cluster tolerance
- * @param[in] min_cluster_size minimum number of points neccessary to create a cluster
+ * @param[in] min_cluster_size minimum number of points necessary to create a cluster
  * @return indices of the all points belonging to the largest connected component fulfilling the plane equation
  */
 template <typename PointT>
@@ -238,4 +237,4 @@ template <typename PointT>
 V4R_EXPORTS void visualizePlanes(const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
                                  const std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>> &planes,
                                  float inlier_threshold = 0.01f, const std::string &window_title = "plane inliers");
-}
+}  // namespace v4r

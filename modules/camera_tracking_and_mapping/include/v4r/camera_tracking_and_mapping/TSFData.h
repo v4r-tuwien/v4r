@@ -77,13 +77,13 @@ class V4R_EXPORTS TSFData {
   cv::Mat image;
   cv::Mat prev_gray, gray;
   pcl::PointCloud<pcl::PointXYZRGB> cloud;  ///// new cloud
-  uint64_t timestamp;
+  double timestamp;
 
   Eigen::Matrix4f pose;  /// global pose of the current frame (depth, gray, points[1], ....)
   bool have_pose;
 
   // used by klt pose tracker
-  uint64_t kf_timestamp;
+  double kf_timestamp;
   Eigen::Matrix4f kf_pose;  /// pose of the keyframe (points[0], points3d[0], normals, prev_gray
   std::vector<cv::Point2f> points[2];
   std::vector<Eigen::Vector3f> points3d[2];
@@ -117,6 +117,6 @@ class V4R_EXPORTS TSFData {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

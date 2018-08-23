@@ -65,7 +65,7 @@
 namespace gc {
 
 // THRESHOLD_CONSTANT:
-// CAREFULL: Float value!!!
+// CAREFUL: Float value!!!
 #define THRESHOLD_CONSTANT 0.5  /// good value 0.5
 #define MIN_SIZE 1              /// minimum size of element-sets
 

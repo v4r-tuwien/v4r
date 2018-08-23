@@ -42,4 +42,4 @@ void OrganizedMultiPlaneExtractor<PointT>::compute() {
 
 #define PCL_INSTANTIATE_OrganizedMultiPlaneExtractor(T) template class V4R_EXPORTS OrganizedMultiPlaneExtractor<T>;
 PCL_INSTANTIATE(OrganizedMultiPlaneExtractor, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

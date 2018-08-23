@@ -131,7 +131,7 @@ int OrientationSaliencyMap::calculate() {
   image.copyTo(image_cur);
   image_cur.convertTo(image_cur, CV_32F, 1.0f / 255);
   cv::Mat image_gray;
-  cv::cvtColor(image_cur, image_gray, CV_BGR2GRAY);
+  cv::cvtColor(image_cur, image_gray, cv::COLOR_BGR2GRAY);
 
   cv::blur(image_gray, image_gray, cv::Size(filter_size, filter_size));
 
@@ -219,7 +219,7 @@ int OrientationSaliencyMap::calculatePyramidSimple() {
   image.copyTo(image_cur);
   image_cur.convertTo(image_cur, CV_32F, 1.0f / 255);
   cv::Mat image_gray;
-  cv::cvtColor(image_cur, image_gray, CV_BGR2GRAY);
+  cv::cvtColor(image_cur, image_gray, cv::COLOR_BGR2GRAY);
 
   pyramid->setImage(image_gray);
   pyramid->buildPyramid();
@@ -259,7 +259,7 @@ int OrientationSaliencyMap::calculatePyramidItti() {
   image.copyTo(image_cur);
   image_cur.convertTo(image_cur, CV_32F, 1.0f / 255);
   cv::Mat image_gray;
-  cv::cvtColor(image_cur, image_gray, CV_BGR2GRAY);
+  cv::cvtColor(image_cur, image_gray, cv::COLOR_BGR2GRAY);
 
   pyramid->setImage(image_gray);
   pyramid->buildPyramid();
@@ -301,7 +301,7 @@ int OrientationSaliencyMap::calculatePyramidFrintrop() {
   image.copyTo(image_cur);
   image_cur.convertTo(image_cur, CV_32F, 1.0f / 255);
   cv::Mat image_gray;
-  cv::cvtColor(image_cur, image_gray, CV_BGR2GRAY);
+  cv::cvtColor(image_cur, image_gray, cv::COLOR_BGR2GRAY);
 
   pyramid->setImage(image_gray);
   pyramid->buildPyramid();

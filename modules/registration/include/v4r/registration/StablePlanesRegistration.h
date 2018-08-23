@@ -72,7 +72,7 @@ class StablePlanesRegistration : public PartialModelRegistrationBase<PointT> {
     computed_planes_ = planes;
   }
 };
-}
-}
+}  // namespace Registration
+}  // namespace v4r
 
 #endif

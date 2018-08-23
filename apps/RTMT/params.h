@@ -120,7 +120,7 @@ class Params : public QDialog {
 
  public:
   //! Constructor.
-  explicit Params(QWidget *parent = 0);
+  explicit Params(QWidget *parent = nullptr);
 
   //! Destructor.
   ~Params();

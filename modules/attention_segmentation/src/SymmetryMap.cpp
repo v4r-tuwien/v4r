@@ -1,46 +1,46 @@
 // modified by Ekaterina Potapovas
 /* * * * * * * * * * * * * * * * * * * * * * * *
-*              Symmetry_map               	*
-*						*
-* Author:   Dominik Kohl			*
-* Email:    e0726126@sudent.tuwien.ac.at	*
-* Date:     15 June 2011 			*
-* Supervisor: Ekaterina Potapova		*
-*						*
-* Based on the Code from Gert Kootstra		*
-* and Niklas Bergstrom [1] and [2]		*
-* (http://www.csc.kth.se/~kootstra/) 		*
-*						*
-*						*
-* * * * * * * * * * * * * * * * * * * * * * * */
+ *              Symmetry_map               	*
+ *						*
+ * Author:   Dominik Kohl			*
+ * Email:    e0726126@sudent.tuwien.ac.at	*
+ * Date:     15 June 2011 			*
+ * Supervisor: Ekaterina Potapova		*
+ *						*
+ * Based on the Code from Gert Kootstra		*
+ * and Niklas Bergstrom [1] and [2]		*
+ * (http://www.csc.kth.se/~kootstra/) 		*
+ *						*
+ *						*
+ * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*
-* DESCRIPTION
-*
-* This is software for the bottom-up detection of unknown objects.
-* It is based on a symmetry-saliency map, as described in [1] and [2]
-*
-* Symmetry is an important Gestalt principle and can be used for
-* figure-ground segregation or to find the centerpoint of an object.
-*
-* The code works with ROS and OpenCV 2.1 or higher and IPP 7.0
-* To get the symmetry-map all usable OpenCV instructions are used
-* and with IPP for speed-optimisation.
-*
-*
-* REFERENCES
-*
-* [1] Kootstra, G., Bergstr&ouml;m, N., & Kragic, D. (2010). Using Symmetry to
-* Select Fixation Points for Segmentation. To be presented at the
-* International Conference on Pattern Recognition (ICPR), August 23-26,
-* 2010, Istanbul, Turkey.
-*
-* [2] Kootstra, G. & Schomaker, L.R.B. (2009) Using Symmetrical
-* Regions-of-Interest to Improve Visual SLAM. In: Proceedings of the
-* International Conference on Intelligent RObots and Systems (IROS),
-* pp. 930-935, Oct 11-15, 2009, St. Louis, USA. doi:
-* 10.1109/IROS.2009.5354402.
-*/
+ * DESCRIPTION
+ *
+ * This is software for the bottom-up detection of unknown objects.
+ * It is based on a symmetry-saliency map, as described in [1] and [2]
+ *
+ * Symmetry is an important Gestalt principle and can be used for
+ * figure-ground segregation or to find the centerpoint of an object.
+ *
+ * The code works with ROS and OpenCV 2.1 or higher and IPP 7.0
+ * To get the symmetry-map all usable OpenCV instructions are used
+ * and with IPP for speed-optimisation.
+ *
+ *
+ * REFERENCES
+ *
+ * [1] Kootstra, G., Bergstr&ouml;m, N., & Kragic, D. (2010). Using Symmetry to
+ * Select Fixation Points for Segmentation. To be presented at the
+ * International Conference on Pattern Recognition (ICPR), August 23-26,
+ * 2010, Istanbul, Turkey.
+ *
+ * [2] Kootstra, G. & Schomaker, L.R.B. (2009) Using Symmetrical
+ * Regions-of-Interest to Improve Visual SLAM. In: Proceedings of the
+ * International Conference on Intelligent RObots and Systems (IROS),
+ * pp. 930-935, Oct 11-15, 2009, St. Louis, USA. doi:
+ * 10.1109/IROS.2009.5354402.
+ */
 
 #include "v4r/attention_segmentation/SymmetryMap.h"
 
@@ -181,7 +181,7 @@ int SymmetryMap::calculate() {
 
   cv::Mat image_cur;
   if (image.channels() > 1)
-    cv::cvtColor(image, image_cur, CV_RGB2GRAY);
+    cv::cvtColor(image, image_cur, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(image_cur);
 
@@ -217,7 +217,7 @@ int SymmetryMap::calculatePyramidSimple() {
   // insert appropriate
   cv::Mat image_cur;
   if (image.channels() > 1)
-    cv::cvtColor(image, image_cur, CV_RGB2GRAY);
+    cv::cvtColor(image, image_cur, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(image_cur);
 
@@ -301,7 +301,7 @@ void SymmetryMap::symmetryMap(cv::Mat &image_cur, int image_width, int image_hei
   for (int y = 0; y < image_height; ++y)  // START of Iteration over all Pixel ***************************
   {
     for (int x = 0; x < image_width; ++x) {
-      // Excluding the borders, since the gradients there are not vaild
+      // Excluding the borders, since the gradients there are not valid
       dy1 = std::max(R2 - y + 1, 1);
       dy2 = std::max(y + R2 + 1 - image_height + 1, 1);
       dy = std::max(dy1, dy2);

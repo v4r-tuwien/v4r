@@ -68,10 +68,11 @@ class V4R_EXPORTS GlobalEstimator {
                                                                                         /// local referance frame
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GlobalEstimator(const std::string &descr_name = "", size_t descr_type = 0, size_t feature_dimensions = 0)
   : descr_name_(descr_name), descr_type_(descr_type), feature_dimensions_(feature_dimensions) {}
 
-  virtual ~GlobalEstimator() {}
+  virtual ~GlobalEstimator() = default;
 
   /**
    * @brief global feature description
@@ -112,7 +113,7 @@ class V4R_EXPORTS GlobalEstimator {
 
   virtual bool needNormals() const = 0;
 
-  typedef boost::shared_ptr<GlobalEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<GlobalEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<GlobalEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<GlobalEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

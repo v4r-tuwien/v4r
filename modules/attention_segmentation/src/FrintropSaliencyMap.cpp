@@ -102,7 +102,7 @@ int FrintropSaliencyMap::checkParameters() {
 
 void FrintropSaliencyMap::createColorChannels() {
   if (image.channels() > 1)
-    cv::cvtColor(image, I, CV_RGB2GRAY);
+    cv::cvtColor(image, I, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(I);
 
@@ -116,29 +116,25 @@ void FrintropSaliencyMap::createColorChannels() {
     colorSaliencyMap.setColor(cv::Scalar(255, 127));
     colorSaliencyMap.calculate();
     if (!colorSaliencyMap.getMap(R)) {
-      printf("[INFO]: FrintropSaliencyMap:createColorChannels:R: computation failed.\n");
-      exit(0);
+      throw std::runtime_error("FrintropSaliencyMap:createColorChannels:R: computation failed.");
     }
     // green
     colorSaliencyMap.setColor(cv::Scalar(0, 127));
     colorSaliencyMap.calculate();
     if (!colorSaliencyMap.getMap(G)) {
-      printf("[INFO]: FrintropSaliencyMap:createColorChannels:G: computation failed.\n");
-      exit(0);
+      throw std::runtime_error("FrintropSaliencyMap:createColorChannels:G: computation failed.");
     }
     // blue
     colorSaliencyMap.setColor(cv::Scalar(127, 0));
     colorSaliencyMap.calculate();
     if (!colorSaliencyMap.getMap(B)) {
-      printf("[INFO]: FrintropSaliencyMap:createColorChannels:B: computation failed.\n");
-      exit(0);
+      throw std::runtime_error("FrintropSaliencyMap:createColorChannels:B: computation failed.");
     }
     // yellow
     colorSaliencyMap.setColor(cv::Scalar(127, 255));
     colorSaliencyMap.calculate();
     if (!colorSaliencyMap.getMap(Y)) {
-      printf("[INFO]: FrintropSaliencyMap:createColorChannels:Y: computation failed.\n");
-      exit(0);
+      throw std::runtime_error("FrintropSaliencyMap:createColorChannels:Y: computation failed.");
     }
   }
 }
@@ -405,4 +401,4 @@ int FrintropSaliencyMap::createFeatureMapsO(SimplePyramid::Ptr pyramid, float an
   return (AM_OK);
 }
 
-}  // AttentionModule
+}  // namespace v4r

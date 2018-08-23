@@ -242,4 +242,4 @@ void RansacSolvePnP::setParameter(const Parameter &_p) {
     param.pnp_method = cv::SOLVEPNP_P3P;
 #endif
 }
-}
+}  // namespace v4r

@@ -51,11 +51,8 @@
 #include <v4r/io/filesystem.h>
 #include <v4r/recognition/local_feature_matching.h>
 #include <v4r/recognition/recognition_pipeline.h>
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
-#include <boost/serialization/serialization.hpp>
 
 #include <omp.h>
 #include <pcl/recognition/cg/correspondence_grouping.h>
@@ -64,99 +61,48 @@ namespace po = boost::program_options;
 
 namespace v4r {
 
-class V4R_EXPORTS LocalRecognitionPipelineParameter {
- public:
-  bool merge_close_hypotheses_;  ///< if true, close correspondence clusters (object hypotheses) of the same object
-                                 /// model are merged together and this big cluster is refined
-  float merge_close_hypotheses_dist_;   ///< defines the maximum distance of the centroids in meter for clusters to be
-                                        /// merged together
-  float merge_close_hypotheses_angle_;  ///< defines the maximum angle in degrees for clusters to be merged together
-  float min_dist_;                      ///< minimum distance two points need to be apart to be counted as redundant
-  float max_dotp_;  ///< maximum dot-product between the surface normals of two oriented points to be counted redundant
-  size_t max_num_hypotheses_per_object_;  ///< maximum number of hypotheses that are generated for a certain object. If
+struct V4R_EXPORTS LocalRecognitionPipelineParameter {
+  bool merge_close_hypotheses_ =
+      true;  ///< if true, close correspondence clusters (object hypotheses) of the same object
+             /// model are merged together and this big cluster is refined
+  float merge_close_hypotheses_dist_ =
+      0.02f;  ///< defines the maximum distance of the centroids in meter for clusters to be
+              /// merged together
+  float merge_close_hypotheses_angle_ =
+      10.f;                  ///< defines the maximum angle in degrees for clusters to be merged together
+  float min_dist_ = 0.005f;  ///< minimum distance two points need to be apart to be counted as redundant
+  float max_dotp_ =
+      0.95f;  ///< maximum dot-product between the surface normals of two oriented points to be counted redundant
+  size_t max_num_hypotheses_per_object_ =
+      0;  ///< maximum number of hypotheses that are generated for a certain object. If
   /// more hypotheses are found, the ones with the fewest number of keypoint correspondences will be discarded.
   /// No limit for 0
 
-  LocalRecognitionPipelineParameter()
-  : merge_close_hypotheses_(true), merge_close_hypotheses_dist_(0.02f), merge_close_hypotheses_angle_(10.f),
-    min_dist_(0.005f), max_dotp_(0.95f), max_num_hypotheses_per_object_(0) {}
-
-  void save(const bf::path &filename) const {
-    std::ofstream ofs(filename.string());
-    boost::archive::xml_oarchive oa(ofs);
-    oa << boost::serialization::make_nvp("LocalRecognitionPipelineParameter", *this);
-    ofs.close();
-  }
-
-  void load(const bf::path &filename);
-
-  /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
-  std::vector<std::string> init(int argc, char **argv) {
-    std::vector<std::string> arguments(argv + 1, argv + argc);
-    return init(arguments);
-  }
-
-  /**
-       * @brief init parameters
-       * @param command_line_arguments (according to Boost program options library)
-       * @return unused parameters (given parameters that were not used in this initialization call)
-       */
-  std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
-    po::options_description desc("Local Recognition Pipeline Parameters\n=====================");
-    desc.add_options()("help,h", "produce help message");
+  void init(boost::program_options::options_description &desc, const std::string &section_name = "local_rec") {
     desc.add_options()(
-        "local_rec_merge_close_hypotheses",
+        (section_name + ".merge_close_hypotheses").c_str(),
         po::value<bool>(&merge_close_hypotheses_)->default_value(merge_close_hypotheses_),
         "if true, close correspondence clusters "
         "(object hypotheses) of the same object model are merged together and this big cluster is refined");
-    desc.add_options()("local_rec_merge_close_hypotheses_dist",
+    desc.add_options()((section_name + ".merge_close_hypotheses_dist").c_str(),
                        po::value<float>(&merge_close_hypotheses_dist_)->default_value(merge_close_hypotheses_dist_),
                        "defines the maximum distance of the centroids "
                        "in meter for clusters to be merged together (if enabled)");
-    desc.add_options()("local_rec_merge_close_hypotheses_angle",
+    desc.add_options()((section_name + ".merge_close_hypotheses_angle").c_str(),
                        po::value<float>(&merge_close_hypotheses_angle_)->default_value(merge_close_hypotheses_angle_),
                        "defines the maximum angle in degrees for "
                        "clusters to be merged together (if enabled)");
-    desc.add_options()("local_rec_min_dist_", po::value<float>(&min_dist_)->default_value(min_dist_),
+    desc.add_options()((section_name + ".min_dist").c_str(), po::value<float>(&min_dist_)->default_value(min_dist_),
                        "minimum distance two points need to be apart to be counted as redundant");
     desc.add_options()(
-        "local_rec_max_dotp_", po::value<float>(&max_dotp_)->default_value(max_dotp_),
+        (section_name + ".max_dotp").c_str(), po::value<float>(&max_dotp_)->default_value(max_dotp_),
         "maximum dot-product between the surface normals of two oriented points to be counted redundant");
     desc.add_options()(
-        "local_rec_max_num_hypotheses_per_object_",
+        (section_name + ".max_num_hypotheses_per_object").c_str(),
         po::value<size_t>(&max_num_hypotheses_per_object_)->default_value(max_num_hypotheses_per_object_),
         "maximum number of hypotheses that are generated for a certain "
         "object. If more hypotheses are found, the ones with the fewest number of "
         "keypoint correspondences will be discarded. No limit for 0");
-    po::variables_map vm;
-    po::parsed_options parsed =
-        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
-    po::store(parsed, vm);
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      to_pass_further.push_back("-h");
-    }
-    try {
-      po::notify(vm);
-    } catch (std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-    }
-    return to_pass_further;
-  }
-
-  friend class boost::serialization::access;
-
-  template <class Archive>
-  V4R_EXPORTS void serialize(Archive &ar, const unsigned int version) {
-    (void)version;
-    ar &BOOST_SERIALIZATION_NVP(merge_close_hypotheses_) & BOOST_SERIALIZATION_NVP(merge_close_hypotheses_dist_) &
-        BOOST_SERIALIZATION_NVP(merge_close_hypotheses_angle_) & BOOST_SERIALIZATION_NVP(min_dist_) &
-        BOOST_SERIALIZATION_NVP(max_dotp_) & BOOST_SERIALIZATION_NVP(max_num_hypotheses_per_object_);
   }
 };
 
@@ -179,7 +125,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
   std::vector<typename LocalFeatureMatcher<PointT>::Ptr>
       local_feature_matchers_;  ///< set of local recognizer generating keypoint correspondences
 
-  typename boost::shared_ptr<pcl::CorrespondenceGrouping<pcl::PointXYZ, pcl::PointXYZ>>
+  typename std::shared_ptr<pcl::CorrespondenceGrouping<pcl::PointXYZ, pcl::PointXYZ>>
       cg_algorithm_;  ///< algorithm for correspondence grouping
   std::map<std::string, LocalObjectHypothesis<PointT>> local_obj_hypotheses_;  ///< stores feature correspondences
   std::map<std::string, typename LocalObjectModel::ConstPtr>
@@ -194,20 +140,22 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
   /**
    * @brief correspondenceGrouping
    */
-  void correspondenceGrouping();
+  void correspondenceGrouping(const std::vector<std::string> &model_ids_to_search);
 
   /**
    * @brief recognize
+   * @param model_ids_to_search object model ids to search for
    */
-  void do_recognize();
+  void do_recognize(const std::vector<std::string> &model_ids_to_search) override;
 
   bool generate_hypotheses_;  ///< if true, cluster correspondences with respect to geometeric consistency and estimates
                               /// pose by SVD
 
   void doInit(const bf::path &trained_dir, bool force_retrain,
-              const std::vector<std::string> &object_instances_to_load);
+              const std::vector<std::string> &object_instances_to_load) override;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   LocalRecognitionPipeline(const LocalRecognitionPipelineParameter &p = LocalRecognitionPipelineParameter())
   : param_(p), generate_hypotheses_(true) {}
 
@@ -215,7 +163,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
    * @brief setCGAlgorithm
    * @param alg
    */
-  void setCGAlgorithm(const boost::shared_ptr<pcl::CorrespondenceGrouping<pcl::PointXYZ, pcl::PointXYZ>> &alg) {
+  void setCGAlgorithm(const std::shared_ptr<pcl::CorrespondenceGrouping<pcl::PointXYZ, pcl::PointXYZ>> &alg) {
     cg_algorithm_ = alg;
   }
 
@@ -231,7 +179,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
    * @brief needNormals
    * @return
    */
-  bool needNormals() const {
+  bool needNormals() const override {
     for (size_t r_id = 0; r_id < local_feature_matchers_.size(); r_id++) {
       if (local_feature_matchers_[r_id]->needNormals())
         return true;
@@ -240,7 +188,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
     // Graph-based correspondence grouping requires normals but interface does not exist in base class - so need to try
     // pointer casting
     typename GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>::Ptr gcg_algorithm =
-        boost::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
+        std::dynamic_pointer_cast<GraphGeometricConsistencyGrouping<pcl::PointXYZ, pcl::PointXYZ>>(cg_algorithm_);
     if (gcg_algorithm)
       return true;
 
@@ -251,7 +199,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
    * @brief getFeatureType
    * @return
    */
-  size_t getFeatureType() const {
+  size_t getFeatureType() const override {
     size_t feat_type = 0;
     for (size_t r_id = 0; r_id < local_feature_matchers_.size(); r_id++)
       feat_type += local_feature_matchers_[r_id]->getFeatureType();
@@ -259,7 +207,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
     return feat_type;
   }
 
-  bool requiresSegmentation() const {
+  bool requiresSegmentation() const override {
     return false;
   }
 
@@ -287,7 +235,7 @@ class V4R_EXPORTS LocalRecognitionPipeline : public RecognitionPipeline<PointT> 
     return local_obj_hypotheses_;
   }
 
-  typedef boost::shared_ptr<LocalRecognitionPipeline<PointT>> Ptr;
-  typedef boost::shared_ptr<LocalRecognitionPipeline<PointT> const> ConstPtr;
+  typedef std::shared_ptr<LocalRecognitionPipeline<PointT>> Ptr;
+  typedef std::shared_ptr<LocalRecognitionPipeline<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

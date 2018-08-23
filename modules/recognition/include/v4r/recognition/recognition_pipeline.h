@@ -51,10 +51,10 @@
 
 #include <v4r/common/normals.h>
 #include <v4r/common/pcl_visualization_utils.h>
+#include <v4r/config.h>
 #include <v4r/core/macros.h>
 #include <v4r/recognition/object_hypothesis.h>
 #include <v4r/recognition/source.h>
-#include <v4r_config.h>
 
 namespace v4r {
 
@@ -69,12 +69,12 @@ namespace v4r {
 template <typename PointT>
 class V4R_EXPORTS RecognitionPipeline {
  public:
-  typedef boost::shared_ptr<RecognitionPipeline<PointT>> Ptr;
-  typedef boost::shared_ptr<RecognitionPipeline<PointT> const> ConstPtr;
+  typedef std::shared_ptr<RecognitionPipeline<PointT>> Ptr;
+  typedef std::shared_ptr<RecognitionPipeline<PointT> const> ConstPtr;
 
  protected:
   typedef Model<PointT> ModelT;
-  typedef boost::shared_ptr<ModelT> ModelTPtr;
+  typedef std::shared_ptr<ModelT> ModelTPtr;
 
   typename pcl::PointCloud<PointT>::ConstPtr scene_;      ///< Point cloud to be recognized
   pcl::PointCloud<pcl::Normal>::ConstPtr scene_normals_;  ///< associated normals
@@ -102,7 +102,10 @@ class V4R_EXPORTS RecognitionPipeline {
 
   PCLVisualizationParams::ConstPtr vis_param_;
 
+  virtual void do_recognize(const std::vector<std::string> &model_ids_to_search) = 0;
+
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RecognitionPipeline() : table_plane_(Eigen::Vector4f::Identity()), table_plane_set_(false) {}
 
   virtual ~RecognitionPipeline() {}
@@ -117,8 +120,8 @@ class V4R_EXPORTS RecognitionPipeline {
    * computed features will be stored on disk (in each
    * object model folder, a feature folder is created with data)
    * @param[in] retrain if set, will re-compute features and store to disk, no matter if they already exist or not
-   * @param[in] object_instances_to_load vector of object models to load from model_database_path. If emtpy, all objects
-  * in directory will be loaded.
+   * @param[in] object_instances_to_load vector of object models to load from model_database_path. If empty, all objects
+   * in directory will be loaded.
    */
   void initialize(const bf::path &trained_dir = "", bool retrain = false,
                   const std::vector<std::string> &object_instances_to_load = {}) {
@@ -196,8 +199,12 @@ class V4R_EXPORTS RecognitionPipeline {
   }
 
   virtual bool requiresSegmentation() const = 0;
-  virtual void do_recognize() = 0;
 
-  void recognize();
+  /**
+   * @brief recognize objects
+   * @param model_ids_to_search object model identities to search. If empty, all object models in loaded object model
+   * database will be searched for
+   */
+  void recognize(const std::vector<std::string> &model_ids_to_search = std::vector<std::string>());
 };
-}
+}  // namespace v4r

@@ -21,39 +21,38 @@ savelabelnames = 0;     % save label names file?
 saveindexfiles = 1;     % save index files?
 
 dataset_file = 'nyu_depth_data_labeled.mat';
+splitfile = 'splits_folds.zip';
 splitfile_prefix = 'splits_fold';
 accel_calib_file = 'accel_calib_for_daniel.mat';  % obtained directly from Silberman
 labelnames_file = 'labelnames.txt';
 
 if (savelabels || savepointclouds || savecameraangles) && ~exist(dataset_file, 'file')
     fprintf(1, 'Downloading dataset...');
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v1/nyu_depth_data_labeled.mat', dataset_file);
+    websave(dataset_file, 'https://data.acin.tuwien.ac.at/index.php/s/4ii0Ovtz5X1EoIf/download');
     fprintf(1, 'Done\n');
 end
 if savecameraangles && ~exist(accel_calib_file, 'file')
     fprintf(1, 'Downloading accelerometer calibration...');    
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/accel_calib_for_daniel.mat', accel_calib_file);
+    websave(accel_calib_file, 'https://data.acin.tuwien.ac.at/index.php/s/sKDtG4qgwbZmgAv/download');
     fprintf(1, 'Done\n');
 end
 if saveindexfiles
     fprintf(1, 'Downloading train/test split files...');
-    for i=1:10
-        splitfile = [splitfile_prefix num2str(i) '.mat'];
-        
-        if ~exist(splitfile, 'file')
-            urlwrite(['https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v1/' splitfile], splitfile);
-        end
+    if ~exist(splitfile, 'file')
+        zip_file = websave(splitfile, 'https://data.acin.tuwien.ac.at/index.php/s/3GiDHk8oVC8QDWX/download');
+        unzip(zip_file);
+        delete(zip_file);
     end
     fprintf(1, 'Done\n');
 end
 if ~exist(colorcode_file, 'file')
     fprintf(1, 'Downloading color code file...');        
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v1/color_code.txt', colorcode_file);
+    websave(colorcode_file, 'https://data.acin.tuwien.ac.at/index.php/s/oMtg2H0jsYdGmz2/download');
     fprintf(1, 'Done\n');
 end
 if ~exist(labelnames_file, 'file')
     fprintf(1, 'Downloading label names file...');        
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v1/labelnames.txt', labelnames_file);
+    websave(labelnames_file, 'https://data.acin.tuwien.ac.at/index.php/s/mSk8Gv14o5aojQV/download');
     fprintf(1, 'Done\n');
 end
 

@@ -46,6 +46,7 @@
  */
 #pragma once
 
+#include <glog/logging.h>
 #include <v4r/ml/types.h>
 
 #include <v4r/ml/nearestNeighbor.h>
@@ -53,25 +54,25 @@
 
 namespace v4r {
 
-Classifier::Ptr initClassifier(int, std::vector<std::string> &);
+Classifier::Ptr initClassifier(ClassifierType, std::vector<std::string> &);
 
-Classifier::Ptr initClassifier(int method, std::vector<std::string> &params) {
+Classifier::Ptr initClassifier(ClassifierType method, std::vector<std::string> &params) {
   Classifier::Ptr classifier;
 
   if (method == ClassifierType::KNN) {
     NearestNeighborClassifierParameter param;
     params = param.init(params);
     NearestNeighborClassifier::Ptr nn(new NearestNeighborClassifier(param));
-    classifier = boost::dynamic_pointer_cast<Classifier>(nn);
+    classifier = std::dynamic_pointer_cast<Classifier>(nn);
   } else if (method == ClassifierType::SVM) {
     SVMParameter param;
     params = param.init(params);
     svmClassifier::Ptr nn(new svmClassifier(param));
-    classifier = boost::dynamic_pointer_cast<Classifier>(nn);
+    classifier = std::dynamic_pointer_cast<Classifier>(nn);
   } else {
-    std::cerr << "Classifier method " << method << " is not implemented! " << std::endl;
+    LOG(ERROR) << "Classifier method " << method << " is not implemented! ";
   }
 
   return classifier;
 }
-}
+}  // namespace v4r

@@ -122,7 +122,7 @@ void Model<PointT>::initialize(const bf::path &model_filename) {
         pcl::copyPointCloud(*v->cloud_, indices, *obj_cloud_tmp);
       } else {
         typename pcl::PointCloud<PointT>::Ptr cloud_tmp(new pcl::PointCloud<PointT>);
-        pcl::io::loadPCDFile(v->filename_, *cloud_tmp);
+        pcl::io::loadPCDFile(v->filename_.string(), *cloud_tmp);
         cloud = cloud_tmp;
       }
 
@@ -153,7 +153,7 @@ void Model<PointT>::initialize(const bf::path &model_filename) {
       if (!v->indices_.empty())
         indices = v->indices_;
       else {
-        std::ifstream mi_f(v->indices_filename_);
+        std::ifstream mi_f(v->indices_filename_.string());
         int idx;
         while (mi_f >> idx)
           indices.push_back(idx);
@@ -230,4 +230,4 @@ template class V4R_EXPORTS Model<pcl::PointXYZRGB>;
 
 // template V4R_EXPORTS void Model<pcl::PointXYZRGB>::serialize<boost::archive>(boost::archive & ar, const unsigned int
 // version);
-}
+}  // namespace v4r

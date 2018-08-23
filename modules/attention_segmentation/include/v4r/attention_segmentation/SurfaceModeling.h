@@ -60,9 +60,8 @@
 
 #include <v4r/attention_segmentation/sequential_fitter.h>
 #include "v4r/attention_segmentation/EPBase.h"
-#include "v4r/attention_segmentation/SurfaceModel.h"
-
 #include "v4r/attention_segmentation/EPUtils.h"
+#include "v4r/attention_segmentation/SurfaceModel.h"
 
 /*
  *@ep: things that are not clear:
@@ -90,13 +89,13 @@ inline bool cmpSavings(const MergedPair &a, const MergedPair &b) {
 
 class SurfaceModeling : public EPBase {
  public:
-  typedef boost::shared_ptr<SurfaceModeling> Ptr;
+  typedef std::shared_ptr<SurfaceModeling> Ptr;
 
   class Parameter {
    public:
     pcl::on_nurbs::SequentialFitter::Parameter nurbsParams;
 
-    double sigmaError;  // error for gausian error model
+    double sigmaError;  // error for gaussian error model
     double kappa1;      // base cost (0.002, 0.005 1 cyl nurb)
     double kappa2;      // weights the error (0.8)
     double plane_savings;
@@ -133,8 +132,6 @@ class SurfaceModeling : public EPBase {
 
   // inits all necessary data structures
   void init();
-  // compites neighbors of all patches in 2D and 3D
-  //   void computeNeighbors();
   // compute a least square plane from a set of points
   void computeLeastSquarePlane(SurfaceModel::Ptr plane);
   // fits plane to the patch
@@ -163,9 +160,6 @@ class SurfaceModeling : public EPBase {
   // create neighbors
   cv::Mat neigbouring_matrix2D, neigbouring_matrix3D;
   void createNeighbours();
-
-  // compites neighbors of all patches in 2D and 3D
-  // void computeNeighbors();
   void copySurfaces();
 
  public:
@@ -244,6 +238,6 @@ inline std::map<borderIdentification, std::vector<neighboringPair>> SurfaceModel
 inline std::vector<int> SurfaceModeling::getAddedTo() {
   return addedTo;
 }
-}
+}  // namespace v4r
 
 #endif

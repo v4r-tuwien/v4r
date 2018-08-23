@@ -56,7 +56,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
 #include <string>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
 namespace v4r {
@@ -114,8 +113,8 @@ class V4R_EXPORTS KeypointPoseDetector {
 
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
 
-  typedef SmartPtr<::v4r::KeypointPoseDetector> Ptr;
-  typedef SmartPtr<::v4r::KeypointPoseDetector const> ConstPtr;
+  typedef std::shared_ptr<::v4r::KeypointPoseDetector> Ptr;
+  typedef std::shared_ptr<::v4r::KeypointPoseDetector const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
@@ -141,6 +140,6 @@ inline void KeypointPoseDetector::cvToEigen(const cv::Mat_<double> &R, const cv:
   pose(2, 3) = t(2, 0);
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

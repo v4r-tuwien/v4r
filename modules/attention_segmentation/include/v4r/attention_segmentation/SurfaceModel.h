@@ -115,8 +115,8 @@ struct Edge {
 class SurfaceModel {
  public:
   typedef std::set<unsigned>::iterator NeighborIter;
-  typedef boost::shared_ptr<::v4r::SurfaceModel> Ptr;
-  typedef boost::shared_ptr<::v4r::SurfaceModel const> ConstPtr;
+  typedef std::shared_ptr<::v4r::SurfaceModel> Ptr;
+  typedef std::shared_ptr<::v4r::SurfaceModel const> ConstPtr;
 
  public:
   int idx;        ///< for merging in surface modeling
@@ -149,8 +149,8 @@ class SurfaceModel {
 
   std::vector<int> concave;                    ///< image indices of concave pts on contour
   std::vector<int> convex;                     ///< image indices of convex pts on contour
-  std::vector<std::vector<int>> split_pathes;  ///< index list of splitting pathes
-  std::vector<int> costs;                      ///< costs of the pathes
+  std::vector<std::vector<int>> split_pathes;  ///< index list of splitting paths
+  std::vector<int> costs;                      ///< costs of the paths
 
   ON_NurbsSurface nurbs;                    ///< B-spline surface
   std::vector<ON_NurbsCurve> curves_image;  ///< B-spline curves in image space
@@ -264,6 +264,12 @@ class SurfaceModel {
   //     }
 };
 
+/** SurfaceModelPair **/
+struct SurfaceModelPair {
+  SurfaceModel::Ptr surface;
+  int index;
+};
+
 /** View **/
 class View {
  public:
@@ -298,6 +304,7 @@ class View {
   void setSaliencyMap(cv::Mat &_saliencyMap);
   void sortPatches();
   void computeNeighbors();
+  bool compareSaliency(const SurfaceModelPair &sm1, const SurfaceModelPair &sm2);
 
   View() : havePatchImage(false), haveNormals(false) {}
 
@@ -376,6 +383,6 @@ inline std::vector<v4r::SurfaceModel::Ptr> deepCopyType(const std::vector<v4r::S
   }
   return surfaces;
 }
-}
+}  // namespace v4r
 
 #endif

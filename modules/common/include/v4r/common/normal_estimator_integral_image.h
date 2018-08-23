@@ -64,24 +64,23 @@ class V4R_EXPORTS NormalEstimatorIntegralImageParameter {
 
   NormalEstimatorIntegralImageParameter()
   :  //          method_ ( method ),
-    smoothing_size_(10.0f),
-    max_depth_change_factor_(20.0f * 0.001f), use_depth_depended_smoothing_(true) {}
+    smoothing_size_(10.0f), max_depth_change_factor_(20.0f * 0.001f), use_depth_depended_smoothing_(true) {}
 
   /**
-*@brief init parameters
-*@param command_line_arguments (according to Boost program options library)
-*@return unused parameters (given parameters that were not used in this initialization call)
-*/
+   *@brief init parameters
+   *@param command_line_arguments (according to Boost program options library)
+   *@return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(int argc, char **argv) {
     std::vector<std::string> arguments(argv + 1, argv + argc);
     return init(arguments);
   }
 
   /**
-*@brief init parameters
-*@param command_line_arguments (according to Boost program options library)
-*@return unused parameters (given parameters that were not used in this initialization call)
-*/
+   *@brief init parameters
+   *@param command_line_arguments (according to Boost program options library)
+   *@return unused parameters (given parameters that were not used in this initialization call)
+   */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Surface Normal Estimator Parameter\n=====================\n");
     desc.add_options()("help,h", "produce help message")
@@ -127,13 +126,13 @@ class V4R_EXPORTS NormalEstimatorIntegralImage : public NormalEstimator<PointT> 
 
   ~NormalEstimatorIntegralImage() {}
 
-  pcl::PointCloud<pcl::Normal>::Ptr compute();
+  pcl::PointCloud<pcl::Normal>::Ptr compute() override;
 
-  int getNormalEstimatorType() const {
+  NormalEstimatorType getNormalEstimatorType() const override {
     return NormalEstimatorType::PCL_INTEGRAL_NORMAL;
   }
 
-  typedef boost::shared_ptr<NormalEstimatorIntegralImage> Ptr;
-  typedef boost::shared_ptr<NormalEstimatorIntegralImage const> ConstPtr;
+  typedef std::shared_ptr<NormalEstimatorIntegralImage> Ptr;
+  typedef std::shared_ptr<NormalEstimatorIntegralImage const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -395,4 +395,4 @@ void RefineProjectedPointLocationLK::setParameter(const Parameter &p) {
   param = p;
 }
 
-}  //-- THE END --
+}  // namespace v4r

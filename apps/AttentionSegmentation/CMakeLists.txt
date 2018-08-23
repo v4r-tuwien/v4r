@@ -7,11 +7,11 @@ if(NOT V4R_DEPENDENCIES_FOUND)
 endif()
 
 v4r_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
-v4r_include_modules(${AttentionSegmentation_DEPS})
 
 #add_definitions(-std=c++0x)
 add_definitions(-DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET)
-add_definitions(-Dlinux -D__x86_64__)
+add_definitions(-Dlinux)
+add_definitions(-D__x86_64__)
 
 set(FORMS
         mainwindow.ui
@@ -47,4 +47,8 @@ INSTALL(TARGETS segmentAttention
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
+)
+
+INSTALL(DIRECTORY cfg
+DESTINATION share/V4R/apps/AttentionSegmentation/
 )

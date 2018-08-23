@@ -10,7 +10,7 @@ namespace v4r {
 template <typename PointTA, typename PointTB>
 boost::dynamic_bitset<> OcclusionReasoner<PointTA, PointTB>::computeVisiblePoints() {
   CHECK(occluder_cloud_ && cloud_to_be_filtered_ &&
-        ((occluder_cloud_->isOrganized() && cloud_to_be_filtered_->isOrganized()) || cam_));
+        ((occluder_cloud_->isOrganized() && cloud_to_be_filtered_->isOrganized())));
 
   if (!occluder_cloud_->isOrganized()) {
     VLOG(1) << "Occluder not organized. Doing z-buffering";
@@ -81,4 +81,4 @@ boost::dynamic_bitset<> OcclusionReasoner<PointTA, PointTB>::computeVisiblePoint
 
 #define PCL_INSTANTIATE_OcclusionReasoner(TA, TB) template class V4R_EXPORTS OcclusionReasoner<TA, TB>;
 PCL_INSTANTIATE_PRODUCT(OcclusionReasoner, (PCL_XYZ_POINT_TYPES)(PCL_XYZ_POINT_TYPES))
-}
+}  // namespace v4r

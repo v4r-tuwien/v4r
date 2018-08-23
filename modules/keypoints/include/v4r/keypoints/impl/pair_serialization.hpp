@@ -37,7 +37,7 @@
 #include <boost/serialization/vector.hpp>
 #include <opencv2/opencv.hpp>
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -54,7 +54,7 @@ void serialize(Archive &ar, std::pair<F, S> &t, const unsigned int version) {
   ar &t.first;
   ar &t.second;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 #endif

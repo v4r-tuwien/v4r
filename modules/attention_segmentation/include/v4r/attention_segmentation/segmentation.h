@@ -221,6 +221,6 @@ inline TimeEstimates Segmenter::getTimeEstimates() {
   return timeEstimates;
 }
 
-}  // namespace segmentation
+}  // namespace v4r
 
 #endif  // SEGMENTATION_MODULES

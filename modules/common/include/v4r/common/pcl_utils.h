@@ -41,7 +41,7 @@
  * @file pcl_utils.h
  * @author Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2015
- * @brief Utiltity functions for PCL library
+ * @brief Utility functions for PCL library
  *
  */
 
@@ -57,31 +57,31 @@ namespace v4r {
  */
 template <typename PointT>
 V4R_EXPORTS void setCloudPose(const Eigen::Matrix4f &trans, pcl::PointCloud<PointT> &cloud);
-}
+}  // namespace v4r
 
 namespace pcl  /// NOTE: THIS NAMESPACE IS AN EXCEPTION
 {
 
 /** \brief Extract the indices of a given point cloud as a new point cloud (instead of int types, this function uses a
  * size_t vector)
-  * \param[in] cloud_in the input point cloud dataset
-  * \param[in] indices the vector of indices representing the points to be copied from \a cloud_in
-  * \param[out] cloud_out the resultant output point cloud dataset
-  * \note Assumes unique indices.
-  * \ingroup common
-  */
+ * \param[in] cloud_in the input point cloud dataset
+ * \param[in] indices the vector of indices representing the points to be copied from \a cloud_in
+ * \param[out] cloud_out the resultant output point cloud dataset
+ * \note Assumes unique indices.
+ * \ingroup common
+ */
 template <typename PointT>
 V4R_EXPORTS void copyPointCloud(const pcl::PointCloud<PointT> &cloud_in, const std::vector<size_t> &indices,
                                 pcl::PointCloud<PointT> &cloud_out);
 
 /** \brief Extract the indices of a given point cloud as a new point cloud (instead of int types, this function uses a
  * size_t vector)
-  * \param[in] cloud_in the input point cloud dataset
-  * \param[in] indices the vector of indices representing the points to be copied from \a cloud_in
-  * \param[out] cloud_out the resultant output point cloud dataset
-  * \note Assumes unique indices.
-  * \ingroup common
-  */
+ * \param[in] cloud_in the input point cloud dataset
+ * \param[in] indices the vector of indices representing the points to be copied from \a cloud_in
+ * \param[out] cloud_out the resultant output point cloud dataset
+ * \note Assumes unique indices.
+ * \ingroup common
+ */
 template <typename PointT>
 V4R_EXPORTS void copyPointCloud(const pcl::PointCloud<PointT> &cloud_in,
                                 const std::vector<size_t, Eigen::aligned_allocator<size_t>> &indices,
@@ -94,4 +94,4 @@ V4R_EXPORTS void copyPointCloud(const pcl::PointCloud<PointT> &cloud_in, const s
 template <typename PointT>
 V4R_EXPORTS void copyPointCloud(const pcl::PointCloud<PointT> &cloud_in, const boost::dynamic_bitset<> &mask,
                                 pcl::PointCloud<PointT> &cloud_out);
-}
+}  // namespace pcl

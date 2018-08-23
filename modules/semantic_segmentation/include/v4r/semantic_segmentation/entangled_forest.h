@@ -122,7 +122,7 @@ class V4R_EXPORTS EntangledForest {
                   int sampledSplitFunctionThresholds = 50, float minInformationGain = 0.02, int minPointsForSplit = 5);
   void Train(EntangledForestData *trainingData, bool tryUniformBags, int verbosityLevel = 1);
 
-  void UpdateRandomGenerator();  // neccessary after load from file
+  void UpdateRandomGenerator();  // necessary after load from file
 
   void Classify(EntangledForestData *data, std::vector<int> &result, int maxDepth = -1,
                 int useNTrees = -1);  //, bool reweightLeafDistributions = false);

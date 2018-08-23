@@ -55,6 +55,10 @@
 namespace po = boost::program_options;
 using namespace v4r;
 
+inline double sqr(double v) {
+  return v * v;
+}
+
 class ObjTrackerMono {
  private:
   std::string log_dir_;
@@ -82,17 +86,17 @@ class ObjTrackerMono {
   bool loop_;
   v4r::ObjectTrackerMono::Parameter param_;
 
-  boost::shared_ptr<pcl::Grabber> interface_;
-  boost::shared_ptr<cv::VideoCapture> cap_;
+  std::shared_ptr<pcl::Grabber> interface_;
+  std::shared_ptr<cv::VideoCapture> cap_;
   v4r::ObjectTrackerMono::Ptr tracker_;
 
   /**
-*@brief drawCoordinateSystem
-*@param im
-*@param pose
-*@param intrinsic
-*@param dist_coeffs
-*/
+   *@brief drawCoordinateSystem
+   *@param im
+   *@param pose
+   *@param intrinsic
+   *@param dist_coeffs
+   */
   void drawCoordinateSystem(cv::Mat &im, const Eigen::Matrix4f &pose, const cv::Mat_<double> &intrinsic,
                             const cv::Mat_<double> &dist_coeffs, double size, int thickness) const {
     Eigen::Matrix3f R = pose.topLeftCorner<3, 3>();
@@ -123,8 +127,8 @@ class ObjTrackerMono {
   }
 
   /**
-*drawConfidenceBar
-*/
+   *drawConfidenceBar
+   */
   void drawConfidenceBar(cv::Mat &im, const double &conf) const {
     int bar_start = 50, bar_end = 200;
     int diff = bar_end - bar_start;
@@ -296,7 +300,7 @@ class ObjTrackerMono {
       cnt4time++;
       mean_time += time;
       std::cout << "tracker conf = " << conf << std::endl
-                << "mean_time = " << mean_time / double(cnt4time) << " (" << cnt4time << ")" << std::endl;
+                << "mean_frame_rate = " << mean_time / double(cnt4time) << " (" << cnt4time << ")" << std::endl;
 
       if (is_ok)
         std::cout << "Status: stable tracking" << std::endl;
@@ -334,14 +338,42 @@ class ObjTrackerMono {
       }
     }
 
+    // compute standard dev. of the object location
+    double x_mean = 0, y_mean = 0, z_mean = 0;
+    double x_var = 0, y_var = 0, z_var = 0;
+    for (unsigned i = 0; i < cam_trajectory.size(); i++) {
+      x_mean += cam_trajectory[i][0];
+      y_mean += cam_trajectory[i][1];
+      z_mean += cam_trajectory[i][2];
+    }
+    if (cam_trajectory.size() > 0) {
+      x_mean /= (double)cam_trajectory.size();
+      y_mean /= (double)cam_trajectory.size();
+      z_mean /= (double)cam_trajectory.size();
+    }
+    for (unsigned i = 0; i < cam_trajectory.size(); i++) {
+      x_var += sqr(cam_trajectory[i][0] - x_mean);
+      y_var += sqr(cam_trajectory[i][1] - y_mean);
+      z_var += sqr(cam_trajectory[i][2] - z_mean);
+    }
+    if (cam_trajectory.size() > 0) {
+      x_var /= (double)cam_trajectory.size();
+      y_var /= (double)cam_trajectory.size();
+      z_var /= (double)cam_trajectory.size();
+    }
+
+    std::cout << "mean object location (x,y,z): " << x_mean << "," << y_mean << "," << z_mean << std::endl;
+    std::cout << "standard deviation (x,y,z): " << std::sqrt(x_var) << "," << std::sqrt(y_var) << ","
+              << std::sqrt(z_var) << std::endl;
+
     if (camera_id_ == -1)
       interface_->stop();
   }
 };
 
 int main(int argc, char *argv[]) {
-  ObjTrackerMono ot;
-  ot.setup(argc, argv);
-  ot.run();
+  ObjTrackerMono tracker;
+  tracker.setup(argc, argv);
+  tracker.run();
   return 0;
 }

@@ -58,9 +58,9 @@ namespace v4r {
 
 class V4R_EXPORTS EuclideanSegmenterParameter : public SegmenterParameter {
  public:
-  using SegmenterParameter::min_cluster_size_;
-  using SegmenterParameter::max_cluster_size_;
   using SegmenterParameter::cluster_tolerance_;
+  using SegmenterParameter::max_cluster_size_;
+  using SegmenterParameter::min_cluster_size_;
 
   EuclideanSegmenterParameter() {
     cluster_tolerance_ = 0.035f;
@@ -75,17 +75,15 @@ class V4R_EXPORTS EuclideanSegmenter : public Segmenter<PointT> {
   EuclideanSegmenterParameter param_;
 
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
   EuclideanSegmenter(const EuclideanSegmenterParameter &p = EuclideanSegmenterParameter()) : param_(p) {}
 
-  bool getRequiresNormals() {
+  bool getRequiresNormals() const override {
     return false;
   }
 
-  void segment();
+  void segment() override;
 
-  typedef boost::shared_ptr<EuclideanSegmenter<PointT>> Ptr;
-  typedef boost::shared_ptr<EuclideanSegmenter<PointT> const> ConstPtr;
+  typedef std::shared_ptr<EuclideanSegmenter<PointT>> Ptr;
+  typedef std::shared_ptr<EuclideanSegmenter<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

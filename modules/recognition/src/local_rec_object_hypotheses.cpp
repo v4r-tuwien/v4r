@@ -65,4 +65,4 @@ void LocalObjectHypothesis<PointT>::visualize(const pcl::PointCloud<pcl::PointXY
 
 template class V4R_EXPORTS LocalObjectHypothesis<pcl::PointXYZRGB>;
 template class V4R_EXPORTS LocalObjectHypothesis<pcl::PointXYZ>;
-}
+}  // namespace v4r

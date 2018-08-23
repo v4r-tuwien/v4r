@@ -126,7 +126,7 @@ class ObjectState {
 template <class PointType>
 class ObjectHistory {
  public:
-  typedef boost::shared_ptr<ObjectHistory<PointType>> Ptr;
+  typedef std::shared_ptr<ObjectHistory<PointType>> Ptr;
 
   ObjectHistory(typename pcl::PointCloud<PointType>::Ptr object_cloud) : cloud(object_cloud) {}
 
@@ -223,7 +223,7 @@ class ObjectChangeForVisual {
 template <class PointType>
 class V4R_EXPORTS ObjectsHistory {
  public:
-  typedef typename boost::shared_ptr<ObjectsHistory<PointType>> Ptr;
+  typedef std::shared_ptr<ObjectsHistory<PointType>> Ptr;
 
   void add(const std::vector<ObjectDetection<PointType>> &detections);
   std::vector<ObjectIdLabeled> markRemovedObjects(const ChangeDetector<PointType> &change_detector);
@@ -258,6 +258,6 @@ class V4R_EXPORTS ObjectsHistory {
   Db db;
   static int time;
 };
-}
+}  // namespace v4r
 
 #endif /* OBJECTHISTORY_H_ */

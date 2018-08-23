@@ -48,13 +48,10 @@
 #ifndef KP_REFINE_PATCH_LOCATION_LK_HH
 #define KP_REFINE_PATCH_LOCATION_LK_HH
 
+#include <v4r/core/macros.h>
 #include <Eigen/Dense>
-#include <iostream>
+#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
-#include <vector>
 
 namespace v4r {
 
@@ -109,8 +106,8 @@ class V4R_EXPORTS RefinePatchLocationLK {
   bool optimize(const cv::Mat_<unsigned char> &patch, cv::Point2f &pt);
   void setImage(const cv::Mat_<unsigned char> &im);
 
-  typedef SmartPtr<::v4r::RefinePatchLocationLK> Ptr;
-  typedef SmartPtr<::v4r::RefinePatchLocationLK const> ConstPtr;
+  typedef std::shared_ptr<::v4r::RefinePatchLocationLK> Ptr;
+  typedef std::shared_ptr<::v4r::RefinePatchLocationLK const> ConstPtr;
 };
 
 /*********************** INLINE METHODES **************************/
@@ -142,6 +139,6 @@ inline float RefinePatchLocationLK::getInterpolated(const cv::Mat_<float> &im, c
   return ((1. - ax) * (1. - ay) * im(yt, xt) + ax * (1. - ay) * im(yt, xt + 1) + (1. - ax) * ay * im(yt + 1, xt) +
           ax * ay * im(yt + 1, xt + 1));
 }
-}
+}  // namespace v4r
 
 #endif

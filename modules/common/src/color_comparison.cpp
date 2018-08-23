@@ -3,18 +3,56 @@
 #include <omp.h>
 #include <pcl/common/angles.h>
 #include <v4r/common/color_comparison.h>
+#include <boost/algorithm/string.hpp>
 
 namespace v4r {
 
-float CIE76(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
+std::istream &operator>>(std::istream &in, ColorComparisonMethod &cm) {
+  std::string token;
+  in >> token;
+  boost::to_upper(token);
+  if (token == "CIE76")
+    cm = ColorComparisonMethod::CIE76;
+  else if (token == "CIE94")
+    cm = ColorComparisonMethod::CIE94;
+  else if (token == "CIEDE2000")
+    cm = ColorComparisonMethod::CIEDE2000;
+  else if (token == "CUSTOM")
+    cm = ColorComparisonMethod::CUSTOM;
+  else
+    in.setstate(std::ios_base::failbit);
+  return in;
+}
+
+std::ostream &operator<<(std::ostream &out, const ColorComparisonMethod &cm) {
+  switch (cm) {
+    case ColorComparisonMethod::CIE76:
+      out << "CIE76";
+      break;
+    case ColorComparisonMethod::CIE94:
+      out << "CIE94";
+      break;
+    case ColorComparisonMethod::CIEDE2000:
+      out << "CIEDE2000";
+      break;
+    case ColorComparisonMethod::CUSTOM:
+      out << "CUSTOM";
+      break;
+    default:
+      out.setstate(std::ios_base::failbit);
+  }
+  return out;
+}
+
+float computeCIE76(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
   return (a - b).norm();
 }
 
-float CIE94_DEFAULT(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
-  return CIE94(a, b, 1.f, .045f, .015f);
+float computeCIE94_DEFAULT(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
+  return computeCIE94(a, b, 1.f, .045f, .015f);
 }
 
-float CIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1, float K2, float Kl) {
+float computeCIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1, float K2, float Kl) {
   float deltaL = a(0) - b(0);
   float deltaA = a(1) - b(1);
   float deltaB = a(2) - b(2);
@@ -40,7 +78,7 @@ float CIE94(const Eigen::Vector3f &a, const Eigen::Vector3f &b, float K1, float 
   return i < 0 ? 0 : sqrt(i);
 }
 
-float CIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
+float computeCIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
   // Set weighting factors to 1
   double k_L = 1.0;
   double k_C = 1.0;
@@ -130,7 +168,7 @@ float CIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
   return CIEDE2000;
 }
 
-// Eigen::VectorXf CIE76(const Eigen::MatrixXf &a, const Eigen::MatrixXf &b)
+// Eigen::VectorXf computeCIE76(const Eigen::MatrixXf &a, const Eigen::MatrixXf &b)
 //{
 //    CHECK(a.rows() == b.rows() && a.cols() == b.cols());
 
@@ -139,8 +177,8 @@ float CIEDE2000(const Eigen::Vector3f &a, const Eigen::Vector3f &b) {
 //#pragma omp parallel for schedule(dynamic)
 
 //    for(size_t i=0; i<a.rows(); i++)
-//        diff(i) = CIE76(a.row(i), b.row(i));
+//        diff(i) = computeCIE76(a.row(i), b.row(i));
 
 //    return diff;
 //}
-}
+}  // namespace v4r

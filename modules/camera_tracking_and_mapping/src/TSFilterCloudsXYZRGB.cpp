@@ -40,8 +40,8 @@ void TSFilterCloudsXYZRGB::operate() {
 
   Eigen::Matrix4f inv_pose;
   v4r::DataMatrix2D<Surfel> sf_cloud_local;
-  std::list<v4r::triple<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Eigen::Matrix4f, double>> frames_local;
-  std::list<v4r::triple<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Eigen::Matrix4f, double>>::iterator it0, itm, itp;
+  FrameList frames_local;
+  FrameList::iterator it0, itm, itp;
 
   while (run) {
     have_todo = false;
@@ -72,37 +72,37 @@ void TSFilterCloudsXYZRGB::operate() {
 
       // init keyframe
       it0 = std::next(frames_local.begin(), frames_local.size() / 2);
-      initKeyframe(*it0->first);
+      initKeyframe(*it0->cloud);
 
       // compute mean values
       itp = itm = it0;
       itp++;
       for (; itm != frames_local.begin() && itp != frames_local.end(); itm--, itp++) {
         if (itm != frames_local.begin()) {
-          invPose(itm->second, inv_pose);
+          invPose(itm->pose, inv_pose);
           if (param.type == 3)
-            integrateDataRGBbilinear2(*itm->first, it0->second * inv_pose);
+            integrateDataRGBbilinear2(*itm->cloud, it0->pose * inv_pose);
           else if (param.type == 2)
-            integrateDataRGBbilinear(*itm->first, it0->second * inv_pose);
+            integrateDataRGBbilinear(*itm->cloud, it0->pose * inv_pose);
           else if (param.type == 1)
-            integrateDataRGB(*itm->first, it0->second * inv_pose);
+            integrateDataRGB(*itm->cloud, it0->pose * inv_pose);
           else if (param.type == 4 || param.type == 5)
-            integrateDatabilinear(*itm->first, it0->second * inv_pose);
+            integrateDatabilinear(*itm->cloud, it0->pose * inv_pose);
           else
-            integrateData(*itm->first, it0->second * inv_pose);
+            integrateData(*itm->cloud, it0->pose * inv_pose);
         }
         if (itp != frames_local.end()) {
-          invPose(itp->second, inv_pose);
+          invPose(itp->pose, inv_pose);
           if (param.type == 3)
-            integrateDataRGBbilinear2(*itp->first, it0->second * inv_pose);
+            integrateDataRGBbilinear2(*itp->cloud, it0->pose * inv_pose);
           else if (param.type == 2)
-            integrateDataRGBbilinear(*itp->first, it0->second * inv_pose);
+            integrateDataRGBbilinear(*itp->cloud, it0->pose * inv_pose);
           else if (param.type == 1)
-            integrateDataRGB(*itp->first, it0->second * inv_pose);
+            integrateDataRGB(*itp->cloud, it0->pose * inv_pose);
           else if (param.type == 4 || param.type == 5)
-            integrateDatabilinear(*itp->first, it0->second * inv_pose);
+            integrateDatabilinear(*itp->cloud, it0->pose * inv_pose);
           else
-            integrateData(*itp->first, it0->second * inv_pose);
+            integrateData(*itp->cloud, it0->pose * inv_pose);
         }
       }
 
@@ -113,15 +113,15 @@ void TSFilterCloudsXYZRGB::operate() {
       // projected colour lookup
       if (param.type == 5) {
         for (itp = frames_local.begin(); itp != frames_local.end(); itp++) {
-          invPose(itp->second, inv_pose);
-          projectedColourTransfere(sf_cloud_local, *itp->first, it0->second * inv_pose);
+          invPose(itp->pose, inv_pose);
+          projectedColourTransfere(sf_cloud_local, *itp->cloud, it0->pose * inv_pose);
         }
         setColourValues(sf_cloud_local);
       }
 
       mtx_shm.lock();
-      sf_timestamp = it0->third;
-      sf_pose = it0->second;
+      sf_timestamp = it0->timestamp;
+      sf_pose = it0->pose;
       sf_cloud = sf_cloud_local;
       sf_nb_frames = frames_local.size();
       mtx_shm.unlock();
@@ -180,7 +180,7 @@ void TSFilterCloudsXYZRGB::integrateData(const pcl::PointCloud<pcl::PointXYZRGB>
 
   pcl::transformPointCloud(cloud, tmp_cloud, pose);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (unsigned i = 0; i < tmp_cloud.points.size(); i++) {
     const pcl::PointXYZRGB &pt3 = tmp_cloud.points[i];
 
@@ -225,7 +225,7 @@ void TSFilterCloudsXYZRGB::integrateDataRGB(const pcl::PointCloud<pcl::PointXYZR
 
   pcl::transformPointCloud(cloud, tmp_cloud, pose);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (unsigned i = 0; i < tmp_cloud.points.size(); i++) {
     const pcl::PointXYZRGB &pt3 = tmp_cloud.points[i];
 
@@ -281,7 +281,7 @@ void TSFilterCloudsXYZRGB::integrateDataRGBbilinear(const pcl::PointCloud<pcl::P
 
   pcl::transformPointCloud(cloud, tmp_cloud, pose);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (unsigned i = 0; i < tmp_cloud.points.size(); i++) {
     const pcl::PointXYZRGB &pt3 = tmp_cloud.points[i];
 
@@ -322,7 +322,7 @@ void TSFilterCloudsXYZRGB::integrateDataRGBbilinear2(const pcl::PointCloud<pcl::
 
   pcl::transformPointCloud(cloud, tmp_cloud, pose);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (unsigned i = 0; i < tmp_cloud.points.size(); i++) {
     const pcl::PointXYZRGB &pt3 = tmp_cloud.points[i];
 
@@ -375,7 +375,7 @@ void TSFilterCloudsXYZRGB::integrateDatabilinear(const pcl::PointCloud<pcl::Poin
 
   pcl::transformPointCloud(cloud, tmp_cloud, pose);
 
-  // tranform filt cloud to current frame and update
+  // transform filt cloud to current frame and update
   for (unsigned i = 0; i < tmp_cloud.points.size(); i++) {
     const pcl::PointXYZRGB &pt3 = tmp_cloud.points[i];
 
@@ -553,10 +553,9 @@ void TSFilterCloudsXYZRGB::addCloud(const pcl::PointCloud<pcl::PointXYZRGB> &clo
   if (!have_track)
     frames.clear();
 
-  if (selectFrame(pose, frames.back().second)) {
-    frames.push_back(v4r::triple<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Eigen::Matrix4f, double>(
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>()), pose, _timestamp));
-    pcl::copyPointCloud(cloud, *frames.back().first);
+  if (frames.size() == 0 || selectFrame(pose, frames.back().pose)) {
+    frames.push_back({_timestamp, pose, pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>)});
+    pcl::copyPointCloud(cloud, *frames.back().cloud);
   }
 
   mtx_shm.unlock();
@@ -725,4 +724,4 @@ void TSFilterCloudsXYZRGB::setParameter(const Parameter &p) {
   if (param.batch_size_clouds < 3)
     throw std::runtime_error("[TSFilterCloudsXYZRGB::setParameter] batch_size_clouds need to be > 2");
 }
-}
+}  // namespace v4r

@@ -146,7 +146,7 @@ class V4R_EXPORTS EntangledForestNode {
   void ApplyClusterLabelDistribution(std::vector<double>& labeldist);
   void UpdateLabelDistribution(std::vector<double>& labeldist);
 
-  void SetRandomGenerator(std::mt19937* randomGenerator);  // neccessary after load
+  void SetRandomGenerator(std::mt19937* randomGenerator);  // necessary after load
 
   void Clone(EntangledForestNode* n, EntangledForestTree* newTree);
   virtual ~EntangledForestNode();
@@ -179,4 +179,4 @@ inline void EntangledForestNode::SetLeftChildIdx(int idx) {
 inline void EntangledForestNode::SetRightChildIdx(int idx) {
   mRightChildIdx = idx;
 }
-}
+}  // namespace v4r

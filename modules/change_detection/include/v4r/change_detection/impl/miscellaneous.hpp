@@ -40,6 +40,6 @@ Eigen::Affine3f resetViewpoint(typename pcl::PointCloud<PointType>::Ptr input) {
 
   return t;
 }
-}
+}  // namespace v4r
 
 #endif /* MISCELLANEOUS_CHANGEDET_HPP_ */

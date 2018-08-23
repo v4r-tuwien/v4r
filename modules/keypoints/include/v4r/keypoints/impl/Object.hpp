@@ -36,13 +36,13 @@
 #include <stdio.h>
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <numeric>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <stdexcept>
 #include <string>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/triple.hpp>
 
 namespace v4r {
@@ -66,8 +66,8 @@ class V4R_EXPORTS GlobalPoint {
  */
 class V4R_EXPORTS ObjectView {
  public:
-  typedef SmartPtr<::v4r::ObjectView> Ptr;
-  typedef SmartPtr<::v4r::ObjectView const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ObjectView> Ptr;
+  typedef std::shared_ptr<::v4r::ObjectView const> ConstPtr;
 
   int idx;
   int camera_id;
@@ -318,8 +318,8 @@ class V4R_EXPORTS Object {
           triple<int, cv::Point2f, Eigen::Vector3f>(camera_idx, im_pts[i].second, pts3[i]));
   }
 
-  typedef SmartPtr<::v4r::Object> Ptr;
-  typedef SmartPtr<::v4r::Object const> ConstPtr;
+  typedef std::shared_ptr<::v4r::Object> Ptr;
+  typedef std::shared_ptr<::v4r::Object const> ConstPtr;
 };
 
 /******************** impl ObjectView **************************/
@@ -368,6 +368,6 @@ inline const Eigen::Matrix4f &ObjectView::getCamera() const {
   return object->cameras[camera_id];
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

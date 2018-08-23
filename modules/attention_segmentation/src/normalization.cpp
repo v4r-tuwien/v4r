@@ -102,13 +102,11 @@ void computeLocalMax(cv::Mat &image, int &numLocalMax, float &averageLocalMax, f
 
 void normalizeNonMax(cv::Mat &map) {
   cv::normalize(map, map, 0, 1, cv::NORM_MINMAX);
-  // normalizeMin2Zero(map);
   int numLocalMax;
   float averageLocalMax;
   computeLocalMax(map, numLocalMax, averageLocalMax);
   float multiplier = (1 - averageLocalMax) * (1 - averageLocalMax);
   map = multiplier * map;
-  // normalizeMax2One(map);
 }
 
 void normalizeFrintrop(cv::Mat &map) {

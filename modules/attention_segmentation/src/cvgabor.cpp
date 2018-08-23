@@ -17,6 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#include <glog/logging.h>
+
 #include "v4r/attention_segmentation/cvgabor.h"
 
 namespace v4r {
@@ -101,7 +103,7 @@ CvGabor::CvGabor(double dPhi, int iNu, double dSigma, double dF) {
 /**
  * @brief Determine whether the gabor has been initlized.
  * Variables F, K, Kmax, Phi, Sigma are filled.
- * @return A boolean value, TRUE is initilised or FALSE is non-initilised.
+ * @return A boolean value, TRUE is initialized or FALSE is non-initialized.
  */
 bool CvGabor::IsInit() {
   return bInitialised;
@@ -114,7 +116,7 @@ bool CvGabor::IsInit() {
 long CvGabor::mask_width() {
   long lWidth;
   if (IsInit() == false) {
-    perror("Error: The Object has not been initilised in mask_width()!\n");
+    LOG(ERROR) << "The Object has not been initialized in mask_width()!";
     return 0;
   } else {
     // determine the width of Mask
@@ -124,7 +126,7 @@ long CvGabor::mask_width() {
     if (fmod(dWidth, 2.0) == 0.0)
       dWidth++;
     lWidth = (long)dWidth;
-    // printf("[CvGabor::mask_width] Gabor mask with: %lu\n", lWidth);
+    VLOG(2) << "Gabor mask with: " << lWidth;
     return lWidth;
   }
 }
@@ -135,7 +137,7 @@ long CvGabor::mask_width() {
 void CvGabor::creat_kernel()  //创建gabor核
 {
   if (IsInit() == false) {
-    perror("Error: The Object has not been initilised in creat_kernel()!\n");
+    LOG(ERROR) << "The Object has not been initialized in creat_kernel()!";
   } else {
     CvMat *mReal, *mImag;
     mReal = cvCreateMat(Width, Width, CV_32FC1);  //实部窗口框的大小
@@ -169,8 +171,6 @@ void CvGabor::creat_kernel()  //创建gabor核
     bKernel = true;
     cvCopy(mReal, Real, NULL);  //拷贝求得的结果
     cvCopy(mImag, Imag, NULL);
-    // printf("[CvGabor::creat_kernel] Message: A %d x %d Gabor kernel with %f PI in arc is created.\n", Width, Width,
-    // Phi/PI);
     cvReleaseMat(&mReal);
     cvReleaseMat(&mImag);
   }
@@ -183,30 +183,22 @@ void CvGabor::creat_kernel()  //创建gabor核
  */
 IplImage *CvGabor::get_image(int Type) {
   if (IsKernelCreate() == false) {
-    perror("Error: the Gabor kernel has not been created in get_image()!\n");
+    LOG(ERROR) << "The Gabor kernel has not been created in get_image()!";
     return nullptr;
   } else {
     IplImage *pImage;
     IplImage *newimage;
     newimage = cvCreateImage(cvSize(Width, Width), IPL_DEPTH_8U, 1);
-    // printf("Width is %d.\n",(int)Width);
-    // printf("Sigma is %f.\n", Sigma);
-    // printf("F is %f.\n", F);
-    // printf("Phi is %f.\n", Phi);
-
-    // pImage = gan_image_alloc_gl_d(Width, Width);
     pImage = cvCreateImage(cvSize(Width, Width), IPL_DEPTH_32F, 1);
 
     CvMat *kernel = cvCreateMat(Width, Width, CV_32FC1);
     double ve;
-    //     CvScalar S;
     CvSize size = cvGetSize(kernel);
     int rows = size.height;
     int cols = size.width;
     switch (Type) {
       case 1:  // Real
         cvCopy((CvMat *)Real, (CvMat *)kernel, nullptr);
-        // pImage = cvGetImage( (CvMat*)kernel, pImageGL );
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
             ve = cvGetReal2D((CvMat *)kernel, i, j);
@@ -216,7 +208,6 @@ IplImage *CvGabor::get_image(int Type) {
         break;
       case 2:  // Imag
         cvCopy((CvMat *)Imag, (CvMat *)kernel, nullptr);
-        // pImage = cvGetImage( (CvMat*)kernel, pImageGL );
         for (int i = 0; i < rows; i++) {
           for (int j = 0; j < cols; j++) {
             ve = cvGetReal2D((CvMat *)kernel, i, j);
@@ -226,11 +217,11 @@ IplImage *CvGabor::get_image(int Type) {
         break;
       case 3:  // Magnitude
         ///@todo
-        printf("[CvGabor::get_image] Error: No magnitude available.\n");
+        LOG(WARNING) << "No magnitude available.";
         break;
       case 4:  // Phase
         ///@todo
-        printf("[CvGabor::get_image] Error: No phase available.\n");
+        LOG(WARNING) << "No phase available.";
         break;
     }
 
@@ -260,17 +251,16 @@ long CvGabor::get_mask_width() {
 }
 
 /**
- * @brief Initilize the.gabor with the orientation iMu, the scale iNu,
+ * @brief Initialize the.gabor with the orientation iMu, the scale iNu,
  * the sigma dSigma, the frequency dF, it will call the function
  * creat_kernel(); So a gabor is created.
  * @param iMu   The orientations which is iMu*PI.8
- * @param iNu   The scale can be from -5 to infinit
+ * @param iNu   The scale can be from -5 to infinite
  * @param dSigma  The Sigma value of gabor, Normally set to 2*PI
  * @param dF  The spatial frequence , normally is sqrt(2)
  */
 void CvGabor::Init(int iMu, int iNu, double dSigma, double dF) {
-  // printf("CvGabor::Init: start\n");
-  // Initilise the parameters
+  // Initialize the parameters
   bInitialised = false;
   bKernel = false;
 
@@ -287,23 +277,21 @@ void CvGabor::Init(int iMu, int iNu, double dSigma, double dF) {
   Real = cvCreateMat(Width, Width, CV_32FC1);
   Imag = cvCreateMat(Width, Width, CV_32FC1);
   creat_kernel();
-  // printf("CvGabor::Init: done\n");
 }
 
 /**
- * @brief Initilize the.gabor with the orientation dPhi, the scale iNu, the sigma dSigma,
+ * @brief Initialize the.gabor with the orientation dPhi, the scale iNu, the sigma dSigma,
  * the frequency dF, it will call the function creat_kernel(); So a gabor is created.filename
  * The name of the image file
       file_format   The format of the file, e.g. GAN_PNG_FORMAT
       image   The image structure to be written to the file
       octrlstr  Format-dependent control structure
  * @param dPhi  The orientations
- * @param iNu   The scale can be from -5 to infinit
+ * @param iNu   The scale can be from -5 to infinite
  * @param dSigma  The Sigma value of gabor, Normally set to 2*PI
  * @param dF  The spatial frequence , normally is sqrt(2)
  */
 void CvGabor::Init(double dPhi, int iNu, double dSigma, double dF) {
-  // printf("CvGabor::Init2: start\n");
   bInitialised = false;
   bKernel = false;
   Sigma = dSigma;
@@ -316,13 +304,9 @@ void CvGabor::Init(double dPhi, int iNu, double dSigma, double dF) {
   Phi = dPhi;
   bInitialised = true;
   Width = mask_width();
-  // printf("CvGabor::Init2: 1\n");
   Real = cvCreateMat(Width, Width, CV_32FC1);
-  // printf("CvGabor::Init2: 2\n");
   Imag = cvCreateMat(Width, Width, CV_32FC1);
-  // printf("CvGabor::Init2: 3\n");
   creat_kernel();
-  // printf("CvGabor::Init2: done\n");
 }
 
 /**
@@ -332,7 +316,7 @@ void CvGabor::Init(double dPhi, int iNu, double dSigma, double dF) {
  */
 CvMat *CvGabor::get_matrix(int Type) {
   if (!IsKernelCreate()) {
-    perror("Error: the gabor kernel has not been created!\n");
+    LOG(ERROR) << "The gabor kernel has not been created!";
     return nullptr;
   }
   switch (Type) {
@@ -343,11 +327,11 @@ CvMat *CvGabor::get_matrix(int Type) {
       return Imag;
       break;
     case CV_GABOR_MAG:
-      printf("[CvGabor::get_matrix] Error: No gabor magnitude available.\n");
+      LOG(ERROR) << "No gabor magnitude available.";
       return nullptr;
       break;
     case CV_GABOR_PHASE:
-      printf("[CvGabor::get_matrix] Error: No gabor phase available.\n");
+      LOG(ERROR) << "No gabor phase available.";
       return nullptr;
       break;
   }
@@ -367,11 +351,11 @@ void CvGabor::output_file(const char *filename, int Type) {
   pImage = get_image(Type);
   if (pImage != nullptr) {
     if (cvSaveImage(filename, pImage))
-      printf("%s has been written successfully!\n", filename);
+      VLOG(1) << filename << " has been written successfully!";
     else
-      printf("Error: writting %s has failed!\n", filename);
+      LOG(ERROR) << "writing " << filename << " has failed!";
   } else
-    perror("Error: the image is empty in output_file()!\n");
+    LOG(ERROR) << "The image is empty in output_file()!";
 
   cvReleaseImage(&pImage);
 }
@@ -381,15 +365,15 @@ void CvGabor::output_file(const char *filename, int Type) {
  */
 void CvGabor::show(int Type) {
   if (!IsInit()) {
-    perror("Error: the gabor kernel has not been created!\n");
+    LOG(ERROR) << "The gabor kernel has not been created!";
   } else {
-    //    IplImage *pImage;
-    // pImage = get_image(Type);
-    // cvNamedWindow("Testing",1);
-    // cvShowImage("Testing",pImage);
-    // cvWaitKey(0);
-    // cvDestroyWindow("Testing");
-    // cvReleaseImage(&pImage);
+    IplImage *pImage;
+    pImage = get_image(Type);
+    cvNamedWindow("Testing", 1);
+    cvShowImage("Testing", pImage);
+    cvWaitKey(0);
+    cvDestroyWindow("Testing");
+    cvReleaseImage(&pImage);
   }
 }
 
@@ -496,7 +480,8 @@ void CvGabor::normalize(const CvArr *src, CvArr *dst, double a, double b, int no
   CvMat *tmp = 0;
   //     __BEGIN__;
 
-  double scale, shift;
+  double scale = 1;
+  double shift = 0;
   if (norm_type == CV_MINMAX) {
     double smin = 0, smax = 0;
     double dmin = MIN(a, b), dmax = MAX(a, b);
@@ -532,7 +517,6 @@ void CvGabor::normalize(const CvArr *src, CvArr *dst, double a, double b, int no
  */
 void CvGabor::conv_img(IplImage *src, IplImage *dst, int Type)  //函数名：conv_img
 {
-  // printf("CvGabor::conv_img 1\n");
   double ve;  //, re,im;
 
   CvMat *mat = cvCreateMat(src->width, src->height, CV_32FC1);
@@ -543,7 +527,6 @@ void CvGabor::conv_img(IplImage *src, IplImage *dst, int Type)  //函数名：co
     }
   }
 
-  // printf("CvGabor::conv_img 2\n");
   CvMat *rmat = cvCreateMat(src->width, src->height, CV_32FC1);
   CvMat *imat = cvCreateMat(src->width, src->height, CV_32FC1);
 
@@ -567,7 +550,6 @@ void CvGabor::conv_img(IplImage *src, IplImage *dst, int Type)  //函数名：co
       break;
   }
 
-  // printf("CvGabor::conv_img 3\n");
   if (dst->depth == IPL_DEPTH_8U) {
     cvNormalize((CvMat *)mat, (CvMat *)mat, 0, 255, CV_MINMAX);
     for (int i = 0; i < mat->rows; i++) {
@@ -578,7 +560,6 @@ void CvGabor::conv_img(IplImage *src, IplImage *dst, int Type)  //函数名：co
     }
   }
 
-  // printf("CvGabor::conv_img 4\n");
   if (dst->depth == IPL_DEPTH_32F) {
     for (int i = 0; i < mat->rows; i++) {
       for (int j = 0; j < mat->cols; j++) {
@@ -587,14 +568,10 @@ void CvGabor::conv_img(IplImage *src, IplImage *dst, int Type)  //函数名：co
       }
     }
   }
-  // printf("CvGabor::conv_img 5\n");
+
   cvReleaseMat(&imat);
   cvReleaseMat(&rmat);
   cvReleaseMat(&mat);
-  // printf("CvGabor::conv_img 6\n");
 }
 
-// void CvGabor::conv_img(cv::Mat_<cv::Vec3b> &_src, cv::Mat_<cv::Vec3b> &_dst, int type)   //函数名：conv_img
-// {
-// }
-}
+}  // namespace v4r

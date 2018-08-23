@@ -119,7 +119,6 @@ void View::calculateBorders(pcl::PointCloud<pcl::PointXYZRGB>::Ptr current_pcl_c
             borderPixel[k].idx1 = idx1;
             borderPixel[k].idx2 = idx2;
             border_distance[k] = distance;
-            // b_distance = distance;
             borderPixel[k].direction = dir[k];
             used[k] = true;
             found = true;
@@ -291,8 +290,6 @@ void View::get2DNeighborsCurrent(cv::Mat& neighbors2D, cv::Mat& neighbors3D) {
   int dc[4] = {0, -1, -1};
 
   for (unsigned int i = 0; i < surfaces.size(); ++i) {
-    //     if( (!(surfaces.at(i)->newly_selected)) || (!(surfaces.at(i)->selected)) )
-    //       continue;
     for (unsigned int j = 0; j < surfaces.at(i)->indices.size(); j++) {
       int c = (surfaces.at(i)->indices.at(j)) % width;
       int r = (surfaces.at(i)->indices.at(j)) / width;
@@ -327,37 +324,6 @@ void View::get2DNeighborsCurrent(cv::Mat& neighbors2D, cv::Mat& neighbors3D) {
       }
     }
   }
-
-  //   for(int r = 1; r < patches.rows-1; r++)
-  //   {
-  //     for(int c = 1; c < patches.cols-1; c++)
-  //     {
-  //       // if the patch exist
-  //       if(patches.at<int>(r,c) != -1)
-  //       {
-  //
-  //         int patchIdx =  patches.at<int>(r,c);
-  //
-  //         //@ep: why we did not use 1,-1 shift???
-  //         for(int i = 0; i < 3; ++i) //@ep: TODO 3->4
-  //         {
-  //
-  //           int nr = r + dr[i];
-  //           int nc = c + dc[i];
-  //
-  //           int currentPatchIdx =  patches.at<int>(nr,nc);
-  //           if(currentPatchIdx == -1)
-  //             continue;
-  //
-  //           if(patchIdx != currentPatchIdx)
-  //           {
-  //             neighbors.at<bool>(currentPatchIdx,patchIdx) = true;
-  //             neighbors.at<bool>(patchIdx,currentPatchIdx) = true;
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
 }
 
 /**
@@ -369,11 +335,7 @@ void View::computeNeighbors() {
 
   //@ep: Why in the original version we've been using only 3 directions out of 4 (no use of +1,-1 shift)
   cv::Mat neighbors2D, neighbors3D;
-  // v4r::get2DNeighbors(patchImage,neighbors2D,surfaces.size());
-  // v4r::get3DNeighbors<pcl::PointXYZRGB>(patchImage,neighbors3D,surfaces.size(),cloud,z_max);
-  // std::cerr << "1" << std::endl;
   get2DNeighborsCurrent(neighbors2D, neighbors3D);
-  // std::cerr << "2" << std::endl;
 
   for (unsigned int i = 0; i < surfaces.size(); i++) {
     surfaces.at(i)->neighbors2D.clear();
@@ -401,21 +363,7 @@ void View::setSaliencyMap(cv::Mat& _saliencyMap) {
   haveSaliencyMap = true;
 }
 
-struct SurfaceModelPair {
-  SurfaceModel::Ptr surface;
-  int index;
-};
-
-bool compareSaliency(SurfaceModelPair, SurfaceModelPair);
-
-bool compareSaliency(SurfaceModelPair sm1, SurfaceModelPair sm2) {
-  //   if(sm1.surface->saliency > sm2.surface->saliency)
-  //     return(true);
-  //   else
-  //   {
-  //     return(sm1.surface->indices.size() > sm2.surface->indices.size());
-  //   }
-
+bool View::compareSaliency(const SurfaceModelPair& sm1, const SurfaceModelPair& sm2) {
   return ((sm1.surface->saliency > sm2.surface->saliency) ? true : false);
 }
 
@@ -427,7 +375,7 @@ void View::sortPatches() {
   }
 
   if (!haveSaliencyMap) {
-    printf("[View::sortPatches] Saliency map not set! Using default ordering \n");
+    VLOG(1) << "Saliency map not set! Using default ordering.";
   }
 
   height = cloud->height;
@@ -464,7 +412,8 @@ void View::sortPatches() {
     surfacePairs.at(i).index = i;
   }
 
-  sort(surfacePairs.begin(), surfacePairs.end(), compareSaliency);
+  sort(surfacePairs.begin(), surfacePairs.end(),
+       [this](SurfaceModelPair sm1, SurfaceModelPair sm2) { return compareSaliency(sm1, sm2); });
 
   for (unsigned int i = 0; i < surfacePairs.size(); ++i) {
     sortedSurfaces.at(i) = surfacePairs.at(i).index;

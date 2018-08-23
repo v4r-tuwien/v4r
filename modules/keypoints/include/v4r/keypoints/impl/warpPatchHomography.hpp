@@ -33,7 +33,7 @@
 #ifndef V4R_WARP_PATCH_HOMOGRAPHY_HPP
 #define V4R_WARP_PATCH_HOMOGRAPHY_HPP
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -147,6 +147,6 @@ bool warpPatchHomography(const unsigned char *im, int im_rows, int im_cols, cons
   return true;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

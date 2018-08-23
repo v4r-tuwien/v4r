@@ -121,6 +121,6 @@ class SVMPredictorSingle {
 inline std::vector<v4r::Relation> SVMPredictorSingle::getRelations() {
   return relations;
 }
-}
+}  // namespace svm
 
 #endif  // SVM_PREDICTOR_SINGLE_H

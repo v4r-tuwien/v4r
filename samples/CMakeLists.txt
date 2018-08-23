@@ -11,43 +11,33 @@ endif()
   #      Define executable targets
   # ---------------------------------------------
 MACRO(V4R_DEFINE_CPP_EXAMPLE name)
-      set(sample_subfolder "cpp")
-      v4r_check_dependencies(${V4R_DEPS})
-
-     if(V4R_DEPENDENCIES_FOUND)
-      v4r_include_modules_recurse(${V4R_DEPS})
-
-
+    set(sample_subfolder "cpp")
     set(the_target "${sample_kind}_${name}")
-    add_executable(${the_target} "${name}.cpp")
-    target_link_libraries(${the_target} ${V4R_LINKER_LIBS} ${V4R_DEPS} ${DEP_LIBS})
 
-    set_target_properties(${the_target} PROPERTIES
-      OUTPUT_NAME "${sample_kind}-${name}"
-      PROJECT_LABEL "(${sample_KIND}) ${name}")
-
-    if(ENABLE_SOLUTION_FOLDERS)
-      set_target_properties(${the_target} PROPERTIES FOLDER "samples/${sample_subfolder}")
-    endif()
-
-    if(WIN32)
-      if (MSVC AND NOT BUILD_SHARED_LIBS)
-        set_target_properties(${the_target} PROPERTIES LINK_FLAGS "/NODEFAULTLIB:atlthunk.lib /NODEFAULTLIB:atlsd.lib /DEBUG")
-      endif()
-      install(TARGETS ${the_target}
-              RUNTIME DESTINATION "${V4R_SAMPLES_BIN_INSTALL_PATH}/${sample_subfolder}" COMPONENT samples)
-    endif()
-
-    if (INSTALL_C_EXAMPLES AND NOT WIN32)
-      install(TARGETS ${the_target}
-              RUNTIME DESTINATION bin
-              LIBRARY DESTINATION lib
-              ARCHIVE DESTINATION lib
-              )
-    endif()
+    v4r_check_dependencies(${V4R_DEPS})
+    if(NOT V4R_DEPENDENCIES_FOUND)
+      message("*** Cannot build ${the_target} because required dependencies (${V4R_DEPS}) are not found")
     else()
-        message("*** Cannot build ${sample_kind}_${name} because required dependencies (${V4R_DEPS}) are not found")
+      add_executable(${the_target} "${name}.cpp")
+      target_link_libraries(${the_target} ${V4R_LINKER_LIBS} ${V4R_DEPS} ${DEP_LIBS})
+
+      set_target_properties(${the_target} PROPERTIES
+        OUTPUT_NAME "${sample_kind}-${name}"
+        PROJECT_LABEL "(${sample_KIND}) ${name}")
+
+      if(ENABLE_SOLUTION_FOLDERS)
+        set_target_properties(${the_target} PROPERTIES FOLDER "samples/${sample_subfolder}")
+      endif()
+
+      if (INSTALL_C_EXAMPLES)
+        install(TARGETS ${the_target}
+                RUNTIME DESTINATION bin
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                )
+      endif()
     endif()
+
 
   ENDMACRO()
 

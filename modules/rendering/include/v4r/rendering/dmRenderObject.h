@@ -45,10 +45,11 @@
  *
  */
 
-#ifndef __DM_RENDERER_OBJECT__
-#define __DM_RENDERER_OBJECT__
+#pragma once
 
+// GLEW has to be included before GL
 #include <GL/glew.h>
+
 #include <GL/gl.h>
 
 #include <v4r/core/macros.h>
@@ -104,7 +105,7 @@ class V4R_EXPORTS DepthmapRendererModel {
 
  public:
   /**
-   * @brief DepthmapRendererModel loads the geometry data and creates the necessary opengl ressources
+   * @brief DepthmapRendererModel loads the geometry data and creates the necessary opengl resources
    * @param file filename of the geometry file
    */
   DepthmapRendererModel(const std::string &file, std::string path = "", bool shiftToCenterAndNormalizeScale = true);
@@ -158,7 +159,8 @@ class V4R_EXPORTS DepthmapRendererModel {
    * @return the models get fitted into a unity sphere.... Scale and Offset gives the shift and offset of the object
    */
   Eigen::Vector3f getOffset();
-};
-}
 
-#endif /* defined(__DM_RENDERER_OBJECT__) */
+  typedef std::shared_ptr<DepthmapRendererModel> Ptr;
+  typedef std::shared_ptr<DepthmapRendererModel const> ConstPtr;
+};
+}  // namespace v4r

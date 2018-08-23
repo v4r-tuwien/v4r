@@ -87,6 +87,6 @@ inline bool readPose(const std::string &filename, Eigen::Matrix4f &pose) {
   }
   return false;
 }
-}
+}  // namespace v4r
 
 #endif

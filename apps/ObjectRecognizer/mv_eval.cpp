@@ -2,6 +2,7 @@
 #include <glog/logging.h>
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
+#include <numeric>
 
 #include <v4r/apps/ObjectRecognizer.h>
 
@@ -28,7 +29,7 @@ int main(int argc, char **argv) {
       "test_dir,t", po::value<bf::path>(&test_dir)->required(),
       "Directory with test scenes stored as point clouds (.pcd). The camera pose is taken directly from the pcd header "
       "fields \"sensor_orientation_\" and \"sensor_origin_\" (if the test directory contains subdirectories, each "
-      "subdirectory is considered as seperate sequence for multiview recognition)")(
+      "subdirectory is considered as separate sequence for multiview recognition)")(
       "out_dir,o", po::value<bf::path>(&out_dir)->default_value(out_dir),
       "Output directory where recognition results will be stored.")(
       "cfg", po::value<bf::path>(&recognizer_config_dir)->default_value(recognizer_config_dir),
@@ -77,9 +78,9 @@ int main(int argc, char **argv) {
     views.resize(kept);
 
     const v4r::apps::ObjectRecognizerParameter &param = recognizer.getParam();
-    if (views.size() < param.max_views_) {
+    if (views.size() < param.multiview_max_views_) {
       LOG(WARNING) << "There are not enough views (" << views.size() << ") within this sequence to evaluate on "
-                   << param.max_views_ << " views! Skipping sequence.";
+                   << param.multiview_max_views_ << " views! Skipping sequence.";
       continue;
     }
 
@@ -118,9 +119,10 @@ int main(int argc, char **argv) {
       std::vector<v4r::ObjectHypothesesGroup> generated_object_hypotheses = recognizer.recognize(cloud);
       std::vector<std::pair<std::string, float>> elapsed_time = recognizer.getElapsedTimes();
 
-      if (counter >= param.max_views_ && !out_dir.empty())  // write results to disk (for each verified hypothesis add a
-                                                            // row in the text file with object name, dummy confidence
-                                                            // value and object pose in row-major order)
+      if (counter >= param.multiview_max_views_ &&
+          !out_dir.empty())  // write results to disk (for each verified hypothesis add a
+                             // row in the text file with object name, dummy confidence
+                             // value and object pose in row-major order)
       {
         view_is_evaluated.set(v_id);
         std::string out_basename = views[v_id];

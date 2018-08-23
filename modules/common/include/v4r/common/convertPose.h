@@ -96,6 +96,6 @@ inline void convertPose(const cv::Mat_<double> &R, const cv::Mat_<double> &t, Ei
   pose(2, 3) = t(2, 0);
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

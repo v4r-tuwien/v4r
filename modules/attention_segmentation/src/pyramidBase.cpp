@@ -408,7 +408,11 @@ int BasePyramid::buildDepthPyramid() {
   v4r::buildDepthPyramid(indices_image, pyramidImages, indices_image, max_level);
 
   v4r::createIndicesPyramid(pyramidImages, pyramidIndices);
-  v4r::createPointCloudPyramid(pyramidX, pyramidY, pyramidZ, pyramidImages, pyramidCloud);
+
+  rt_code = v4r::createPointCloudPyramid(pyramidX, pyramidY, pyramidZ, pyramidImages, pyramidCloud);
+  if (rt_code != AM_OK)
+    return rt_code;
+
   v4r::createNormalPyramid(pyramidNx, pyramidNy, pyramidNz, pyramidImages, pyramidNormals);
 
   //   for(int i = 0; i < pyramidCloud.at(6)->points.size(); ++i)
@@ -432,6 +436,7 @@ int BasePyramid::buildDepthPyramid() {
 
 void BasePyramid::combinePyramid(bool standard) {
   printf("[INFO]: %s: Sory, but combinePyramid() is not implemented.\n", pyramidName.c_str());
+  (void)standard;
 }
 
 void BasePyramid::calculate() {
@@ -480,4 +485,4 @@ void BasePyramid::combineConspicuityMaps(cv::Mat &sm_map, cv::Mat &consp_map) {
       return;
   }
 }
-}
+}  // namespace v4r

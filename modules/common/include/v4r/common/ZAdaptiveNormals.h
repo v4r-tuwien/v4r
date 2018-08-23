@@ -35,7 +35,6 @@
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 
 namespace v4r {
 /**
@@ -87,8 +86,8 @@ class V4R_EXPORTS ZAdaptiveNormals {
   void compute(const v4r::DataMatrix2D<Eigen::Vector3f> &cloud, const std::vector<int> &indices,
                std::vector<Eigen::Vector3f> &normals);
 
-  typedef SmartPtr<::v4r::ZAdaptiveNormals> Ptr;
-  typedef SmartPtr<::v4r::ZAdaptiveNormals const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ZAdaptiveNormals> Ptr;
+  typedef std::shared_ptr<::v4r::ZAdaptiveNormals const> ConstPtr;
 };
 
 /*********************** INLINE METHODES **************************/
@@ -104,6 +103,6 @@ inline short ZAdaptiveNormals::X(int idx) {
 inline short ZAdaptiveNormals::Y(int idx) {
   return idx / width;
 }
-}
+}  // namespace v4r
 
 #endif

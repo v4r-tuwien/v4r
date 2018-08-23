@@ -431,4 +431,4 @@ void ProjBundleAdjuster::optimize(Object &data) {
     cout << endl;
   }
 }
-}
+}  // namespace v4r

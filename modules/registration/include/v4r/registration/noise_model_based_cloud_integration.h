@@ -243,4 +243,4 @@ class V4R_EXPORTS NMBasedCloudIntegration {
     clouds = input_clouds_used_;
   }
 };
-}
+}  // namespace v4r

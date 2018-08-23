@@ -13,9 +13,8 @@ void NarfKeypointExtractor<PointT>::compute() {
                                Eigen::Affine3f(input_->sensor_orientation_);
   pcl::RangeImagePlanar rangeImage;
   rangeImage.createFromPointCloudWithFixedSize(
-      *input_, param_.cam_->getWidth(), param_.cam_->getHeight(), param_.cam_->getCx(), param_.cam_->getCy(),
-      param_.cam_->getFocalLengthX(), param_.cam_->getFocalLengthY(), sensorPose, pcl::RangeImage::CAMERA_FRAME,
-      param_.noise_level_, param_.minimum_range_);
+      *input_, param_.cam_.w, param_.cam_.h, param_.cam_.cx, param_.cam_.cy, param_.cam_.fx, param_.cam_.fy, sensorPose,
+      pcl::RangeImage::CAMERA_FRAME, param_.noise_level_, param_.minimum_range_);
 
   pcl::RangeImageBorderExtractor borderExtractor;
   // Keypoint detection object.
@@ -39,4 +38,4 @@ void NarfKeypointExtractor<PointT>::compute() {
 
 template class V4R_EXPORTS NarfKeypointExtractor<pcl::PointXYZ>;
 template class V4R_EXPORTS NarfKeypointExtractor<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

@@ -57,47 +57,15 @@ namespace po = boost::program_options;
 POINT_CLOUD_REGISTER_POINT_STRUCT(pcl::Histogram<352>, (float[352], histogram, histogram352))
 
 namespace v4r {
-class V4R_EXPORTS SHOTLocalEstimationParameter {
- public:
-  float support_radius_;
+struct V4R_EXPORTS SHOTLocalEstimationParameter {
+  float support_radius_ = 0.05f;
 
-  SHOTLocalEstimationParameter() : support_radius_(0.05f) {}
-
-  /**
-   * @brief init parameters
-   * @param command_line_arguments (according to Boost program options library)
-   * @return unused parameters (given parameters that were not used in this initialization call)
+  /* @brief initialization function for the parameter
+   * @param desc boost program options
    */
-  std::vector<std::string> init(int argc, char **argv) {
-    std::vector<std::string> arguments(argv + 1, argv + argc);
-    return init(arguments);
-  }
-
-  /**
-   * @brief init parameters
-   * @param command_line_arguments (according to Boost program options library)
-   * @return unused parameters (given parameters that were not used in this initialization call)
-   */
-  std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
-    po::options_description desc("SHOT Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "shot_support_radius", po::value<float>(&support_radius_)->default_value(support_radius_),
-        "shot support radius");
-    po::variables_map vm;
-    po::parsed_options parsed =
-        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
-    po::store(parsed, vm);
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      to_pass_further.push_back("-h");
-    }
-    try {
-      po::notify(vm);
-    } catch (std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-    }
-    return to_pass_further;
+  void init(po::options_description &desc, const std::string &section_name = "shot") {
+    desc.add_options()((section_name + "support_radius").c_str(),
+                       po::value<float>(&support_radius_)->default_value(support_radius_), "SHOT support radius");
   }
 };
 
@@ -121,23 +89,23 @@ class V4R_EXPORTS SHOTLocalEstimation : public LocalEstimator<PointT> {
     descr_dims_ = 352;
   }
 
-  bool acceptsIndices() const {
+  void compute(cv::Mat &signatures) override;
+
+  bool needNormals() const override {
     return true;
   }
 
-  void compute(std::vector<std::vector<float>> &signatures);
-
-  bool needNormals() const {
-    return true;
+  bool detectsKeypoints() const override {
+    return false;
   }
 
-  std::string getUniqueId() const {
+  std::string getUniqueId() const override {
     std::stringstream id;
     id << static_cast<int>(param_.support_radius_ * 1000.f);
     return id.str();
   }
 
-  typedef boost::shared_ptr<SHOTLocalEstimation<PointT>> Ptr;
-  typedef boost::shared_ptr<SHOTLocalEstimation<PointT> const> ConstPtr;
+  typedef std::shared_ptr<SHOTLocalEstimation<PointT>> Ptr;
+  typedef std::shared_ptr<SHOTLocalEstimation<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

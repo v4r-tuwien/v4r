@@ -112,10 +112,10 @@ MainWindow::MainWindow(QWidget *parent)
   // sensor signals
   qRegisterMetaType<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>("pcl::PointCloud<pcl::PointXYZRGB>::Ptr");
   qRegisterMetaType<cv::Mat_<cv::Vec3b>>("cv::Mat_<cv::Vec3b>");
-  qRegisterMetaType<boost::shared_ptr<std::vector<Sensor::CameraLocation>>>(
-      "boost::shared_ptr< std::vector<Sensor::CameraLocation> >");
-  qRegisterMetaType<boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>>(
-      "boost::shared_ptr< Sensor::AlignedPointXYZRGBVector >");
+  qRegisterMetaType<std::shared_ptr<std::vector<Sensor::CameraLocation>>>(
+      "std::shared_ptr< std::vector<Sensor::CameraLocation> >");
+  qRegisterMetaType<std::shared_ptr<Sensor::AlignedPointXYZRGBVector>>(
+      "std::shared_ptr< Sensor::AlignedPointXYZRGBVector >");
   qRegisterMetaType<std::string>("std::string");
   qRegisterMetaType<std::vector<Eigen::Vector3f>>("std::vector<Eigen::Vector3f>");
   qRegisterMetaType<Eigen::Matrix4f>("Eigen::Matrix4f");
@@ -123,12 +123,12 @@ MainWindow::MainWindow(QWidget *parent)
 
   connect(m_sensor, SIGNAL(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)),
           m_glviewer, SLOT(new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr, const cv::Mat_<cv::Vec3b>)));
-  connect(m_sensor, SIGNAL(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)), m_glviewer,
-          SLOT(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
-  connect(m_segmentation, SIGNAL(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)),
-          m_glviewer, SLOT(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
-  connect(m_sensor, SIGNAL(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)),
-          m_glviewer, SLOT(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)));
+  connect(m_sensor, SIGNAL(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)), m_glviewer,
+          SLOT(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
+  connect(m_segmentation, SIGNAL(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)),
+          m_glviewer, SLOT(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
+  connect(m_sensor, SIGNAL(update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>>)),
+          m_glviewer, SLOT(update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>>)));
   connect(m_sensor, SIGNAL(update_visualization()), m_glviewer, SLOT(update_visualization()));
   connect(m_sensor, SIGNAL(printStatus(const std::string)), this, SLOT(printStatus(const std::string)));
   connect(m_sensor, SIGNAL(finishedOptimizeCameras(int)), this, SLOT(finishedOptimizeCameras(int)));
@@ -157,10 +157,10 @@ MainWindow::MainWindow(QWidget *parent)
   connect(m_params, SIGNAL(set_cb_param(bool, float)), m_store_tracking_model, SLOT(set_cb_param(bool, float)));
 
   // bundle adjustment
-  connect(m_ba, SIGNAL(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)), m_glviewer,
-          SLOT(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
-  connect(m_ba, SIGNAL(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)), m_glviewer,
-          SLOT(update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>>)));
+  connect(m_ba, SIGNAL(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)), m_glviewer,
+          SLOT(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
+  connect(m_ba, SIGNAL(update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>>)), m_glviewer,
+          SLOT(update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>>)));
   connect(m_ba, SIGNAL(update_visualization()), m_glviewer, SLOT(update_visualization()));
   connect(m_ba, SIGNAL(printStatus(const std::string)), this, SLOT(printStatus(const std::string)));
   connect(m_ba, SIGNAL(finishedOptimizeCameras(int)), this, SLOT(finishedOptimizeCameras(int)));
@@ -168,8 +168,8 @@ MainWindow::MainWindow(QWidget *parent)
   // multi session
   connect(m_multi_session, SIGNAL(finishedAlignment(bool)), this, SLOT(finishedAlignment(bool)));
   connect(m_multi_session, SIGNAL(printStatus(const std::string)), this, SLOT(printStatus(const std::string)));
-  connect(m_multi_session, SIGNAL(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)),
-          m_glviewer, SLOT(update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
+  connect(m_multi_session, SIGNAL(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)),
+          m_glviewer, SLOT(update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector>)));
   connect(m_multi_session, SIGNAL(update_visualization()), m_glviewer, SLOT(update_visualization()));
 
   m_params->apply_cam_params();
@@ -504,8 +504,9 @@ void MainWindow::on_SaveTrackerModel_clicked() {
 
   if (ok && !object_name.isNull()) {
     if (boost::filesystem::exists(m_params->get_rgbd_path() + "/" + object_name.toStdString() + "/tracking_model.ao")) {
-      int ret = QMessageBox::warning(this, tr("Store tracking model"), tr("The object file exists!\n"
-                                                                          "Do you want to overwrite the file?"),
+      int ret = QMessageBox::warning(this, tr("Store tracking model"),
+                                     tr("The object file exists!\n"
+                                        "Do you want to overwrite the file?"),
                                      QMessageBox::Save, QMessageBox::Cancel);
       if (ret != QMessageBox::Save)
         ok = false;

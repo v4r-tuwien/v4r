@@ -36,7 +36,7 @@
 # ===================================================================================
 
 # Search packages for host system instead of packages for target system.
-# in case of cross compilation thess macro should be defined by toolchain file
+# in case of cross compilation this macro should be defined by toolchain file
 
 if(NOT COMMAND find_host_package)
     macro(find_host_package)
@@ -250,7 +250,7 @@ if(CMAKE_CROSSCOMPILING AND V4R_SHARED AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
 endif()
 
 #
-# Some macroses for samples
+# Some macros for samples
 #
 macro(v4r_check_dependencies)
   set(V4R_DEPENDENCIES_FOUND TRUE)
@@ -277,18 +277,6 @@ function(v4r_include_directories)
   endforeach()
   include_directories(BEFORE ${__add_before})
 endfunction()
-
-macro(v4r_include_modules)
-  include_directories(BEFORE "${V4R_INCLUDE_DIRS}")
-endmacro()
-
-macro(v4r_include_modules_recurse)
-  include_directories(BEFORE "${V4R_INCLUDE_DIRS}")
-endmacro()
-
-macro(v4r_target_link_libraries)
-  target_link_libraries(${ARGN})
-endmacro()
 
 # remove all matching elements from the list
 macro(v4r_list_filterout lst regex)

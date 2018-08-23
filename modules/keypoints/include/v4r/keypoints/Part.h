@@ -51,10 +51,10 @@
 #include <float.h>
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/triple.hpp>
 #include <vector>
 
@@ -62,11 +62,12 @@ namespace v4r {
 
 class V4R_EXPORTS Part {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   enum Type { STATIC, ROTATION_1D, TRANSLATION_1D, MOTION_6D, MOTION_PLANAR_3D, MAX_TYPE, UNDEF = MAX_TYPE };
 
  public:
-  typedef SmartPtr<::v4r::Part> Ptr;
-  typedef SmartPtr<::v4r::Part const> ConstPtr;
+  typedef std::shared_ptr<::v4r::Part> Ptr;
+  typedef std::shared_ptr<::v4r::Part const> ConstPtr;
 
   Type type;
   int idx;  // index to ObjectModel::parts
@@ -121,6 +122,6 @@ class V4R_EXPORTS Part {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

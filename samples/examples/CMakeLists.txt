@@ -22,7 +22,7 @@ if(BUILD_EXAMPLES)
   SET(V4R_DEPS v4r_tracking v4r_recognition v4r_keypoints v4r_features)
   V4R_DEFINE_CPP_EXAMPLE(imkRecognizeObject-file)
 
-  SET(V4R_DEPS v4r_tracking v4r_keypoints v4r_features v4r_camera_tracking_and_mapping v4r_recognition v4r_surface_texturing)
+  SET(V4R_DEPS v4r_tracking v4r_keypoints v4r_features v4r_camera_tracking_and_mapping v4r_recognition v4r_surface)
   V4R_DEFINE_CPP_EXAMPLE(camera_tracking_and_mapping)
 
   SET(V4R_DEPS v4r_tracking v4r_keypoints v4r_features v4r_camera_tracking_and_mapping v4r_recognition)
@@ -86,7 +86,7 @@ if(BUILD_EXAMPLES)
 
 endif()
 
-if (INSTALL_C_EXAMPLES AND NOT WIN32)
+if (INSTALL_C_EXAMPLES)
   file(GLOB C_SAMPLES *.c *.cpp *.jpg *.png *.data makefile.* build_all.sh *.dsp *.cmd )
   install(FILES ${C_SAMPLES}
           DESTINATION ${V4R_SAMPLES_SRC_INSTALL_PATH}/cpp

@@ -227,4 +227,4 @@ void ClusteringRNN::getCenters(DataMatrix2Df &_centers) {
   for (unsigned i = 0; i < clusters.size(); i++)
     _centers.push_back(&clusters[i]->data[0], cols);
 }
-}
+}  // namespace v4r

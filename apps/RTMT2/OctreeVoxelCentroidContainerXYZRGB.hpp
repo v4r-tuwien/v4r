@@ -13,9 +13,9 @@
 namespace pcl {
 namespace octree {
 /** \brief @b Octree pointcloud voxel centroid leaf node class
-  * \note This class implements a leaf node that calculates the mean centroid of PointXYZRGB points added this octree
+ * \note This class implements a leaf node that calculates the mean centroid of PointXYZRGB points added this octree
  * container.
-  */
+ */
 template <typename PointT = pcl::PointXYZRGB>
 class OctreeVoxelCentroidContainerXYZRGB : public OctreeContainerBase {
  public:
@@ -40,8 +40,8 @@ class OctreeVoxelCentroidContainerXYZRGB : public OctreeContainerBase {
   }
 
   /** \brief Add new point to voxel.
-    * \param[in] new_point the new point to add
-    */
+   * \param[in] new_point the new point to add
+   */
   void addPoint(const PointT& new_point) {
     using namespace pcl::common;
 
@@ -56,8 +56,8 @@ class OctreeVoxelCentroidContainerXYZRGB : public OctreeContainerBase {
   }
 
   /** \brief Calculate centroid of voxel.
-    * \param[out] centroid_arg the resultant centroid of the voxel
-    */
+   * \param[out] centroid_arg the resultant centroid of the voxel
+   */
   void getCentroid(PointT& centroid_arg) const {
     using namespace pcl::common;
 
@@ -90,7 +90,7 @@ class OctreeVoxelCentroidContainerXYZRGB : public OctreeContainerBase {
   Eigen::Vector3d pt_;
   unsigned r_, g_, b_;
 };
-}
-}
+}  // namespace octree
+}  // namespace pcl
 
 #endif

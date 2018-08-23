@@ -256,7 +256,7 @@ class Slic_Labelling {
           vis->close();
 
           std::cout << "Saving segmented point cloud to " << label_path.str() << "." << std::endl;
-          pcl::io::savePCDFileBinary<pcl::PointXYZRGB>(label_path.str(), *pLabelledPCl);
+          pcl::io::savePCDFileBinaryCompressed(label_path.str(), *pLabelledPCl);
         }
       } else {
         cv::Mat_<cv::Vec3b> slicLabelledMat = cv::Mat_<cv::Vec3b>::zeros(slicSrcMat.rows, slicSrcMat.cols);

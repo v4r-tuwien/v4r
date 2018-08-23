@@ -45,6 +45,8 @@
  * @brief Predict results from a trained SVM.
  */
 
+#include <glog/logging.h>
+
 #include "v4r/attention_segmentation/SVMPredictorSingle.h"
 
 namespace svm {
@@ -87,8 +89,8 @@ void SVMPredictorSingle::setModelFilename(std::string _model_filename) {
 
   // allocate memory for model (and nodes)
   if ((model = svm_load_model(model_filename.c_str())) == 0) {
-    fprintf(stderr, "can't open model file %s\n", model_filename.c_str());
-    exit(1);
+    throw std::invalid_argument("[SVMPredictorSingle::setModelFilename] model-file " + model_filename +
+                                " does not exist.");
   }
 
   have_model_filename = true;
@@ -96,23 +98,20 @@ void SVMPredictorSingle::setModelFilename(std::string _model_filename) {
   node = (struct svm_node *)malloc(max_nr_attr * sizeof(struct svm_node));
   if (predict_probability) {
     if (svm_check_probability_model(model) == 0) {
-      printf("[SVMPredictorSingle::SVMPredictorSingle] Error: Model does not support probability estimates.\n");
-      return;
+      throw std::invalid_argument(
+          "[SVMPredictorSingle::setModelFilename] Error: Model does not support probability estimates.");
     }
   } else {
     if (svm_check_probability_model(model) != 0)
-      printf(
-          "[SVMPredictorSingle::SVMPredictorSingle] Warning: Model supports probability estimates, but disabled in "
-          "prediction.");
+      LOG(WARNING) << "Model supports probability estimates, but "
+                      "disabled in prediction.";
   }
 
   have_model_node = true;
 }
 
 void SVMPredictorSingle::setRelations(std::vector<v4r::Relation> _relations) {
-  //   std::cerr << "relations 3 " << _relations.size() << std::endl;
   relations = _relations;
-  //   std::cerr << "relations 4 " << relations.size() << std::endl;
   have_relations = true;
 }
 
@@ -128,44 +127,34 @@ void SVMPredictorSingle::setType(int _type) {
  */
 void SVMPredictorSingle::compute() {
   if (!have_model_filename) {
-    fprintf(stderr, "do not have model file\n");
-    exit(1);
+    throw std::invalid_argument("[SVMPredictorSingle::compute] do not have model file.");
   }
 
   if (!have_model_node) {
-    fprintf(stderr, "do not have model node\n");
-    exit(1);
+    throw std::invalid_argument("[SVMPredictorSingle::compute] do not have model node.");
   }
 
   if (!have_surfaces) {
-    fprintf(stderr, "do not have surfaces\n");
-    exit(1);
+    throw std::invalid_argument("[SVMPredictorSingle::compute] do not have surfaces.");
   }
 
   if (!have_relations) {
-    fprintf(stderr, "do not have relations\n");
-    exit(1);
+    throw std::invalid_argument("[SVMPredictorSingle::compute] do not have relations.");
   }
 
   if (!have_type) {
-    fprintf(stderr, "do not know what type (structural, assembly) of relationships I need to classify\n");
-    exit(1);
+    throw std::invalid_argument(
+        "[SVMPredictorSingle::compute] do not know what type (structural, assembly) of relationships I need "
+        "to classify.");
   }
 
   //@ep: reallocate node structure according to the size of the feature vector
 
   for (unsigned int i = 0; i < relations.size(); i++) {
-    //     if(!(relations.at(i).valid))
-    //       continue;
-
     if (relations.at(i).type == type) {
-      //       std::cerr << "relations.rel_value " << relations.at(i).rel_value.size() << std::endl;
       relations.at(i).prediction = predict(relations.at(i).rel_value, relations.at(i).rel_probability);
     }
   }
-
-  //   std::cerr << "relations " << relations.size() << std::endl;
-
   //@ep: this function seems to be wrong to me
   // checkSmallPatches(30);
 }
@@ -186,12 +175,10 @@ double SVMPredictorSingle::predict(std::vector<double> &val, std::vector<double>
   prob.clear();
 
   if (predict_probability) {
-    if (svm_type == NU_SVR || svm_type == EPSILON_SVR)
-      printf(
-          "Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution "
-          "e^(-|z|/sigma)/(2sigma),sigma=%g\n",
-          svm_get_svr_probability(model));
-    else
+    if (svm_type == NU_SVR || svm_type == EPSILON_SVR) {
+      VLOG(1) << "Prob. model for test data: target value = predicted value + z";
+      VLOG(1) << "z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma=" << svm_get_svr_probability(model);
+    } else
       prob_estimates = (double *)malloc(nr_class * sizeof(double));
   }
 
@@ -225,13 +212,10 @@ void SVMPredictorSingle::setScaling(bool _scale, std::string filename) {
   if (!scale)
     return;
 
-  printf("Scaling values...\n");
-
   /* pass 1: find out max index of attributes */
   int max_index = 0;
-  // int min_index = 1;
-
   std::ifstream fp1(filename.c_str());
+
   if (fp1.is_open()) {
     std::string line;
     getline(fp1, line);
@@ -306,9 +290,8 @@ void SVMPredictorSingle::setScaling(bool _scale, std::string filename) {
 
 void SVMPredictorSingle::scaleValues(std::vector<double> &val) {
   if ((val.size() + 1) != feature_min.size()) {
-    printf("SVMPredictorSingle::scaleValues val.size %d != feature_min.size %d\n", (int)val.size(),
-           (int)feature_min.size());
-    return;
+    LOG(ERROR) << "val.size " << val.size() << " != " << feature_min.size();
+    throw std::runtime_error("[SVMPredictorSingle::scaleValues] Different sizes for values and features.");
   }
 
   for (unsigned index = 0; index < val.size(); index++) {
@@ -318,8 +301,7 @@ void SVMPredictorSingle::scaleValues(std::vector<double> &val) {
 
     double value = val.at(index);
     if (fabs(feature_max.at(index + 1) - feature_min.at(index + 1)) < 0.000001) {
-      printf("[SVMPredictorSingle::scaleValues] Warning: feature_maxat(index+1) ~= feature_minat(index+1): %4.3f\n",
-             feature_max.at(index + 1));
+      LOG(WARNING) << "feature_maxat(index+1) ~= feature_minat(index+1): " << feature_max.at(index + 1);
       return;
     }
 
@@ -328,9 +310,8 @@ void SVMPredictorSingle::scaleValues(std::vector<double> &val) {
     else if (fabs(value - feature_max.at(index + 1)) < 0.000001)
       value = upper;
     else
-      value = lower +
-              (upper - lower) * (value - feature_min.at(index + 1)) /
-                  (feature_max.at(index + 1) - feature_min.at(index + 1));
+      value = lower + (upper - lower) * (value - feature_min.at(index + 1)) /
+                          (feature_max.at(index + 1) - feature_min.at(index + 1));
 
     val.at(index) = value;
   }

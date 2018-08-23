@@ -40,63 +40,73 @@ int main(int argc, char** argv) {
   po::options_description desc(
       "Evaluation Dynamic Object Learning with Ground Truth\n======================================\n **Allowed "
       "options");
-  desc.add_options()("help,h", "produce help message")("scenes_dir,s", po::value<std::string>(&scene_dir)->required(),
-                                                       "input directory with .pcd files of the scenes. Each folder is "
-                                                       "considered as seperate sequence. Views are sorted "
-                                                       "alphabetically and object mask is applied on first view.")(
-      "input_mask_dir,m", po::value<std::string>(&input_mask_dir)->required(),
-      "directory containing the object masks used as a seed to learn the object in the first cloud")(
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("scenes_dir,s", po::value<std::string>(&scene_dir)->required(),
+                     "input directory with .pcd files of the scenes. Each folder is "
+                     "considered as separate sequence. Views are sorted "
+                     "alphabetically and object mask is applied on first view.");
+  desc.add_options()("input_mask_dir,m", po::value<std::string>(&input_mask_dir)->required(),
+                     "directory containing the object masks used as a seed to learn the object in the first cloud");
+  desc.add_options()(
       "output_dir,o", po::value<std::string>(&output_dir)->default_value(output_dir),
-      "Output directory where the model, training data, timing information and parameter values will be stored")
-
-      ("save_views", po::bool_switch(&save_views),
-       "if true, also saves point clouds, camera pose and object masks for each training views. This is necessary for "
-       "recognition.")
-
-          ("radius,r", po::value<double>(&m.param_.radius_)->default_value(m.param_.radius_),
-           "Radius used for region growing. Neighboring points within this distance are candidates for clustering it "
-           "to the object model.")(
-              "dot_product", po::value<double>(&m.param_.eps_angle_)->default_value(m.param_.eps_angle_),
-              "Threshold for the normals dot product used for region growing. Neighboring points with a surface normal "
-              "within this threshold are candidates for clustering it to the object model.")(
-              "dist_threshold_growing",
-              po::value<double>(&m.param_.dist_threshold_growing_)->default_value(m.param_.dist_threshold_growing_),
-              "")("seed_res", po::value<double>(&m.param_.seed_resolution_)->default_value(m.param_.seed_resolution_),
-                  "")("voxel_res",
-                      po::value<double>(&m.param_.voxel_resolution_)->default_value(m.param_.voxel_resolution_), "")(
-              "ratio", po::value<double>(&m.param_.ratio_supervoxel_)->default_value(m.param_.ratio_supervoxel_), "")(
-              "do_erosion", po::value<bool>(&m.param_.do_erosion_)->default_value(m.param_.do_erosion_), "")(
-              "do_mst_refinement",
-              po::value<bool>(&m.param_.do_mst_refinement_)->default_value(m.param_.do_mst_refinement_),
-              "")("transfer_latest_only", po::value<bool>(&m.param_.transfer_indices_from_latest_frame_only_)
-                                              ->default_value(m.param_.transfer_indices_from_latest_frame_only_),
-                  "")("chop_z,z", po::value<double>(&m.param_.chop_z_)->default_value(m.param_.chop_z_),
-                      "Cut-off distance of the input clouds with respect to the camera. Points further away than this "
-                      "distance will be ignored.")(
-              "normal_method,n", po::value<int>(&m.param_.normal_method_)->default_value(m.param_.normal_method_), "")(
-              "ratio_cluster_obj_supported", po::value<double>(&m.param_.ratio_cluster_obj_supported_)
-                                                 ->default_value(m.param_.ratio_cluster_obj_supported_),
-              "")("ratio_cluster_occluded",
-                  po::value<double>(&m.param_.ratio_cluster_occluded_)->default_value(m.param_.ratio_cluster_occluded_),
-                  "")
-
-              ("stat_outlier_removal_meanK", po::value<int>(&m.sor_params_.meanK_)->default_value(m.sor_params_.meanK_),
-               "MeanK used for statistical outlier removal (see PCL documentation)")(
-                  "stat_outlier_removal_std_mul",
-                  po::value<double>(&m.sor_params_.std_mul_)->default_value(m.sor_params_.std_mul_),
-                  "Standard Deviation multiplier used for statistical outlier removal (see PCL documentation)")(
-                  "inlier_threshold_plane_seg",
-                  po::value<double>(&m.p_param_.inlDist)->default_value(m.p_param_.inlDist),
-                  "")("min_points_smooth_cluster",
-                      po::value<int>(&m.p_param_.minPointsSmooth)->default_value(m.p_param_.minPointsSmooth),
-                      "Minimum number of points for a cluster")(
-                  "min_plane_points", po::value<int>(&m.p_param_.minPoints)->default_value(m.p_param_.minPoints),
-                  "Minimum number of points for a cluster to be a candidate for a plane")(
-                  "smooth_clustering",
-                  po::value<bool>(&m.p_param_.smooth_clustering)->default_value(m.p_param_.smooth_clustering),
-                  "If true, does smooth clustering. Otherwise only plane clustering.")
-
-                  ("visualize,v", po::bool_switch(&visualize), "turn visualization on");
+      "Output directory where the model, training data, timing information and parameter values will be stored");
+  desc.add_options()(
+      "save_views", po::bool_switch(&save_views),
+      "if true, also saves point clouds, camera pose and object masks for each training views. This is necessary for "
+      "recognition.");
+  desc.add_options()(
+      "radius,r", po::value<double>(&m.param_.radius_)->default_value(m.param_.radius_),
+      "Radius used for region growing. Neighboring points within this distance are candidates for clustering it "
+      "to the object model.");
+  desc.add_options()(
+      "dot_product", po::value<double>(&m.param_.eps_angle_)->default_value(m.param_.eps_angle_),
+      "Threshold for the normals dot product used for region growing. Neighboring points with a surface normal "
+      "within this threshold are candidates for clustering it to the object model.");
+  desc.add_options()(
+      "dist_threshold_growing",
+      po::value<double>(&m.param_.dist_threshold_growing_)->default_value(m.param_.dist_threshold_growing_), "");
+  desc.add_options()("seed_res",
+                     po::value<double>(&m.param_.seed_resolution_)->default_value(m.param_.seed_resolution_), "");
+  desc.add_options("voxel_res",
+                   po::value<double>(&m.param_.voxel_resolution_)->default_value(m.param_.voxel_resolution_), "");
+  desc.add_options()("ratio", po::value<double>(&m.param_.ratio_supervoxel_)->default_value(m.param_.ratio_supervoxel_),
+                     "");
+  desc.add_options()("do_erosion", po::value<bool>(&m.param_.do_erosion_)->default_value(m.param_.do_erosion_), "");
+  desc.add_options()("do_mst_refinement",
+                     po::value<bool>(&m.param_.do_mst_refinement_)->default_value(m.param_.do_mst_refinement_), "");
+  desc.add_options()("transfer_latest_only",
+                     po::value<bool>(&m.param_.transfer_indices_from_latest_frame_only_)
+                         ->default_value(m.param_.transfer_indices_from_latest_frame_only_),
+                     "");
+  desc.add_options()("chop_z,z", po::value<double>(&m.param_.chop_z_)->default_value(m.param_.chop_z_),
+                     "Cut-off distance of the input clouds with respect to the camera. Points further away than this "
+                     "distance will be ignored.");
+  desc.add_options()("normal_method,n",
+                     po::value<int>(&m.param_.normal_method_)->default_value(m.param_.normal_method_), "");
+  desc.add_options()(
+      "ratio_cluster_obj_supported",
+      po::value<double>(&m.param_.ratio_cluster_obj_supported_)->default_value(m.param_.ratio_cluster_obj_supported_),
+      "");
+  desc.add_options()(
+      "ratio_cluster_occluded",
+      po::value<double>(&m.param_.ratio_cluster_occluded_)->default_value(m.param_.ratio_cluster_occluded_), "");
+  desc.add_options()("stat_outlier_removal_meanK",
+                     po::value<int>(&m.sor_params_.meanK_)->default_value(m.sor_params_.meanK_),
+                     "MeanK used for statistical outlier removal (see PCL documentation)");
+  desc.add_options()("stat_outlier_removal_std_mul",
+                     po::value<double>(&m.sor_params_.std_mul_)->default_value(m.sor_params_.std_mul_),
+                     "Standard Deviation multiplier used for statistical outlier removal (see PCL documentation)");
+  desc.add_options()("inlier_threshold_plane_seg",
+                     po::value<double>(&m.p_param_.inlDist)->default_value(m.p_param_.inlDist), "");
+  desc.add_options()("min_points_smooth_cluster",
+                     po::value<int>(&m.p_param_.minPointsSmooth)->default_value(m.p_param_.minPointsSmooth),
+                     "Minimum number of points for a cluster");
+  desc.add_options()("min_plane_points", po::value<int>(&m.p_param_.minPoints)->default_value(m.p_param_.minPoints),
+                     "Minimum number of points for a cluster to be a candidate for a plane");
+  desc.add_options()("smooth_clustering",
+                     po::value<bool>(&m.p_param_.smooth_clustering)->default_value(m.p_param_.smooth_clustering),
+                     "If true, does smooth clustering. Otherwise only plane clustering.");
+  desc.add_options()("visualize,v", po::bool_switch(&visualize), "turn visualization on");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);

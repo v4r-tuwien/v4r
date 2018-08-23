@@ -37,19 +37,13 @@
 **
 ****************************************************************************/
 
-/**
- * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
- * @date 2017
- * @brief
- *
- */
-
 #ifndef Q_MOC_RUN
 #include "sensor.h"
 #include <pcl/common/io.h>
 
+#include <v4r/common/convertCloud.h>
 #include <v4r/common/convertImage.h>
+#include <v4r/common/unprojection.h>
 #include <v4r/keypoints/RigidTransformationRANSAC.h>
 #include <v4r/keypoints/impl/PoseIO.hpp>
 #include <v4r/keypoints/impl/invPose.hpp>
@@ -57,36 +51,21 @@
 //#include "v4r/KeypointTools/ScopeTime.hpp"
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/ply_io.h>
 #endif
 
 using namespace std;
 
 const double Sensor::OFFSET_BOUNDING_BOX_TRACKING = -0.02;
 
-/**
- * @brief Sensor::Sensor
- */
 Sensor::Sensor()
-: m_run(false), m_run_tracker(false), m_cam_id(0), m_draw_mask(false), m_select_roi(false), m_activate_roi(false),
-  m_show_cameras(false), upscaling(1.), roi_seed_x(320), roi_seed_y(280), u_idle_time(35 * 1000),  // 35 ms
-  max_queue_size(3),  // allow a queue size of 3 clouds
-  pose(Eigen::Matrix4f::Identity()), conf(0), cam_id(-1), bbox_scale_xy(1.), bbox_scale_height(1.), seg_offs(0.01),
-  bb_min(Eigen::Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX)), bb_max(Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX)),
-  bbox_base_transform(Eigen::Matrix4f::Identity()) {
+: run_(false), run_tracker_(false), draw_depth_mas_(false), publish_camera_trajectory_(false), upscaling_(1.),
+  roi_seed_x_(320), roi_seed_y_(280), roi_selected_(false), roi_activated_(false), frame_waiting_idle_time_(35 * 1000),
+  camera_pose_(Eigen::Matrix4f::Identity()), base_transform_(Eigen::Matrix4f::Identity()), stream_uri_(""),
+  bbox_scale_xy_(1.), bbox_scale_height_(1.), bbox_seg_offset_(0.01),
+  bbox_min_(Eigen::Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX)), bbox_max_(Eigen::Vector3f(FLT_MAX, FLT_MAX, FLT_MAX)),
+  bbox_transform_(Eigen::Matrix4f::Identity()) {
   // set cameras
-  cam = cv::Mat_<double>::eye(3, 3);
-
-  cam(0, 0) = cam_params.f[0];
-  cam(1, 1) = cam_params.f[1];
-  cam(0, 2) = cam_params.c[0];
-  cam(1, 2) = cam_params.c[1];
-
-  cam_trajectory.reset(new std::vector<CameraLocation>());
-  log_clouds.reset(new std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>());
-
-  cos_min_delta_angle = cos(20 * M_PI / 180.);
-  sqr_min_cam_distance = 1. * 1.;
+  camera_trajectory_.reset(new std::vector<CameraLocation>());
 
   v4r::ClusterNormalsToPlanes::Parameter p_param;
   p_param.thrAngle = 45;
@@ -97,341 +76,221 @@ Sensor::Sensor()
   p_param.thrAngleSmooth = 30;
   p_param.inlDistSmooth = 0.01;
   p_param.minPointsSmooth = 3;
-  pest.reset(new v4r::ClusterNormalsToPlanes(p_param));
+  plane_estimation_.reset(new v4r::ClusterNormalsToPlanes(p_param));
 
   v4r::ZAdaptiveNormals::Parameter n_param;
   n_param.adaptive = true;
-  nest.reset(new v4r::ZAdaptiveNormals(n_param));
+  normal_estimation_.reset(new v4r::ZAdaptiveNormals(n_param));
 
   // set up tracking
-  tsf.setCameraParameter(cam, upscaling);
-  param.tsf_filtering = true;
-  param.tsf_mapping = true;
-  param.pt_param.max_count = 250;
-  param.pt_param.conf_tracked_points_norm = 150;
-  param.map_param.refine_plk = false;
-  param.map_param.detect_loops = true;
-  param.map_param.nb_tracked_frames = 10;
-  param.filt_param.batch_size_clouds = 20;
-  param.diff_cam_distance_map = 0.5;
-  param.diff_delta_angle_map = 7;
-  param.filt_param.type = 3;  // 0...ori. col., 1..col mean, 2..bilin., 3..bilin col and cut off depth
-  tsf.setParameter(param);
+  tsf_.setCameraParameter(camera_params_.getCameraMatrix(), upscaling_);
+  tsf_params_.tsf_filtering = true;
+  tsf_params_.tsf_mapping = true;
+  tsf_params_.pt_param.max_count = 250;
+  tsf_params_.pt_param.conf_tracked_points_norm = 150;
+  tsf_params_.map_param.refine_plk = false;
+  tsf_params_.map_param.detect_loops = true;
+  tsf_params_.map_param.nb_tracked_frames = 10;
+  tsf_params_.filt_param.batch_size_clouds = 20;
+  tsf_params_.diff_cam_distance_map = 0.5;
+  tsf_params_.diff_delta_angle_map = 7;
+  tsf_params_.filt_param.type = 3;  // 0...ori. col., 1..col mean, 2..bilin., 3..bilin col and cut off depth
+  tsf_.setParameter(tsf_params_);
 
-  v4r::FeatureDetector::Ptr detector(new v4r::FeatureDetector_KD_FAST_IMGD());
-  tsf.setDetectors(detector, detector);
+  feature_detector_.reset(new v4r::FeatureDetector_KD_FAST_IMGD);
+  tsf_.setDetectors(feature_detector_, feature_detector_);
 }
 
-/**
- * @brief Sensor::~Sensor
- */
 Sensor::~Sensor() {
   stop();
 }
 
 /******************************** public *******************************/
 
-/**
- * @brief Sensor::setTSFParameter
- * @param nb_tracked_frames_ba
- * @param batch_size_clouds_tsf
- * @param cam_dist_map
- * @param delta_angle_map
- */
 void Sensor::setTSFParameter(int nb_tracked_frames_ba, int batch_size_clouds_tsf, const double &cam_dist_map,
                              const double &delta_angle_map) {
-  param.map_param.nb_tracked_frames = nb_tracked_frames_ba;
-  param.filt_param.batch_size_clouds = batch_size_clouds_tsf;
-  param.diff_cam_distance_map = cam_dist_map;
-  param.diff_delta_angle_map = delta_angle_map;
-  tsf.setParameter(param);
+  tsf_params_.map_param.nb_tracked_frames = nb_tracked_frames_ba;
+  tsf_params_.filt_param.batch_size_clouds = batch_size_clouds_tsf;
+  tsf_params_.diff_cam_distance_map = cam_dist_map;
+  tsf_params_.diff_delta_angle_map = delta_angle_map;
+  tsf_.setParameter(tsf_params_);
 }
 
-/**
- * @brief Sensor::getClouds
- * @return
- */
-// const boost::shared_ptr< std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > >& Sensor::getClouds()
+// const std::shared_ptr< std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > >& Sensor::getClouds()
 //{
 //  stopTracker();
-//  return log_clouds;
 //}
 
-/**
- * @brief Sensor::start
- * @param cam_id
- */
-void Sensor::start(int _cam_id) {
-  m_cam_id = _cam_id;
+void Sensor::start(const std::string &stream_uri) {
+  stream_uri_ = stream_uri;
   QThread::start();
 }
 
-/**
- * @brief Sensor::stop
- */
 void Sensor::stop() {
-  if (m_run) {
-    m_run = false;
+  if (run_) {
+    run_ = false;
     stopTracker();
     this->wait();
   }
-  tsf.stop();
+  tsf_.stop();
 }
 
-/**
- * @brief Sensor::startTracker
- * @param cam_id
- */
-void Sensor::startTracker(int _cam_id) {
-  if (!m_run)
-    start(_cam_id);
+void Sensor::startTracker() {
+  if (!run_)
+    start(stream_uri_);
 
-  m_run_tracker = true;
+  run_tracker_ = true;
 }
 
-/**
- * @brief Sensor::stopTracker
- */
 void Sensor::stopTracker() {
-  if (m_run_tracker) {
-    m_run_tracker = false;
+  if (run_tracker_) {
+    run_tracker_ = false;
   }
-  tsf.stop();
+  tsf_.stop();
 }
 
-/**
- * @brief Sensor::isRunning
- * @return
- */
 bool Sensor::isRunning() {
-  return m_run;
+  return run_;
 }
 
-/**
- * @brief Sensor::set_roi_params
- * @param _bbox_scale_xy
- * @param _bbox_scale_height
- * @param _seg_offs
- */
 void Sensor::set_roi_params(const double &_bbox_scale_xy, const double &_bbox_scale_height, const double &_seg_offs) {
-  bbox_scale_xy = _bbox_scale_xy;
-  bbox_scale_height = _bbox_scale_height;
-  seg_offs = _seg_offs;
+  bbox_scale_xy_ = _bbox_scale_xy;
+  bbox_scale_height_ = _bbox_scale_height;
+  bbox_seg_offset_ = _seg_offs;
 }
 
-/**
- * @brief Sensor::cam_params_changed
- * @param _cam_params
- */
-void Sensor::cam_params_changed(const RGBDCameraParameter &_cam_params) {
-  bool need_start = m_run;
-  bool need_start_tracker = m_run_tracker;
-
-  stop();
-
-  cam_params = _cam_params;
-
-  cam = cv::Mat_<double>::eye(3, 3);
-
-  cam(0, 0) = cam_params.f[0];
-  cam(1, 1) = cam_params.f[1];
-  cam(0, 2) = cam_params.c[0];
-  cam(1, 2) = cam_params.c[1];
-
-  cam_trajectory.reset(new std::vector<CameraLocation>());
-  log_clouds.reset(new std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>());
-
-  cos_min_delta_angle = cos(20 * M_PI / 180.);
-  sqr_min_cam_distance = 1. * 1.;
-  pose = Eigen::Matrix4f::Identity();
-  conf = 0.;
-
-  tsf.setCameraParameter(cam, upscaling);
-
-  if (need_start)
-    start(cam_id);
-  if (need_start_tracker)
-    startTracker(cam_id);
-}
-
-/**
- * @brief Sensor::select_roi
- * @param x
- * @param y
- */
 void Sensor::select_roi(int x, int y) {
-  roi_seed_x = x;
-  roi_seed_y = y;
-  m_select_roi = true;
+  roi_seed_x_ = x;
+  roi_seed_y_ = y;
+  roi_selected_ = true;
 }
 
-/**
- * @brief Sensor::reset
- */
 void Sensor::reset() {
-  bool is_run_tracker = m_run_tracker;
+  bool is_run_tracker = run_tracker_;
 
   stopTracker();
 
-  tsf.reset();
+  tsf_.reset();
 
-  cam_trajectory.reset(new std::vector<CameraLocation>());
-  log_clouds.reset(new std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>());
-  cameras.clear();
+  camera_trajectory_.reset(new std::vector<CameraLocation>());
 
-  pose.setIdentity();
-  conf = 0;
+  camera_pose_ = Eigen::Matrix4f::Identity();
 
   if (is_run_tracker)
-    startTracker(m_cam_id);
+    startTracker();
 }
 
-/**
- * @brief Sensor::showDepthMask
- * @param _draw_depth_mask
- */
 void Sensor::showDepthMask(bool _draw_depth_mask) {
-  m_draw_mask = _draw_depth_mask;
+  draw_depth_mas_ = _draw_depth_mask;
 }
 
-/**
- * @brief Sensor::selectROI
- * @param _seed_x
- * @param _seed_y
- */
 void Sensor::selectROI(int _seed_x, int _seed_y) {
-  m_select_roi = true;
-  roi_seed_x = _seed_x;
-  roi_seed_y = _seed_y;
+  roi_selected_ = true;
+  roi_seed_x_ = _seed_x;
+  roi_seed_y_ = _seed_y;
 }
 
-/**
- * @brief Sensor::activateROI
- * @param enable
- */
 void Sensor::activateROI(int enable) {
-  m_activate_roi = enable;
+  roi_activated_ = enable;
 }
 
 /*************************************** private **************************************************/
 
-void Sensor::CallbackCloud(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &_cloud) {
-  shm_mutex.lock();
-
-  if (shm_clouds.size() < max_queue_size) {
-    shm_clouds.push(pcl::PointCloud<pcl::PointXYZRGB>::Ptr());
-    shm_clouds.back().reset(new pcl::PointCloud<pcl::PointXYZRGB>());
-    pcl::copyPointCloud(*_cloud, *shm_clouds.back());
-  }
-
-  shm_mutex.unlock();
-
-  usleep(u_idle_time);
-}
-
-/**
- * @brief Sensor::run
- * main loop
- */
 void Sensor::run() {
-  try {
-    interface.reset(new pcl::OpenNIGrabber());
-  } catch (pcl::IOException e) {
-    m_run = false;
-    m_run_tracker = false;
-    emit printStatus(std::string("Status: No OpenNI device connected!"));
+  grabber_ = v4r::io::createGrabber(stream_uri_);
+  if (!grabber_) {
+    run_ = false;
+    run_tracker_ = false;
+    emit printStatus(std::string("Status: unable to create grabber!"));
     return;
   }
-  boost::function<void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr &)> f =
-      boost::bind(&Sensor::CallbackCloud, this, _1);
-  interface->registerCallback(f);
-  interface->start();
 
-  m_run = true;
+  // Setup camera parameters
+  camera_params_ = grabber_->getCameraIntrinsics();
+
+  camera_trajectory_.reset(new std::vector<CameraLocation>());
+  camera_pose_ = Eigen::Matrix4f::Identity();
+  tsf_.setCameraParameter(camera_params_.getCameraMatrix(), upscaling_);
+
+  emit cam_params_changed(camera_params_);
+
+  run_ = true;
 
   bool have_pose = false;
   int z = 0;
   double conf_ransac_iter = 0, conf_tracked_points = 0;
   cv::Mat_<cv::Vec3b> im_draw;
-  //uint64_t ts = INT_MAX, ts_last;
+  // uint64_t ts = INT_MAX, ts_last;
   Eigen::Matrix4f filt_pose;
   pcl::PointCloud<pcl::PointXYZRGBNormal> filt_cloud;
+  cv::Mat color, depth;
+  current_cloud_.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  while (m_run) {
+  while (run_) {
     // -------------------- do tracking --------------------------
 
-    shm_mutex.lock();
-
-    if (!shm_clouds.empty()) {
-      cloud = shm_clouds.front();
-      shm_clouds.pop();
-    } else
-      cloud.reset();
-
-    shm_mutex.unlock();
-
-    if (cloud.get() != 0) {
+    if (grabber_->hasMoreFrames()) {
+      grabber_->grabFrame(color, depth);
+      v4r::unproject(color, depth, grabber_->getCameraIntrinsics(), *current_cloud_);
       // v4r::ScopeTime t("tracking");
-      v4r::convertCloud(*cloud, kp_cloud, image);
-      image.copyTo(im_draw);
+      v4r::convertCloud(*current_cloud_, current_kp_cloud_, current_image_);
+      current_image_.copyTo(im_draw);
 
       // select a roi
-      if (m_select_roi)
-        detectROI(kp_cloud);
-      if (m_activate_roi)
-        maskCloud(pose * bbox_base_transform, bb_min, bb_max, *cloud);
+      if (roi_selected_)
+        detectROI(current_kp_cloud_);
+      if (roi_activated_)
+        maskCloud(bbox_transform_, bbox_min_, bbox_max_, *current_cloud_);
 
       // track camera
-      if (m_run_tracker) {
-        //        if (m_draw_mask) tsf.setDebugImage(im_draw); // debug viz
-        //        else tsf.setDebugImage(cv::Mat());
+      if (run_tracker_) {
+        //        if (draw_depth_mas_) tsf_.setDebugImage(im_draw); // debug viz
+        //        else tsf_.setDebugImage(cv::Mat());
 
-        have_pose = tsf.track(*cloud, z, pose, conf_ransac_iter, conf_tracked_points);
+        have_pose = tsf_.track(*current_cloud_, z, camera_pose_, conf_ransac_iter, conf_tracked_points);
 
         // debug save
-        //        tsf.getFilteredCloudNormals(filt_cloud, filt_pose, ts);
+        //        tsf_.getFilteredCloudNormals(filt_cloud, filt_pose, ts);
         //        if (ts != ts_last && filt_cloud.points.size()>0)
         //        {
         //            pcl::io::savePCDFileBinary(std::string("log/")+v4r::toString(z)+std::string("-filt.pcd"),
         //            filt_cloud);
-        //            convertImage(filt_cloud, image);
-        //            cv::imwrite(std::string("log/")+v4r::toString(z)+std::string("-filt.jpg"),image);
+        //            convertImage(filt_cloud, current_image_);
+        //            cv::imwrite(std::string("log/")+v4r::toString(z)+std::string("-filt.jpg"),current_image_);
         //            ts_last = ts;
         //        }
         if (have_pose) {
-          v4r::invPose(pose, inv_pose);
-          cam_trajectory->push_back(CameraLocation(z, 1, inv_pose.block<3, 1>(0, 3), inv_pose.block<3, 1>(0, 2)));
-          if (m_show_cameras)
-            emit update_cam_trajectory(cam_trajectory);
+          Eigen::Matrix4f inv_pose;
+          v4r::invPose(camera_pose_, inv_pose);
+          camera_trajectory_->push_back(CameraLocation(z, 1, inv_pose.block<3, 1>(0, 3), inv_pose.block<3, 1>(0, 2)));
+          if (publish_camera_trajectory_)
+            emit update_cam_trajectory(camera_trajectory_);
         }
-        if (m_activate_roi)
-          emit update_boundingbox(edges, pose * bbox_base_transform);
+        if (roi_activated_) {
+          bbox_transform_ = camera_pose_ * base_transform_;
+          emit update_boundingbox(bbox_edges_, bbox_transform_);
+        }
       }
 
-      //      if (m_draw_mask) drawDepthMask(*cloud,im_draw); // debug viz
+      //      if (draw_depth_mas_) drawDepthMask(*current_cloud_,im_draw); // debug viz
       //      drawConfidenceBar(im_draw,conf_tracked_points);
-      //      emit new_image(cloud, im_draw);
+      //      emit new_image(current_cloud_, im_draw);
 
-      if (m_draw_mask)
-        drawDepthMask(*cloud, image);
-      drawConfidenceBar(image, conf_tracked_points);
-      emit new_image(cloud, image);
+      if (draw_depth_mas_)
+        drawDepthMask(*current_cloud_, current_image_);
+      drawConfidenceBar(current_image_, conf_tracked_points);
+      emit new_image(current_cloud_, current_image_);
 
       emit update_visualization();
 
       z++;
     } else
-      usleep(u_idle_time / 2);
+      usleep(frame_waiting_idle_time_ / 2);
   }
 
   usleep(50000);
-  interface->stop();
-  usleep(50000);
 }
 
-/**
- * drawConfidenceBar
- */
 void Sensor::drawConfidenceBar(cv::Mat &im, const double &_conf) {
   int bar_start = 50, bar_end = 200;
   int diff = bar_end - bar_start;
@@ -452,31 +311,20 @@ void Sensor::drawConfidenceBar(cv::Mat &im, const double &_conf) {
   }
 }
 
-/**
- * @brief Sensor::drawDepthMask
- * @param cloud
- * @param im
- */
 void Sensor::drawDepthMask(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat &im) {
   if ((int)_cloud.width != im.cols || (int)_cloud.height != im.rows)
     return;
 
   for (unsigned i = 0; i < _cloud.width * _cloud.height; i++)
-    if (isnan(_cloud.points[i].x))
+    if (!pcl::isFinite(_cloud.points[i]))
       im.at<cv::Vec3b>(i) = cv::Vec3b(255, 0, 0);
 
-  //  for (unsigned i=0; i<plane.indices.size(); i++)
+  //  for (unsigned i=0; i<plane_.indices.size(); i++)
   //  {
-  //    im.at<cv::Vec3b>(plane.indices[i]) = cv::Vec3b(255,0,0);
+  //    im.at<cv::Vec3b>(plane_.indices[i]) = cv::Vec3b(255,0,0);
   //  }
 }
 
-/**
- * @brief Sensor::getInplaneTransform
- * @param pt
- * @param normal
- * @param pose
- */
 void Sensor::getInplaneTransform(const Eigen::Vector3f &pt, const Eigen::Vector3f &normal, Eigen::Matrix4f &_pose) {
   _pose.setIdentity();
 
@@ -494,13 +342,6 @@ void Sensor::getInplaneTransform(const Eigen::Vector3f &pt, const Eigen::Vector3
   _pose.block<3, 1>(0, 3) = pt;
 }
 
-/**
- * @brief Sensor::maskCloud
- * @param cloud
- * @param pose
- * @param bb_min
- * @param bb_max
- */
 void Sensor::maskCloud(const Eigen::Matrix4f &_pose, const Eigen::Vector3f &_bb_min, const Eigen::Vector3f &_bb_max,
                        pcl::PointCloud<pcl::PointXYZRGB> &_cloud) {
   Eigen::Vector3f pt_glob;
@@ -512,7 +353,7 @@ void Sensor::maskCloud(const Eigen::Matrix4f &_pose, const Eigen::Vector3f &_bb_
   for (unsigned i = 0; i < _cloud.points.size(); i++) {
     pcl::PointXYZRGB &pt = _cloud.points[i];
 
-    if (!isNaN(pt.getVector3fMap())) {
+    if (pcl::isFinite(pt)) {
       pt_glob = R * pt.getVector3fMap() + t;
 
       if (pt_glob[0] < _bb_min[0] || pt_glob[0] > _bb_max[0] || pt_glob[1] < _bb_min[1] || pt_glob[1] > _bb_max[1] ||
@@ -525,16 +366,6 @@ void Sensor::maskCloud(const Eigen::Matrix4f &_pose, const Eigen::Vector3f &_bb_
   }
 }
 
-/**
- * @brief Sensor::getBoundingBox
- * @param cloud
- * @param pose
- * @param bbox
- * @param xmin
- * @param xmax
- * @param ymin
- * @param ymax
- */
 void Sensor::getBoundingBox(const v4r::DataMatrix2D<Eigen::Vector3f> &_cloud, const std::vector<int> &_indices,
                             const Eigen::Matrix4f &_pose, std::vector<Eigen::Vector3f> &bbox, Eigen::Vector3f &_bb_min,
                             Eigen::Vector3f &_bb_max) {
@@ -561,9 +392,9 @@ void Sensor::getBoundingBox(const v4r::DataMatrix2D<Eigen::Vector3f> &_cloud, co
       ymin = pt[1];
   }
 
-  h_bbox_length = bbox_scale_xy * (xmax - xmin) / 2.;
-  h_bbox_width = bbox_scale_xy * (ymax - ymin) / 2.;
-  bbox_height = bbox_scale_height * (xmax - xmin + ymax - ymin) / 2.;
+  h_bbox_length = bbox_scale_xy_ * (xmax - xmin) / 2.;
+  h_bbox_width = bbox_scale_xy_ * (ymax - ymin) / 2.;
+  bbox_height = bbox_scale_height_ * (xmax - xmin + ymax - ymin) / 2.;
   bbox_center_xy = Eigen::Vector3f((xmin + xmax) / 2., (ymin + ymax) / 2., 0.);
 
   bbox.clear();
@@ -594,27 +425,24 @@ void Sensor::getBoundingBox(const v4r::DataMatrix2D<Eigen::Vector3f> &_cloud, co
   _bb_max = bbox_center_xy + Eigen::Vector3f(h_bbox_length, h_bbox_width, bbox_height);
 }
 
-/**
- * @brief Sensor::detectROI
- * @param cloud
- */
 void Sensor::detectROI(const v4r::DataMatrix2D<Eigen::Vector3f> &_cloud) {
   v4r::DataMatrix2D<Eigen::Vector3f> normals;
 
-  nest->compute(_cloud, normals);
-  pest->compute(_cloud, normals, roi_seed_x, roi_seed_y, plane);
+  normal_estimation_->compute(_cloud, normals);
+  plane_estimation_->compute(_cloud, normals, roi_seed_x_, roi_seed_y_, plane_);
 
-  if (plane.indices.size() > 3) {
-    getInplaneTransform(plane.pt, plane.normal, bbox_base_transform);
-    getBoundingBox(_cloud, plane.indices, bbox_base_transform, edges, bb_min, bb_max);
-    emit update_boundingbox(edges, bbox_base_transform);
-    bb_min += Eigen::Vector3f(0, 0, OFFSET_BOUNDING_BOX_TRACKING);
+  if (plane_.indices.size() > 3) {
+    getInplaneTransform(plane_.pt, plane_.normal, bbox_transform_);
+    getBoundingBox(_cloud, plane_.indices, bbox_transform_, bbox_edges_, bbox_min_, bbox_max_);
+    base_transform_ = bbox_transform_;
+    emit update_boundingbox(bbox_edges_, bbox_transform_);
+    bbox_min_ += Eigen::Vector3f(0, 0, OFFSET_BOUNDING_BOX_TRACKING);
   }
 
-  // cout<<"[Sensor::detectROI] roi plane nb pts: "<<plane.indices.size()<<endl;
+  // cout<<"[Sensor::detectROI] roi plane nb pts: "<<plane_.indices.size()<<endl;
 
-  m_activate_roi = true;
-  m_select_roi = false;
+  roi_activated_ = true;
+  roi_selected_ = false;
 }
 
 void Sensor::convertImage(const pcl::PointCloud<pcl::PointXYZRGBNormal> &_cloud, cv::Mat &_image) {

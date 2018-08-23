@@ -34,28 +34,32 @@ int main(int argc, char** argv) {
   bool eval_only_closest_cluster = true;
   bf::path models_dir;
   bf::path test_dir;
-  bf::path out_dir = "/tmp/class_results/";
+  bf::path out_dir = "class_results";
   int knn;
   bool retrain = false;
 
   knn = 5;
-  int segmentation_method = SegmentationType::OrganizedConnectedComponents;
+  SegmentationType segmentation_method = SegmentationType::ORGANIZED_CONNECTED_COMPONENTS;
 
   google::InitGoogleLogging(argv[0]);
 
   po::options_description desc(
       "Depth-map and point cloud Rendering from mesh file\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message")("models_dir,m", po::value<bf::path>(&models_dir)->required(),
-                                                       "model directory ")(
-      "test_dir,t", po::value<bf::path>(&test_dir)->required(), "directory containing *.pcd files for testing")(
-      "out_dir,o", po::value<bf::path>(&out_dir)->default_value(out_dir), "output directory")(
-      "eval_only_closest_cluster",
-      po::value<bool>(&eval_only_closest_cluster)->default_value(eval_only_closest_cluster),
-      "if true, evaluates only the closest segmented cluster with respect to the camera.")(
-      "kNN,k", po::value<int>(&knn)->default_value(knn), "defines the number k of nearest neighbor for classification")(
-      "seg_method", po::value<int>(&segmentation_method)->default_value(segmentation_method),
-      "segmentation method used")("retrain", po::bool_switch(&retrain),
-                                  "if true, retrains the model database no matter if they already exist");
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("models_dir,m", po::value<bf::path>(&models_dir)->required(), "model directory ");
+  desc.add_options()("test_dir,t", po::value<bf::path>(&test_dir)->required(),
+                     "directory containing *.pcd files for testing");
+  desc.add_options()("out_dir,o", po::value<bf::path>(&out_dir)->default_value(out_dir), "output directory");
+  desc.add_options()("eval_only_closest_cluster",
+                     po::value<bool>(&eval_only_closest_cluster)->default_value(eval_only_closest_cluster),
+                     "if true, evaluates only the closest segmented cluster with respect to the camera.");
+  desc.add_options()("kNN,k", po::value<int>(&knn)->default_value(knn),
+                     "defines the number k of nearest neighbor for classification");
+  desc.add_options()("seg_method",
+                     po::value<SegmentationType>(&segmentation_method)->default_value(segmentation_method),
+                     "segmentation method used");
+  desc.add_options()("retrain", po::bool_switch(&retrain),
+                     "if true, retrains the model database no matter if they already exist");
   po::variables_map vm;
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -81,7 +85,7 @@ int main(int argc, char** argv) {
   Source<PointT>::Ptr model_database(new Source<PointT>(source_param));
   model_database->init(models_dir);
   ESFEstimation<PointT>::Ptr estimator(new ESFEstimation<PointT>);
-  GlobalEstimator<PointT>::Ptr cast_estimator = boost::dynamic_pointer_cast<ESFEstimation<PointT>>(estimator);
+  GlobalEstimator<PointT>::Ptr cast_estimator = std::dynamic_pointer_cast<ESFEstimation<PointT>>(estimator);
 
   GlobalRecognizer<PointT> rec;
   rec.setModelDatabase(model_database);
@@ -166,9 +170,9 @@ int main(int argc, char** argv) {
         rec.setInputCloud(cloudXYZ);
         rec.setCluster(cluster);
         rec.recognize();
-        std::vector<typename ObjectHypothesis::Ptr> ohs = rec.getHypotheses();
+        std::vector<ObjectHypothesis::Ptr> ohs = rec.getHypotheses();
 
-        for (typename ObjectHypothesis::Ptr oh : ohs)
+        for (ObjectHypothesis::Ptr oh : ohs)
           std::cout << oh->model_id_ << " " << oh->class_id_ << "(" << oh->confidence_ << ")" << std::endl;
 
         //                of << categories[i][0] << " " << confidences[i][0] << " ";

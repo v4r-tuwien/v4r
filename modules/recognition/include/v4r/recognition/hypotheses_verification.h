@@ -47,12 +47,11 @@
 
 #pragma once
 
-#include <v4r/common/camera.h>
 #include <v4r/common/color_comparison.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/common/normals.h>
 #include <v4r/common/rgb2cielab.h>
 #include <v4r/core/macros.h>
-#include <v4r/recognition/ghv_opt.h>
 #include <v4r/recognition/hypotheses_verification_param.h>
 #include <v4r/recognition/hypotheses_verification_visualization.h>
 #include <v4r/recognition/object_hypothesis.h>
@@ -62,9 +61,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/octree/octree.h>
 #include <pcl/search/kdtree.h>
-#include <metslib/mets.hh>
 
-#include <pcl/common/time.h>
 #include <pcl/octree/octree_pointcloud_pointvector.h>
 #include <pcl/octree/impl/octree_iterator.hpp>
 
@@ -76,12 +73,6 @@
 namespace v4r {
 
 // forward declarations
-template <typename PointT>
-class GHVmove_manager;
-template <typename PointT>
-class GHVSAModel;
-template <typename PointT>
-class GHVCostFunctionLogger;
 template <typename PointT>
 class HV_ModelVisualizer;
 template <typename PointT>
@@ -102,15 +93,12 @@ class PtFitness {
 };
 
 /**
-   * \brief A hypothesis verification method for 3D Object Instance Recognition
-   * \author Thomas Faeulhammer (based on the work of Federico Tombari and Aitor Aldoma)
-   * \date April, 2016
-   */
+ * \brief A hypothesis verification method for 3D Object Instance Recognition
+ * \author Thomas Faeulhammer (based on the work of Federico Tombari and Aitor Aldoma)
+ * \date April, 2016
+ */
 template <typename PointT>
 class V4R_EXPORTS HypothesisVerification {
-  friend class GHVmove_manager<PointT>;
-  friend class GHVSAModel<PointT>;
-  friend class GHVCostFunctionLogger<PointT>;
   friend class HV_ModelVisualizer<PointT>;
   friend class HV_CuesVisualizer<PointT>;
   friend class HV_PairwiseVisualizer<PointT>;
@@ -118,8 +106,8 @@ class V4R_EXPORTS HypothesisVerification {
   HV_Parameter param_;
 
  public:
-  typedef boost::shared_ptr<HypothesisVerification<PointT>> Ptr;
-  typedef boost::shared_ptr<HypothesisVerification<PointT> const> ConstPtr;
+  typedef std::shared_ptr<HypothesisVerification<PointT>> Ptr;
+  typedef std::shared_ptr<HypothesisVerification<PointT> const> ConstPtr;
 
  protected:
   typedef boost::mpl::map<boost::mpl::pair<pcl::PointXYZ, pcl::PointNormal>,
@@ -138,27 +126,30 @@ class V4R_EXPORTS HypothesisVerification {
   mutable typename HV_CuesVisualizer<PointT>::Ptr vis_cues_;
   mutable typename HV_PairwiseVisualizer<PointT>::Ptr vis_pairwise_;
 
-  Camera::ConstPtr cam_;
+  Intrinsics cam_;  ///< rgb camera intrinsics. Used for projection of the object hypotheses onto the image plane.
+  cv::Mat_<uchar> rgb_depth_overlap_;  ///< this mask has the same size as the camera image and tells us which pixels
+                                       ///< can have valid depth pixels and which ones are not seen due to the physical
+                                       ///< displacement between RGB and depth sensor. Valid pixels are set to 255,
+                                       ///< pixels that are outside depth camera's field of view are set to 0
   ColorTransform::Ptr colorTransf_;
 
   bool visualize_pairwise_cues_;  ///< visualizes the pairwise cues. Useful for debugging
 
   typename Source<PointT>::ConstPtr m_db_;  ///< model data base
 
-  boost::dynamic_bitset<>
-      solution_;  ///< Boolean vector indicating if a hypothesis is accepted (true) or rejected (false)
-
   typename pcl::PointCloud<PointT>::ConstPtr scene_cloud_;         ///< scene point clou
   typename pcl::PointCloud<pcl::Normal>::ConstPtr scene_normals_;  ///< scene normals cloud
   typename pcl::PointCloud<PointT>::Ptr scene_cloud_downsampled_;  ///< Downsampled scene point cloud
   pcl::PointCloud<pcl::Normal>::Ptr scene_normals_downsampled_;    ///< Downsampled scene normals cloud
   std::vector<int> scene_sampled_indices_;                         ///< downsampled indices of the scene
+  Eigen::VectorXi scene_indices_map_;  ///< saves relationship between indices of the input cloud and indices of the
+                                       ///< downsampled input cloud
 
   std::vector<std::vector<typename HVRecognitionModel<PointT>::Ptr>> obj_hypotheses_groups_;
   std::vector<typename HVRecognitionModel<PointT>::Ptr>
       global_hypotheses_;  ///< all hypotheses not rejected by individual verification
 
-  std::map<std::string, boost::shared_ptr<pcl::octree::OctreePointCloudPointVector<PointT>>>
+  std::map<std::string, std::shared_ptr<pcl::octree::OctreePointCloudPointVector<PointT>>>
       octree_model_representation_;  ///< for each model we create an octree representation (used for computing visible
                                      /// points)
   typename pcl::search::KdTree<PointT>::Ptr kdtree_scene_;
@@ -166,28 +157,36 @@ class V4R_EXPORTS HypothesisVerification {
       model_normal_estimator_;  ///< normal estimator for object models (only used
                                 /// in case not already computed in advance)
 
-  std::vector<typename HVRecognitionModel<PointT>::Ptr> recognition_models_;  ///< all models to be verified
-
-  double model_fitness_, pairwise_cost_, scene_fitness_;
-
   float Lmin_ = 0.f, Lmax_ = 100.f;
   int bins_ = 50;
 
-  Eigen::MatrixXf intersection_cost_;  ///< represents the pairwise intersection cost
+  Eigen::MatrixXf intersection_cost_;      ///< represents the pairwise intersection cost
+  Eigen::MatrixXi smooth_region_overlap_;  ///< represents if two hypotheses explain the same smooth region
+  // cached variables for speed-up
+  float eps_angle_threshold_rad_;
 
   std::vector<std::vector<PtFitness>> scene_pts_explained_solution_;
 
   static std::vector<std::pair<std::string, float>>
       elapsed_time_;  ///< measurements of computation times for various components
 
-  float initial_temp_;
-  boost::shared_ptr<GHVCostFunctionLogger<PointT>> cost_logger_;
+  struct Solution {
+    boost::dynamic_bitset<> solution_;
+    double cost_;
+  } best_solution_;  ///< costs for each possible solution
+
+  std::set<size_t> evaluated_solutions_;
+  void search();
+
   Eigen::MatrixXf scene_color_channels_;  ///< converted color values where each point corresponds to a row entry
   typename pcl::octree::OctreePointCloudSearch<PointT>::Ptr octree_scene_downsampled_;
   boost::function<void(const boost::dynamic_bitset<> &, double, size_t)> visualize_cues_during_logger_;
 
   Eigen::VectorXi scene_pt_smooth_label_id_;  ///< stores a label for each point of the (downsampled) scene. Points
                                               /// belonging to the same smooth clusters, have the same label
+  int max_smooth_label_id_;
+
+  size_t num_evaluations_;  ///< counts how many times it evaluates a solution until finished verification
 
   // ----- MULTI-VIEW VARIABLES------
   std::vector<typename pcl::PointCloud<PointT>::ConstPtr>
@@ -241,28 +240,34 @@ class V4R_EXPORTS HypothesisVerification {
 
   void computePairwiseIntersection();  ///< computes the overlap of two visible points when projected to camera view
 
+  void computeSmoothRegionOverlap();  ///< computes if two hypotheses explain the same smooth region
+
   void computeModelFitness(HVRecognitionModel<PointT> &rm) const;
-
-  void visualizeGOcues(const boost::dynamic_bitset<> &active_solution, double cost, size_t times_evaluated) const {
-    vis_cues_->visualize(this, active_solution, cost, times_evaluated);
-  }
-
-  void applySolution(const boost::dynamic_bitset<> &sol) {
-    solution_ = sol;  // nothing needs to be updated as we always compute from scratch
-  }
 
   void initialize();
 
-  mets::gol_type evaluateSolution(const boost::dynamic_bitset<> &solution);
+  double evaluateSolution(const boost::dynamic_bitset<> &solution, bool &violates_smooth_region_check);
 
   void optimize();
+
+  /**
+   * @brief check if provided input is okay
+   */
+  void checkInput();
+
+  /**
+   * @brief this iterates through all poses and rejects hypotheses that are very similar.
+   * Similar means that they describe the same object identity, their centroids align and the rotation is (almost) the
+   * same.
+   */
+  void removeRedundantPoses();
 
   /**
    * @brief isOutlier remove hypotheses with a lot of outliers. Returns true if hypothesis is rejected.
    * @param rm
    * @return
    */
-  bool isOutlier(HVRecognitionModel<PointT> &rm) const;
+  bool isOutlier(const HVRecognitionModel<PointT> &rm) const;
 
   void cleanUp() {
     octree_scene_downsampled_.reset();
@@ -377,24 +382,6 @@ class V4R_EXPORTS HypothesisVerification {
   bool customRegionGrowing(const PointTWithNormal &seed_pt, const PointTWithNormal &candidate_pt,
                            float squared_distance) const;
 
-  /**
-   *  \brief: Returns a vector of booleans representing which hypotheses have been accepted/rejected (true/false)
-   *  mask vector of booleans
-   */
-  boost::dynamic_bitset<> getSolution() const {
-    return solution_;
-  }
-
-  class StopWatch {
-    std::string desc_;
-    boost::posix_time::ptime start_time_;
-
-   public:
-    StopWatch(const std::string &desc) : desc_(desc), start_time_(boost::posix_time::microsec_clock::local_time()) {}
-
-    ~StopWatch();
-  };
-
   // pre-computed variables for speed-up
   float OneOver_distNorm0_;
   float OneOver_distColor0_;
@@ -402,26 +389,26 @@ class V4R_EXPORTS HypothesisVerification {
   float search_radius_;
 
  public:
-  HypothesisVerification(const Camera::ConstPtr &cam, const HV_Parameter &p = HV_Parameter())
-  : param_(p), cam_(cam), initial_temp_(1000), OneOver_distNorm0_(1.f / scoreNormals(1.f)),
-    OneOver_distColor0_(1.f / scoreColor(0.f)), OneOver_distXYZ0_(1.f / scoreXYZ(0.f)),
-    search_radius_(2. * param_.resolution_mm_ / 1000.) {
+  HypothesisVerification(const Intrinsics &cam, const HV_Parameter &p = HV_Parameter())
+  : param_(p), cam_(cam), OneOver_distNorm0_(1.f / scoreNormals(1.f)), OneOver_distColor0_(1.f / scoreColor(0.f)),
+    OneOver_distXYZ0_(1.f / scoreXYZ(0.f)), search_radius_(2. * param_.resolution_mm_ / 1000.) {
+    max_smooth_label_id_ = 0;
     colorTransf_.reset(new RGB2CIELAB);
 
     switch (param_.color_comparison_method_) {
-      case ColorComparisonMethod::cie76:
-        color_dist_f_ = CIE76;
+      case ColorComparisonMethod::CIE76:
+        color_dist_f_ = computeCIE76;
         break;
 
-      case ColorComparisonMethod::cie94:
-        color_dist_f_ = CIE94_DEFAULT;
+      case ColorComparisonMethod::CIE94:
+        color_dist_f_ = computeCIE94_DEFAULT;
         break;
 
-      case ColorComparisonMethod::ciede2000:
-        color_dist_f_ = CIEDE2000;
+      case ColorComparisonMethod::CIEDE2000:
+        color_dist_f_ = computeCIEDE2000;
         break;
 
-      case 3:
+      case ColorComparisonMethod::CUSTOM:
         color_dist_f_ = boost::bind(&HypothesisVerification::customColorDistance, this, _1, _2);
         break;
 
@@ -429,30 +416,11 @@ class V4R_EXPORTS HypothesisVerification {
         throw std::runtime_error("Color comparison method not defined!");
     }
 
+    eps_angle_threshold_rad_ = pcl::deg2rad(param_.eps_angle_threshold_deg_);
+
     std::vector<std::string> dummy;
     model_normal_estimator_ = v4r::initNormalEstimator<PointT>(param_.normal_method_, dummy);
   }
-
-  //    /**
-  //     * @brief returns the vector of verified object hypotheses
-  //     * @return
-  //     */
-  //    std::vector<typename ObjectHypothesis<PointT>::Ptr >
-  //    getVerifiedHypotheses() const
-  //    {
-  //        std::vector<typename ObjectHypothesis<PointT>::Ptr > verified_hypotheses  (global_hypotheses_.size());
-  //        size_t kept=0;
-  //        for(size_t i=0; i<global_hypotheses_.size(); i++)
-  //        {
-  //            if(solution_[i])
-  //            {
-  //                verified_hypotheses[kept] = global_hypotheses_[i];
-  //                kept++;
-  //            }
-  //        }
-  //        verified_hypotheses.resize(kept);
-  //        return verified_hypotheses;
-  //    }
 
   /**
    *  \brief Sets the scene cloud
@@ -500,17 +468,6 @@ class V4R_EXPORTS HypothesisVerification {
   void setHypotheses(std::vector<ObjectHypothesesGroup> &ohs);
 
   /**
-   * @brief writeToLog
-   * @param of
-   * @param all_costs_
-   */
-  void writeToLog(std::ofstream &of, bool all_costs_ = false) {
-    cost_logger_->writeToLog(of);
-    if (all_costs_)
-      cost_logger_->writeEachCostToLog(of);
-  }
-
-  /**
    * @brief setModelDatabase
    * @param m_db model database
    */
@@ -518,12 +475,16 @@ class V4R_EXPORTS HypothesisVerification {
     m_db_ = m_db;
   }
 
+  void setRGBDepthOverlap(const cv::Mat_<uchar> &rgb_depth_overlap) {
+    rgb_depth_overlap_ = rgb_depth_overlap;
+  }
+
   /**
    * @brief visualizeModelCues visualizes the model cues during computation. Useful for debugging
    * @param vis_params visualization parameters
    */
   void visualizeModelCues(
-      const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>()) {
+      const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>()) {
     vis_model_.reset(new HV_ModelVisualizer<PointT>(vis_params));
   }
 
@@ -532,8 +493,7 @@ class V4R_EXPORTS HypothesisVerification {
    * for debugging
    * @param vis_params visualization parameters
    */
-  void visualizeCues(
-      const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>()) {
+  void visualizeCues(const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>()) {
     vis_cues_.reset(new HV_CuesVisualizer<PointT>(vis_params));
   }
 
@@ -543,7 +503,7 @@ class V4R_EXPORTS HypothesisVerification {
    * @param vis_params visualization parameters
    */
   void visualizePairwiseCues(
-      const PCLVisualizationParams::ConstPtr &vis_params = boost::make_shared<PCLVisualizationParams>()) {
+      const PCLVisualizationParams::ConstPtr &vis_params = std::make_shared<PCLVisualizationParams>()) {
     vis_pairwise_.reset(new HV_PairwiseVisualizer<PointT>(vis_params));
   }
 
@@ -565,8 +525,8 @@ class V4R_EXPORTS HypothesisVerification {
    * @brief setCamera set the camera used for z-buffering
    * @param cam camera parameters
    */
-  void setCamera(const Camera::ConstPtr &cam) {
+  void setCameraIntrinsics(const Intrinsics &cam) {
     cam_ = cam;
   }
 };
-}
+}  // namespace v4r

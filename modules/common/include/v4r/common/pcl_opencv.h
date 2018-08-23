@@ -45,7 +45,7 @@
  *
  */
 #include <pcl/common/common.h>
-#include <v4r/common/camera.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/core/macros.h>
 #include <boost/dynamic_bitset.hpp>
 #include <opencv2/opencv.hpp>
@@ -66,7 +66,7 @@ class V4R_EXPORTS PCLOpenCVConverter {
 
   typename pcl::PointCloud<PointT>::ConstPtr cloud_;  ///< cloud to be converted
   std::vector<int> indices_;  ///< pixel indices to be extracted (if empty, all pixel will be extracted)
-  Camera::ConstPtr cam_;      ///< camera parameters (used for re-projection if point cloud is not organized)
+  Intrinsics cam_;            ///< RGB camera parameters (used for re-projection if point cloud is not organized)
   bool remove_background_;  ///< if true, will set pixel not specified by the indices to the background color defined by
                             /// its member variable background_color_
   cv::Vec3b background_color_;  ///< background color (only used if indices are not empty and remove_background is set
@@ -133,10 +133,10 @@ class V4R_EXPORTS PCLOpenCVConverter {
   }
 
   ///
-  /// \brief setCamera
-  /// \param cam camera parameters (used for re-projection if point cloud is not organized)
+  /// \brief setCameraIntrinsics
+  /// \param cam RGB camera intrinsic parameters (used for re-projection if point cloud is not organized)
   ///
-  void setCamera(const Camera::ConstPtr cam) {
+  void setCameraIntrinsics(const Intrinsics &cam) {
     cam_ = cam;
   }
 
@@ -197,11 +197,11 @@ class V4R_EXPORTS PCLOpenCVConverter {
 };
 
 /**
-  * @brief computes the depth map of a point cloud with fixed size output
-  * @param indices of the points belonging to the object (assumes row major indices)
-  * @param width of the image/point cloud
-  * @param height of the image/point cloud
-  */
+ * @brief computes the depth map of a point cloud with fixed size output
+ * @param indices of the points belonging to the object (assumes row major indices)
+ * @param width of the image/point cloud
+ * @param height of the image/point cloud
+ */
 V4R_EXPORTS
 cv::Rect computeBoundingBox(const std::vector<int> &indices, size_t width, size_t height);
-}
+}  // namespace v4r

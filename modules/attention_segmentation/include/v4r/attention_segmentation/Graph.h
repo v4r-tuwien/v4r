@@ -74,7 +74,7 @@ extern void Add3(const T1 v1[3], const T2 v2[3], T3 r[3]);
 class Graph {
  private:
   unsigned nodes;               ///< number of surface patches
-  std::vector<gc::Edge> edges;  ///< edges of the graph (wiht node numbers and probability)
+  std::vector<gc::Edge> edges;  ///< edges of the graph (with node numbers and probability)
 
   std::vector<v4r::Relation> relations;              ///< relations between features
   std::vector<v4r::SurfaceModel::Ptr> surfaces;      ///< relations between features
@@ -116,6 +116,6 @@ inline short Graph::X(int idx) {
 inline short Graph::Y(int idx) {
   return idx / pcl_cloud->width;
 }
-}
+}  // namespace gc
 
 #endif

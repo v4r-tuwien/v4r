@@ -486,7 +486,7 @@ void ConvertPCLCloud2Image(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr &p
         if (std::isnan(pt.z))
           continue;  // background is always black
 
-        while (pt.label >= colormap.size())  // if there is no color for this label (first occurance)
+        while (pt.label >= colormap.size())  // if there is no color for this label (first occurrence)
         {
           // fill up colormap with random colors until colormap.size = pt.label+1
           cv::Vec3b c;
@@ -1029,7 +1029,7 @@ void ProjectPC2Model(const int model, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_p
 }
 
 void NormalSpaceSampling(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr _in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_out,
-                         pcl::PointCloud<pcl::Normal>::Ptr &normals, std::vector<int> &indices) {
+                         pcl::PointCloud<pcl::Normal>::Ptr &normals) {
   if (_in.get() == 0) {
     printf("[PCLUtils::NormalSpaceSampling] Error: Input cloud is uninitialized. Abort.\n");
     return;

@@ -45,4 +45,4 @@ void OrganizedConnectedComponentSegmenter<PointT>::segment() {
 #define PCL_INSTANTIATE_OrganizedConnectedComponentSegmenter(T) \
   template class V4R_EXPORTS OrganizedConnectedComponentSegmenter<T>;
 PCL_INSTANTIATE(OrganizedConnectedComponentSegmenter, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

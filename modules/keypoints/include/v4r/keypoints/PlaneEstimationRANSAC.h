@@ -50,9 +50,9 @@
 
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -109,8 +109,8 @@ class V4R_EXPORTS PlaneEstimationRANSAC {
   static void getDistances(const std::vector<Eigen::Vector3f> &pts, const Eigen::Vector3f &pt, const Eigen::Vector3f &n,
                            std::vector<float> &dists);
 
-  typedef SmartPtr<::v4r::PlaneEstimationRANSAC> Ptr;
-  typedef SmartPtr<::v4r::PlaneEstimationRANSAC const> ConstPtr;
+  typedef std::shared_ptr<::v4r::PlaneEstimationRANSAC> Ptr;
+  typedef std::shared_ptr<::v4r::PlaneEstimationRANSAC const> ConstPtr;
 };
 
 /*********************** INLINE METHODES **************************/
@@ -177,6 +177,6 @@ inline float PlaneEstimationRANSAC::normalPointDist(const Eigen::Vector3f &pt, c
                                                     const Eigen::Vector3f &pt_dist) {
   return (pt_dist - pt).dot(n);
 }
-}
+}  // namespace v4r
 
 #endif

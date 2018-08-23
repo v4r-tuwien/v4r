@@ -116,6 +116,6 @@ inline bool SlicRGBD::isnan(const Eigen::Vector3f &pt) {
 inline double SlicRGBD::sqr(const double &v) {
   return v * v;
 }
-}
+}  // namespace v4r
 
 #endif  // -- THE END --

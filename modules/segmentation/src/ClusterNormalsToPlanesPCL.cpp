@@ -433,4 +433,4 @@ void ClusterNormalsToPlanesPCL<PointT>::compute(const typename pcl::PointCloud<P
 template class V4R_EXPORTS ClusterNormalsToPlanesPCL<pcl::PointXYZRGB>;
 template class V4R_EXPORTS ClusterNormalsToPlanesPCL<pcl::PointXYZ>;
 
-}  //-- THE END --
+}  // namespace v4r

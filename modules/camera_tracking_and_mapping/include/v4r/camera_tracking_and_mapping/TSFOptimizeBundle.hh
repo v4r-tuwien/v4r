@@ -37,45 +37,37 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #ifndef KP_TSF_OPTIMIZE_BUNDLE_HH
 #define KP_TSF_OPTIMIZE_BUNDLE_HH
 
-#include <Eigen/Dense>
-#include <opencv2/core/core.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
-#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
 #include <v4r/core/macros.h>
+#include <Eigen/Dense>
+#include <opencv2/core/core.hpp>
+#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
+#include "opencv2/imgproc/imgproc.hpp"
 
-
-namespace v4r
-{
-
-
+namespace v4r {
 
 /**
  * TSFOptimizeBundle
  */
-class V4R_EXPORTS TSFOptimizeBundle 
-{
-public:
-
+class V4R_EXPORTS TSFOptimizeBundle {
+ public:
   /**
    * Parameter
    */
-  class Parameter
-  {
-  public:
+  class Parameter {
+   public:
     double depth_error_scale;
 
     bool use_robust_loss;
@@ -91,15 +83,13 @@ public:
     bool optimize_delta_cloud_rgb_pose;
     double px_error_scale;
     Parameter()
-      : depth_error_scale(100), use_robust_loss(true), loss_scale(2.),
-        optimize_focal_length(false), optimize_principal_point(false),
-        optimize_radial_k1(false), optimize_radial_k2(false), optimize_radial_k3(false),
-        optimize_tangential_p1(false), optimize_tangential_p2(false),
-        optimize_delta_cloud_rgb_pose_global(false), optimize_delta_cloud_rgb_pose(false),
-        px_error_scale(1) {}
+    : depth_error_scale(100), use_robust_loss(true), loss_scale(2.), optimize_focal_length(false),
+      optimize_principal_point(false), optimize_radial_k1(false), optimize_radial_k2(false), optimize_radial_k3(false),
+      optimize_tangential_p1(false), optimize_tangential_p2(false), optimize_delta_cloud_rgb_pose_global(false),
+      optimize_delta_cloud_rgb_pose(false), px_error_scale(1) {}
   };
 
-private:
+ private:
   Parameter param;
 
   cv::Mat_<double> dist_coeffs;
@@ -107,9 +97,9 @@ private:
   std::vector<double> lm_intrinsics;
 
   Eigen::Matrix<double, 6, 1> delta_pose;
-  std::vector<Eigen::Matrix<double, 6, 1> > poses_Rt;
-  std::vector<Eigen::Matrix<double, 6, 1> > poses_Rt_RGB;
-  std::vector< std::vector<Eigen::Vector3d> > points3d;
+  std::vector<Eigen::Matrix<double, 6, 1>> poses_Rt;
+  std::vector<Eigen::Matrix<double, 6, 1>> poses_Rt_RGB;
+  std::vector<std::vector<Eigen::Vector3d>> points3d;
 
   std::vector<int> const_intrinsics;
   bool const_all_intrinsics;
@@ -124,28 +114,24 @@ private:
 
   void setCameraParameterConst();
 
-
-public:
-  TSFOptimizeBundle( const Parameter &p=Parameter());
+ public:
+  TSFOptimizeBundle(const Parameter &p = Parameter());
   ~TSFOptimizeBundle();
 
   void optimize(std::vector<TSFFrame::Ptr> &map);
 
-  void getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs);
+  void getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs) const;
 
-  inline const std::vector< std::vector<Eigen::Vector3d> > &getOptiPoints() const {return points3d;}
+  inline const std::vector<std::vector<Eigen::Vector3d>> &getOptiPoints() const {
+    return points3d;
+  }
 
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
-  void setParameter(const Parameter &p=Parameter());
+  void setParameter(const Parameter &p = Parameter());
 };
-
-
 
 /*************************** INLINE METHODES **************************/
 
-
-
-} //--END--
+}  // namespace v4r
 
 #endif
-

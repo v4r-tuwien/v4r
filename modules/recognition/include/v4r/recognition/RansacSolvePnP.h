@@ -110,8 +110,8 @@ class V4R_EXPORTS RansacSolvePnP {
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
   void setParameter(const Parameter &_p);
 
-  typedef boost::shared_ptr<::v4r::RansacSolvePnP> Ptr;
-  typedef boost::shared_ptr<::v4r::RansacSolvePnP const> ConstPtr;
+  typedef std::shared_ptr<::v4r::RansacSolvePnP> Ptr;
+  typedef std::shared_ptr<::v4r::RansacSolvePnP const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
@@ -143,6 +143,6 @@ inline bool RansacSolvePnP::contains(const std::vector<int> &idx, int num) {
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

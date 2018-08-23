@@ -94,7 +94,7 @@ class V4R_EXPORTS Gabor {
                       //   CvGabor gabor;
 
  public:
-  typedef boost::shared_ptr<Gabor> Ptr;
+  typedef std::shared_ptr<Gabor> Ptr;
 
   Gabor();
   ~Gabor();
@@ -129,6 +129,6 @@ class V4R_EXPORTS Gabor {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

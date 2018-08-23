@@ -54,7 +54,6 @@
 #include <vector>
 
 #include "v4r/attention_segmentation/EPBase.h"
-#include "v4r/attention_segmentation/PPlane.h"
 #include "v4r/attention_segmentation/SurfaceModel.h"
 
 namespace v4r {
@@ -64,7 +63,7 @@ namespace v4r {
  */
 class ClusterNormalsToPlanes : public EPBase {
  public:
-  typedef boost::shared_ptr<ClusterNormalsToPlanes> Ptr;
+  typedef std::shared_ptr<ClusterNormalsToPlanes> Ptr;
 
   class Parameter {
    public:
@@ -122,7 +121,7 @@ class ClusterNormalsToPlanes : public EPBase {
 
   // calculates parameters of angles between normals and distances depending on z value
   void calculateCloudAdaptiveParameters();
-  // creates patch image TODO: should be transfered
+  // creates patch image TODO: should be transferred
   void createPatchImage();
   // @ep: do not understand this function
   void countNeighbours(std::vector<std::vector<int>> &reassign_idxs, int nb, int nnb, int inc);
@@ -178,6 +177,6 @@ class ClusterNormalsToPlanes : public EPBase {
 inline std::vector<SurfaceModel::Ptr> ClusterNormalsToPlanes::getSurfaces() {
   return surfaces;
 }
-}
+}  // namespace v4r
 
 #endif

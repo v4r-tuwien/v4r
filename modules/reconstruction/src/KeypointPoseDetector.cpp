@@ -78,12 +78,12 @@ KeypointPoseDetector::~KeypointPoseDetector() {}
  */
 double KeypointPoseDetector::detect(const cv::Mat &image, Eigen::Matrix4f &pose) {
   if (model.get() == 0)
-    throw std::runtime_error("[KeypointPoseDetector::detect] No model available!");
+    throw std::runtime_error("[KeypointPoseDetector::detectAndCompute] No model available!");
   if (intrinsic.empty())
-    throw std::runtime_error("[KeypointPoseDetector::detect] Intrinsic camera parameter not set!");
+    throw std::runtime_error("[KeypointPoseDetector::detectAndCompute] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -94,7 +94,7 @@ double KeypointPoseDetector::detect(const cv::Mat &image, Eigen::Matrix4f &pose)
 
   //{ v4r::ScopeTime t("detect keypoints");
   detector->detect(im_gray, keys);
-  descEstimator->extract(im_gray, keys, descs);
+  descEstimator->compute(im_gray, keys, descs);
   //}
 
   // matcher->knnMatch( descs, model->descs, matches, 2 );
@@ -182,4 +182,4 @@ void KeypointPoseDetector::setCameraParameter(const cv::Mat &_intrinsic, const c
       dist_coeffs(0, i) = _dist_coeffs.at<double>(0, i);
   }
 }
-}
+}  // namespace v4r

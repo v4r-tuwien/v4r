@@ -127,19 +127,13 @@ std::string Params::getVGNfile() {
 std::string Params::getCRFfile() {
   return ui->editCRFfile->text().toStdString();
 }
+std::string Params::getStreamURI() {
+  return ui->editStreamURI->text().toStdString();
+}
 
 void Params::apply_params() {
   emit set_roi_params(ui->roi_scale_xy->text().toFloat(), ui->roi_scale_height->text().toFloat(),
                       ui->roi_offs->text().toFloat());
-}
-
-void Params::apply_cam_params() {
-  cam_params.f[0] = ui->fuRgbEdit->text().toFloat();
-  cam_params.f[1] = ui->fvRgbEdit->text().toFloat();
-  cam_params.c[0] = ui->cuRgbEdit->text().toFloat();
-  cam_params.c[1] = ui->cvRgbEdit->text().toFloat();
-
-  emit cam_params_changed(cam_params);
 }
 
 std::string Params::get_rgbd_path() {
@@ -192,10 +186,6 @@ void Params::on_okButton_clicked() {
   apply_params();
 }
 
-void Params::on_applyButton_clicked() {
-  apply_cam_params();
-}
-
 void Params::loadSettings() {
   QSettings settings(settings_file);
 
@@ -240,15 +230,6 @@ void Params::loadSettings() {
   if (settings.contains("roi_offs"))
     ui->roi_offs->setText(settings.value("roi_offs", "").toString());
 
-  if (settings.contains("fuRgbEdit"))
-    ui->fuRgbEdit->setText(settings.value("fuRgbEdit", "").toString());
-  if (settings.contains("fvRgbEdit"))
-    ui->fvRgbEdit->setText(settings.value("fvRgbEdit", "").toString());
-  if (settings.contains("cuRgbEdit"))
-    ui->cuRgbEdit->setText(settings.value("cuRgbEdit", "").toString());
-  if (settings.contains("cvRgbEdit"))
-    ui->cvRgbEdit->setText(settings.value("cvRgbEdit", "").toString());
-
   if (settings.contains("editVGNfile"))
     ui->editVGNfile->setText(settings.value("editVGNfile", "").toString());
   if (settings.contains("editCRFfile"))
@@ -256,6 +237,9 @@ void Params::loadSettings() {
 
   if (settings.contains("editRGBDPath"))
     ui->editRGBDPath->setText(settings.value("editRGBDPath", "").toString());
+
+  if (settings.contains("editStreamURI"))
+    ui->editStreamURI->setText(settings.value("editStreamURI", "").toString());
 
   cout << "Loaded settings from: " << settings.fileName().toStdString() << endl;
 }
@@ -286,13 +270,9 @@ void Params::saveSettings() {
   settings.setValue("roi_scale_height", ui->roi_scale_height->text());
   settings.setValue("roi_offs", ui->roi_offs->text());
 
-  settings.setValue("fuRgbEdit", ui->fuRgbEdit->text());
-  settings.setValue("fvRgbEdit", ui->fvRgbEdit->text());
-  settings.setValue("cuRgbEdit", ui->cuRgbEdit->text());
-  settings.setValue("cvRgbEdit", ui->cvRgbEdit->text());
-
   settings.setValue("editVGNfile", ui->editVGNfile->text());
   settings.setValue("editCRFfile", ui->editCRFfile->text());
+  settings.setValue("editStreamURI", ui->editStreamURI->text());
 
   settings.setValue("editRGBDPath", ui->editRGBDPath->text());
 

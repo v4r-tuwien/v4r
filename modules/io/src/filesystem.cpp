@@ -24,7 +24,7 @@ std::vector<std::string> getFoldersInDirectory(const bf::path &dir) {
 std::vector<std::string> getFilesInDirectory(const bf::path &dir, const std::string &regex_pattern, bool recursive) {
   std::vector<std::string> relative_paths;
 
-  if (!v4r::io::existsFolder(dir)) {
+  if (!v4r::io::existsFolder(dir) || !bf::is_directory(dir)) {
     std::cerr << dir << " is not a directory!" << std::endl;
   } else {
     bf::path bf_dir = dir;
@@ -102,5 +102,28 @@ void removeDir(const bf::path &path) {
   } else
     std::cerr << "Folder " << path.string() << " does not exist." << std::endl;
 }
+
+bf::path getDataDir() {
+  bf::path p;
+  if (auto value = std::getenv("XDG_DATA_HOME"))
+    p = value;
+  else if (auto value = std::getenv("HOME"))
+    p = bf::path(value) / ".local" / "share";
+  else
+    throw std::runtime_error("Cannot construct data directory path");
+  return p / "v4r";
 }
+
+bf::path getConfigDir() {
+  bf::path p;
+  if (auto value = std::getenv("XDG_CONFIG_HOME"))
+    p = value;
+  else if (auto value = std::getenv("HOME"))
+    p = bf::path(value) / ".config";
+  else
+    throw std::runtime_error("Cannot construct config directory path");
+  return p / "v4r";
 }
+
+}  // namespace io
+}  // namespace v4r

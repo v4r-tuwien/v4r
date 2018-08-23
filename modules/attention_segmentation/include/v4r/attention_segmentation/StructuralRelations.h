@@ -169,6 +169,6 @@ inline int StructuralRelations::getUsedRelations() {
   return usedRelations;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -22,6 +22,9 @@ if(BUILD_UTILITY_TOOLS)
   SET(V4R_DEPS v4r_recognition)
   V4R_DEFINE_CPP_EXAMPLE(pcd_ground_truth_labelling)
 
+  SET(V4R_DEPS v4r_camera_tracking_and_mapping)
+  V4R_DEFINE_CPP_EXAMPLE(pointcloud2mesh)
+
   SET(V4R_DEPS v4r_common v4r_io)
   V4R_DEFINE_CPP_EXAMPLE(save_pose_into_pcd)
 
@@ -31,9 +34,23 @@ if(BUILD_UTILITY_TOOLS)
   SET(V4R_DEPS pcl boost)
   V4R_DEFINE_CPP_EXAMPLE(visualize_hypothesis)
 
+  SET(V4R_DEPS v4r_io pcl opencv)
+  V4R_DEFINE_CPP_EXAMPLE(create_HV_registration_image_mask)
+
+  SET(V4R_DEPS v4r_common v4r_io)
+  V4R_DEFINE_CPP_EXAMPLE(grab)
+
+  SET(V4R_DEPS v4r_common v4r_io v4r_surface)
+  V4R_DEFINE_CPP_EXAMPLE(texture_mesh)
+
+  SET(V4R_DEPS v4r_common glog)
+  V4R_DEFINE_CPP_EXAMPLE(motion_blur_detection)
+
+  SET(V4R_DEPS v4r_common v4r_calibration glog)
+  V4R_DEFINE_CPP_EXAMPLE(apply_auto_calibration)
 endif()
 
-if (INSTALL_C_UTILITY_TOOLS AND NOT WIN32)
+if (INSTALL_C_UTILITY_TOOLS)
   file(GLOB C_SAMPLES *.c *.cpp *.jpg *.png *.data makefile.* build_all.sh *.dsp *.cmd )
   install(FILES ${C_SAMPLES}
           DESTINATION ${V4R_SAMPLES_SRC_INSTALL_PATH}/cpp

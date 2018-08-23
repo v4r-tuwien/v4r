@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Based on: https://github.com/eklitzke/clang-format-all/blob/master/clang-format-all
+
+function usage {
+  echo "Usage: $0 [-d] DIR..."
+  exit 1
+}
+
+if [ $# -eq 0 ]; then
+  usage
+fi
+
+# Clang-format version that we use
+CLANG_FORMAT_VERSION="5.0"
+
+# Check if appropriate version of clang-format is installed
+for EXE in clang-format clang-format-$CLANG_FORMAT_VERSION; do
+  if hash $EXE 2>/dev/null; then
+    if $EXE -version | grep -Fq "$CLANG_FORMAT_VERSION"; then
+      CLANG_FORMAT=$EXE
+      break
+    fi
+  fi
+done
+
+# Check if we found a working clang-format
+if [[ -z ${CLANG_FORMAT+x} ]]; then
+  echo "Failed to find a suitable version of clang-format"
+  exit 1
+fi
+
+DIRS=()
+
+# Iterate through the arguments and find directories and options
+for arg in "$@"; do
+  if [[ ${arg} == "-d" ]]; then
+    diffmode=1
+  elif [ ! -d "${arg}" ]; then
+    echo "${arg} is not a directory"
+    usage
+  else
+    DIRS+=(${arg})
+  fi
+done
+
+FILES=()
+
+# Discover files of interest in the directories recursively
+for dir in "${DIRS[@]}"; do
+  while IFS= read -r -d $'\0'; do
+    FILES+=("$REPLY")
+  done < <(find $dir \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.h' -o -name '*.hh' -o -name '*.hpp' \) -print0)
+done
+
+# Run clang-format -i on all of the things
+for file in "${FILES[@]}"; do
+  if [[ -n $diffmode ]]; then
+    # Output diff after formatting to stdout
+    $CLANG_FORMAT $file | diff -u $file - | sed -e "1s|--- |--- a/|" -e "2s|+++ -|+++ b/$file|"
+  else
+    # Apply formatting to files in-place
+    $CLANG_FORMAT -i $file
+  fi
+done

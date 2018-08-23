@@ -100,7 +100,7 @@ class V4R_EXPORTS EntangledForestTree {
   inline std::mt19937* GetRandomGenerator() {
     return mRandomGenerator;
   }
-  void SetRandomGenerator(std::mt19937* randomGenerator);  // neccessary after loading from file
+  void SetRandomGenerator(std::mt19937* randomGenerator);  // necessary after loading from file
   EntangledForestNode* GetRootNode();
 
   inline int GetIndex() {
@@ -148,4 +148,4 @@ class V4R_EXPORTS EntangledForestTree {
     return mCurrentDepth;
   }
 };
-}
+}  // namespace v4r

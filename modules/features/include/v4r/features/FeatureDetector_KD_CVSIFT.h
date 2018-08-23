@@ -39,58 +39,65 @@
 
 /**
  * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
+ * @author Johann Prankl (prankl@acin.tuwien.ac.at), Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
  */
 
-#ifndef KP_FEATURE_DETECTOR_CVSIFT_HH
-#define KP_FEATURE_DETECTOR_CVSIFT_HH
+#pragma once
 
+#include <v4r/config.h>
 #include <v4r/features/FeatureDetector.h>
-#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/nonfree/features2d.hpp>
+
+#if CV_VERSION_MAJOR < 3
+#include <opencv2/nonfree/features2d.hpp>  // requires OpenCV non-free module
+#else
+#include <opencv2/xfeatures2d.hpp>
+#endif
 
 namespace v4r {
 
 class V4R_EXPORTS FeatureDetector_KD_CVSIFT : public FeatureDetector {
  public:
-  class Parameter {
-   public:
-    int nfeatures;
-    int nOctaveLayers;
-    double contrastThreshold;
-    double edgeThreshold;
-    double sigma;
-    Parameter(int _nfeatures = 0, int _nOctaveLayers = 4, double _contrastThreshold = 0.02, double _edgeThreshold = 5,
-              double _sigma = 1.6)
-    : nfeatures(_nfeatures), nOctaveLayers(_nOctaveLayers), contrastThreshold(_contrastThreshold),
-      edgeThreshold(_edgeThreshold), sigma(_sigma) {}
+  struct V4R_EXPORTS Parameter {
+    int nfeatures = 0;
+    int nOctaveLayers = 4;
+    double contrastThreshold = 0.02;
+    double edgeThreshold = 5;
+    double sigma = 1.6;
+
+    Parameter() {}
   };
 
  private:
+  using FeatureDetector::descr_name_;
   Parameter param;
-  cv::Mat_<unsigned char> im_gray;
 
+#if CV_VERSION_MAJOR < 3
   cv::Ptr<cv::SIFT> sift;
+#else
+  cv::Ptr<cv::Feature2D> sift;
+#endif
+
+  cv::Mat_<unsigned char> im_gray_;
 
  public:
   FeatureDetector_KD_CVSIFT(const Parameter &_p = Parameter());
-  ~FeatureDetector_KD_CVSIFT();
+  ~FeatureDetector_KD_CVSIFT() {}
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys);
-  virtual void extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
+  void detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors,
+                        const cv::Mat &object_mask = cv::Mat()) override final;
+  void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+              const cv::Mat &object_mask = cv::Mat()) override final;
+  void compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) override final;
 
-  typedef boost::shared_ptr<::v4r::FeatureDetector_KD_CVSIFT> Ptr;
-  typedef boost::shared_ptr<::v4r::FeatureDetector_KD_CVSIFT const> ConstPtr;
+  typedef std::shared_ptr<FeatureDetector_KD_CVSIFT> Ptr;
+  typedef std::shared_ptr<FeatureDetector_KD_CVSIFT const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
-
-#endif
+}  // namespace v4r

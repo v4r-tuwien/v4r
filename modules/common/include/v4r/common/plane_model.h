@@ -15,8 +15,8 @@ class V4R_EXPORTS PlaneModel {
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef boost::shared_ptr<PlaneModel> Ptr;
-  typedef boost::shared_ptr<PlaneModel const> ConstPtr;
+  typedef std::shared_ptr<PlaneModel> Ptr;
+  typedef std::shared_ptr<PlaneModel const> ConstPtr;
 
   Eigen::Vector4f coefficients_;
   pcl::PolygonMeshPtr convex_hull_;
@@ -38,6 +38,6 @@ class V4R_EXPORTS PlaneModel {
 
   void visualize();
 };
-}
+}  // namespace v4r
 
 #endif

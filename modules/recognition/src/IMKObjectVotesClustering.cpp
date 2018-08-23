@@ -60,8 +60,8 @@ using namespace std;
 
 const float IMKObjectVotesClustering::two_pi = 2. * M_PI;
 
-inline bool cmpCluster(const boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>> &a,
-                       const boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>> &b) {
+inline bool cmpCluster(const std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>> &a,
+                       const std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>> &b) {
   return (a->second > b->second);
 }
 
@@ -145,12 +145,12 @@ void IMKObjectVotesClustering::createVotes(unsigned id, const std::vector<IMKVie
  * @param views
  * @param keys
  * @param matches
- * @param clusters DMatch::distance .. 1./number of occurances
+ * @param clusters DMatch::distance .. 1./number of occurrences
  */
 void IMKObjectVotesClustering::operate(
     const std::vector<std::string> &object_names, const std::vector<IMKView> &views,
     const std::vector<cv::KeyPoint> &keys, const std::vector<std::vector<cv::DMatch>> &matches,
-    std::vector<boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters) {
+    std::vector<std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>> &clusters) {
   rnn.param.dist_thr = param.cluster_dist;
   rnn.dbg = false;
   clusters.clear();
@@ -163,7 +163,7 @@ void IMKObjectVotesClustering::operate(
 
     for (unsigned j = 0; j < indices.size(); j++) {
       const std::vector<int> &inds = indices[j];
-      clusters.push_back(boost::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>(
+      clusters.push_back(std::shared_ptr<v4r::triple<unsigned, double, std::vector<cv::DMatch>>>(
           new v4r::triple<unsigned, double, std::vector<cv::DMatch>>()));
       v4r::triple<unsigned, double, std::vector<cv::DMatch>> &cl = *clusters.back();
       cl.first = i;
@@ -222,4 +222,4 @@ void IMKObjectVotesClustering::operate(
   }
 #endif
 }
-}
+}  // namespace v4r

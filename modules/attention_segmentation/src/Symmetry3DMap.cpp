@@ -43,13 +43,13 @@
 
 namespace v4r {
 
-// boost::shared_ptr<pcl::visualization::PCLVisualizer> normalsVis (
+// <pcl::visualization::PCLVisualizer::Ptr normalsVis (
 //     pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
 // {
 //   // --------------------------------------------------------
 //   // -----Open 3D viewer and add point cloud and normals-----
 //   // --------------------------------------------------------
-//   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+//   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 //   viewer->setBackgroundColor (0, 0, 0);
 //   viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
 //   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "sample cloud");
@@ -58,11 +58,12 @@ namespace v4r {
 //   viewer->initCameraParameters ();
 //   return (viewer);
 // }
-pcl::PointXYZRGB operator+(const pcl::PointXYZRGB, const pcl::PointXYZRGB);
-pcl::Normal PointsPair2Vector(const pcl::PointXYZRGB p1, const pcl::PointXYZRGB p2);
-float Distance2PlaneSigned(pcl::Normal vect, pcl::Normal norm);
+pcl::PointXYZRGB operator+(const pcl::PointXYZRGB &p1, const pcl::PointXYZRGB &p2);
+pcl::Normal PointsPair2Vector(const pcl::PointXYZRGB &p1, const pcl::PointXYZRGB &p2);
+float Distance2PlaneSigned(const pcl::Normal &vect, const pcl::Normal &norm);
+pcl::Normal operator+(const pcl::Normal &n1, const pcl::Normal &n2);
 
-pcl::PointXYZRGB operator+(const pcl::PointXYZRGB p1, const pcl::PointXYZRGB p2) {
+pcl::PointXYZRGB operator+(const pcl::PointXYZRGB &p1, const pcl::PointXYZRGB &p2) {
   pcl::PointXYZRGB p;
   p.x = p1.x + p2.x;
   p.y = p1.y + p2.y;
@@ -70,7 +71,7 @@ pcl::PointXYZRGB operator+(const pcl::PointXYZRGB p1, const pcl::PointXYZRGB p2)
   return (p);
 }
 
-pcl::Normal operator+(const pcl::Normal n1, const pcl::Normal n2) {
+pcl::Normal operator+(const pcl::Normal &n1, const pcl::Normal &n2) {
   pcl::Normal n;
   n.normal[0] = n1.normal[0] + n2.normal[0];
   n.normal[1] = n1.normal[1] + n2.normal[1];
@@ -78,7 +79,7 @@ pcl::Normal operator+(const pcl::Normal n1, const pcl::Normal n2) {
   return (n);
 }
 
-pcl::Normal PointsPair2Vector(const pcl::PointXYZRGB p1, const pcl::PointXYZRGB p2) {
+pcl::Normal PointsPair2Vector(const pcl::PointXYZRGB &p1, const pcl::PointXYZRGB &p2) {
   pcl::Normal vect;
   vect.normal[0] = p1.x - p2.x;
   vect.normal[1] = p1.y - p2.y;
@@ -87,7 +88,7 @@ pcl::Normal PointsPair2Vector(const pcl::PointXYZRGB p1, const pcl::PointXYZRGB 
   return (vect);
 }
 
-float Distance2PlaneSigned(pcl::Normal vect, pcl::Normal norm) {
+float Distance2PlaneSigned(const pcl::Normal &vect, const pcl::Normal &norm) {
   float dist = vect.normal[0] * norm.normal[0] + vect.normal[1] * norm.normal[1] + vect.normal[2] * norm.normal[2];
   return (dist);
 }
@@ -278,7 +279,7 @@ void Symmetry3DMap::symmetry3DMap(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_c
       coefficients->values.at(2) = c;
       coefficients->values.at(3) = d;
 
-      //       boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+      //       pcl::visualization::PCLVisualizer::Ptr viewer;
       //       viewer = normalsVis(small_cloud,small_normals);
       //       viewer->addPlane(*coefficients);
       //       while (!viewer->wasStopped ())

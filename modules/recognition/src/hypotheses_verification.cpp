@@ -5,12 +5,14 @@
 #include <v4r/common/normals.h>
 #include <v4r/common/occlusion_reasoning.h>
 #include <v4r/common/pcl_utils.h>
+#include <v4r/common/time.h>
 #include <v4r/common/zbuffering.h>
 #include <v4r/recognition/hypotheses_verification.h>
+#include <v4r/segmentation/segmenter_conditional_euclidean.h>
 
+#include <pcl/common/time.h>
 #include <pcl/registration/icp.h>
 #include <pcl_1_8/keypoints/uniform_sampling.h>
-#include <pcl_1_8/segmentation/conditional_euclidean_clustering.h>
 
 #include <omp.h>
 #include <opencv2/opencv.hpp>
@@ -18,27 +20,22 @@
 namespace v4r {
 
 template <typename PointT>
-HypothesisVerification<PointT>::StopWatch::~StopWatch() {
-  boost::posix_time::ptime end_time = boost::posix_time::microsec_clock::local_time();
-  float elapsed_time = static_cast<float>(((end_time - start_time_).total_milliseconds()));
-  VLOG(1) << desc_ << " took " << elapsed_time << " ms.";
-  elapsed_time_.push_back(std::pair<std::string, float>(desc_, elapsed_time));
-}
-
-template <typename PointT>
 bool HypothesisVerification<PointT>::customRegionGrowing(const PointTWithNormal &seed_pt,
                                                          const PointTWithNormal &candidate_pt,
                                                          float squared_distance) const {
+  (void)squared_distance;
   // float curvature_threshold = param_.curvature_threshold_;
-  float radius = param_.cluster_tolerance_;
-  float eps_angle_threshold_rad = pcl::deg2rad(param_.eps_angle_threshold_deg_);
+  float eps_angle_threshold_rad = eps_angle_threshold_rad_;
+
+  if (!std::isfinite(seed_pt.getNormalVector4fMap()(0)) || std::isnan(seed_pt.getNormalVector4fMap()(0)) ||
+      !std::isfinite(candidate_pt.getNormalVector4fMap()(0)) || std::isnan(candidate_pt.getNormalVector4fMap()(0)))
+    return false;
 
   if (param_.z_adaptive_) {
     float mult = std::max(seed_pt.z, 1.f);
     //            mult *= mult;
-    radius = param_.cluster_tolerance_ * mult;
     // curvature_threshold = param_.curvature_threshold_ * mult;
-    eps_angle_threshold_rad = eps_angle_threshold_rad * mult;
+    eps_angle_threshold_rad = eps_angle_threshold_rad_ * mult;
   }
 
   if (seed_pt.curvature > param_.curvature_threshold_)
@@ -47,16 +44,13 @@ bool HypothesisVerification<PointT>::customRegionGrowing(const PointTWithNormal 
   if (candidate_pt.curvature > param_.curvature_threshold_)
     return false;
 
-  if (squared_distance > radius * radius)
-    return false;
-
   float intensity_a = .2126f * seed_pt.r + .7152f * seed_pt.g + .0722f * seed_pt.b;
   float intensity_b = .2126f * candidate_pt.r + .7152f * candidate_pt.g + .0722f * candidate_pt.b;
 
   if (fabs(intensity_a - intensity_b) > 5.f)
     return false;
 
-  float dotp = seed_pt.getNormalVector3fMap().dot(candidate_pt.getNormalVector3fMap());
+  float dotp = seed_pt.getNormalVector4fMap().dot(candidate_pt.getNormalVector4fMap());
   if (dotp < cos(eps_angle_threshold_rad))
     return false;
 
@@ -102,13 +96,11 @@ void HypothesisVerification<PointT>::computeModelOcclusionByScene(HVRecognitionM
     ZBufferingParameter zBparam;
     zBparam.do_noise_filtering_ = false;
     zBparam.do_smoothing_ = false;
-    //        zBparam.smoothing_radius_ = 5;
-    zBparam.inlier_threshold_ = 0.015f;
     zBparam.use_normals_ = true;
     ZBuffering<PointT> zbuf(cam_, zBparam);
     zbuf.setCloudNormals(aligned_normals);
     typename pcl::PointCloud<PointT>::Ptr organized_cloud_to_be_filtered(new pcl::PointCloud<PointT>);
-    zbuf.renderPointCloud(*aligned_cloud, *organized_cloud_to_be_filtered, 2);
+    zbuf.renderPointCloud(*aligned_cloud, *organized_cloud_to_be_filtered, 1);
     //        std::vector<int> kept_indices = zbuf.getKeptIndices();
     Eigen::MatrixXi index_map = zbuf.getIndexMap();
 
@@ -157,7 +149,7 @@ void HypothesisVerification<PointT>::computeModelOcclusionByScene(HVRecognitionM
     //        vis.spin();
 
     OcclusionReasoner<PointT, PointT> occ_reasoner;
-    occ_reasoner.setCamera(cam_);
+    occ_reasoner.setCameraIntrinsics(cam_);
     occ_reasoner.setInputCloud(organized_cloud_to_be_filtered);
     occ_reasoner.setOcclusionCloud(occlusion_clouds_[view]);
     occ_reasoner.setOcclusionThreshold(param_.occlusion_thres_);
@@ -183,7 +175,8 @@ void HypothesisVerification<PointT>::computeModelOcclusionByScene(HVRecognitionM
       for (size_t v = 0; v < organized_cloud_to_be_filtered->height; v++) {
         int idx = v * organized_cloud_to_be_filtered->width + u;
 
-        if (img_boundary_distance_.at<float>(v, u) < param_.min_px_distance_to_image_boundary_)
+        if (!img_boundary_distance_.empty() &&
+            img_boundary_distance_.at<float>(v, u) < param_.min_px_distance_to_image_boundary_)
           continue;
 
         if (pt_is_visible[idx]) {
@@ -389,7 +382,6 @@ void HypothesisVerification<PointT>::downsampleSceneCloud() {
     us.setInputCloud(scene_cloud_);
     pcl::PointCloud<int> sampled_indices;
     us.compute(sampled_indices);
-    scene_sampled_indices_.clear();
     scene_sampled_indices_.resize(sampled_indices.points.size());
     for (size_t i = 0; i < scene_sampled_indices_.size(); i++)
       scene_sampled_indices_[i] = sampled_indices.points[i];
@@ -406,6 +398,11 @@ void HypothesisVerification<PointT>::downsampleSceneCloud() {
   }
 
   removeSceneNans();
+
+  scene_indices_map_ = Eigen::VectorXi::Constant(scene_cloud_->points.size(), -1);
+  for (size_t i = 0; i < scene_sampled_indices_.size(); i++) {
+    scene_indices_map_[scene_sampled_indices_[i]] = i;
+  }
 }
 
 template <typename PointT>
@@ -430,17 +427,95 @@ void HypothesisVerification<PointT>::removeSceneNans() {
 }
 
 template <typename PointT>
-mets::gol_type HypothesisVerification<PointT>::evaluateSolution(const boost::dynamic_bitset<> &solution) {
+void HypothesisVerification<PointT>::search() {
+  pcl::StopWatch t;
+
+  // set initial solution to hypotheses that do not have any intersection and not lie on same smooth cluster as other
+  // hypothesis
+  boost::dynamic_bitset<> initial_solution(global_hypotheses_.size(), 0);
+  for (size_t i = 0; i < global_hypotheses_.size(); i++) {
+    const auto rm = global_hypotheses_[i];
+    if (intersection_cost_.row(i).sum() == 0 &&
+        (!param_.check_smooth_clusters_ || smooth_region_overlap_.row(i).sum() == 0) &&
+        (!param_.check_smooth_clusters_ || !rm->violates_smooth_cluster_check_)) {
+      initial_solution.set(i);
+    }
+  }
+
+  bool violates_smooth_region_check;
+  double cost = evaluateSolution(initial_solution, violates_smooth_region_check);
+  evaluated_solutions_.insert(initial_solution.to_ulong());
+  if (!param_.check_smooth_clusters_ || !violates_smooth_region_check) {
+    best_solution_.solution_ = initial_solution;
+    best_solution_.cost_ = cost;
+  } else {
+    best_solution_.solution_ = boost::dynamic_bitset<>(global_hypotheses_.size(), 0);
+    best_solution_.cost_ = std::numeric_limits<double>::max();
+  }
+
+  // now do a local search by enabling one hyphotheses at a time and also multiple hypotheses if they are on the same
+  // smooth cluster
+  bool everything_checked = false;
+  evaluated_solutions_.insert(initial_solution.to_ulong());
+  while (!everything_checked) {
+    everything_checked = true;
+    std::vector<size_t> solutions_to_be_tested;
+    // flip one bit at a time
+    for (size_t i = 0; i < best_solution_.solution_.size(); i++) {
+      boost::dynamic_bitset<> current_solution = best_solution_.solution_;
+      if (current_solution[i])
+        continue;
+
+      current_solution.flip(i);
+
+      size_t solution_uint = current_solution.to_ulong();
+      solutions_to_be_tested.push_back(solution_uint);
+
+      // also test solutions with two new hypotheses which both describe the same smooth cluster. This should avoid
+      // rejection of them if the objects are e.g. stacked together and only one smooth cluster for the stack is found.
+      /// TODO: also implement checks for more than two hypotheses describing the same smooth cluster!
+      if (param_.check_smooth_clusters_ && smooth_region_overlap_.row(i).sum() > 0) {
+        for (size_t j = 0; j < best_solution_.solution_.size(); j++) {
+          boost::dynamic_bitset<> ss = current_solution;
+          if (smooth_region_overlap_(i, j) > 0 && !current_solution[j]) {
+            ss.set(j);
+            size_t s_uint = ss.to_ulong();
+            solutions_to_be_tested.push_back(s_uint);
+          }
+        }
+      }
+    }
+
+    for (size_t s_uint : solutions_to_be_tested) {
+      // check if already evaluated
+      if (evaluated_solutions_.find(s_uint) != evaluated_solutions_.end())
+        continue;
+
+      boost::dynamic_bitset<> s(global_hypotheses_.size(), s_uint);
+      bool violates_smooth_region_check;
+      double cost = evaluateSolution(s, violates_smooth_region_check);
+      evaluated_solutions_.insert(s.to_ulong());
+      if (cost < best_solution_.cost_ && (!param_.check_smooth_clusters_ || !violates_smooth_region_check)) {
+        best_solution_.cost_ = cost;
+        best_solution_.solution_ = s;
+        everything_checked = false;
+      }
+    }
+  }
+  VLOG(1) << "Local search with " << num_evaluations_ << " evaluations took " << t.getTime() << " ms" << std::endl;
+}
+
+template <typename PointT>
+double HypothesisVerification<PointT>::evaluateSolution(const boost::dynamic_bitset<> &solution,
+                                                        bool &violates_smooth_region_check) {
   scene_pts_explained_solution_.clear();
   scene_pts_explained_solution_.resize(scene_cloud_downsampled_->points.size());
-  double cost = std::numeric_limits<double>::max();
 
   for (size_t i = 0; i < global_hypotheses_.size(); i++) {
-    const typename HVRecognitionModel<PointT>::Ptr rm = global_hypotheses_[i];
-
     if (!solution[i])
       continue;
 
+    const typename HVRecognitionModel<PointT>::Ptr rm = global_hypotheses_[i];
     for (Eigen::SparseVector<float>::InnerIterator it(rm->scene_explained_weight_); it; ++it)
       scene_pts_explained_solution_[it.row()].push_back(PtFitness(it.value(), i));
   }
@@ -463,7 +538,7 @@ mets::gol_type HypothesisVerification<PointT>::evaluateSolution(const boost::dyn
       duplicity += s_pt[s_pt.size() - 2].fit_;  // uses the second best explanation
   }
 
-  bool violates_smooth_region_check = false;
+  violates_smooth_region_check = false;
   if (param_.check_smooth_clusters_) {
     int max_label = scene_pt_smooth_label_id_.maxCoeff();
     for (int i = 1; i < max_label; i++)  // label "0" is for points not belonging to any smooth region
@@ -477,20 +552,39 @@ mets::gol_type HypothesisVerification<PointT>::evaluateSolution(const boost::dyn
       if (num_explained_pts_in_region > param_.min_pts_smooth_cluster_to_be_epxlained_ &&
           (float)(num_explained_pts_in_region) / num_pts_in_smooth_regions < param_.min_ratio_cluster_explained_) {
         violates_smooth_region_check = true;
-        break;
       }
     }
   }
 
-  if (!violates_smooth_region_check)
-    cost = -(log(scene_fit) - param_.clutter_regularizer_ * duplicity);
+  double cost = -(log(scene_fit) - param_.clutter_regularizer_ * duplicity);
 
-  if (cost_logger_) {
-    cost_logger_->increaseEvaluated();
-    cost_logger_->addCostEachTimeEvaluated(cost);
+  // VLOG(2) << "Evaluation of solution " << solution
+  //       << (violates_smooth_region_check ? " violates smooth region check!" : "") << " cost: " << cost;
+
+  num_evaluations_++;
+
+  if (vis_cues_) {
+    vis_cues_->visualize(this, solution, cost);
   }
 
-  return static_cast<mets::gol_type>(cost);  // return the dual to our max problem
+  return cost;  // return the dual to our max problem
+}
+
+template <typename PointT>
+void HypothesisVerification<PointT>::computeSmoothRegionOverlap() {
+  smooth_region_overlap_ = Eigen::MatrixXi::Zero(global_hypotheses_.size(), global_hypotheses_.size());
+
+  for (size_t i = 1; i < global_hypotheses_.size(); i++) {
+    HVRecognitionModel<PointT> &rm_a = *global_hypotheses_[i];
+    for (size_t j = 0; j < i; j++) {
+      const HVRecognitionModel<PointT> &rm_b = *global_hypotheses_[j];
+
+      if (rm_a.violates_smooth_cluster_check_ || rm_b.violates_smooth_cluster_check_) {
+        size_t num_overlap = (rm_a.on_smooth_cluster_ & rm_b.on_smooth_cluster_).count();
+        smooth_region_overlap_(i, j) = smooth_region_overlap_(j, i) = static_cast<int>(num_overlap);
+      }
+    }
+  }
 }
 
 template <typename PointT>
@@ -545,7 +639,7 @@ void HypothesisVerification<PointT>::setHypotheses(std::vector<ObjectHypothesesG
 
     obj_hypotheses_groups_[i].resize(ohg.ohs_.size());
     for (size_t jj = 0; jj < ohg.ohs_.size(); jj++) {
-      typename ObjectHypothesis::Ptr oh = ohg.ohs_[jj];
+      ObjectHypothesis::Ptr oh = ohg.ohs_[jj];
       obj_hypotheses_groups_[i][jj].reset(new HVRecognitionModel<PointT>(oh));
       //            HVRecognitionModel<PointT> &hv_oh = *obj_hypotheses_groups_[i][jj];
 
@@ -554,8 +648,8 @@ void HypothesisVerification<PointT>::setHypotheses(std::vector<ObjectHypothesesG
 
       //            bool found_model;
       //            typename Model<PointT>::ConstPtr m = m_db_->getModelById("", oh->model_id_, found_model);
-      //            typename pcl::PointCloud<PointT>::ConstPtr model_cloud = m->getAssembled ( param_.resolution_mm_ );
-      //            pcl::PointCloud<pcl::Normal>::ConstPtr normal_cloud_const = m->getNormalsAssembled (
+      //            typename pcl::PointCloud<PointT>::ConstPtr model_cloud = m->getAssembled ( param_.resolution_mm_
+      //            ); pcl::PointCloud<pcl::Normal>::ConstPtr normal_cloud_const = m->getNormalsAssembled (
       //            param_.resolution_mm_ );
       //            pcl::transformPointCloud (*model_cloud, *hv_oh.complete_cloud_, oh->transform_);
       //            transformNormals(*normal_cloud_const, *hv_oh.complete_cloud_normals_, oh->transform_);
@@ -564,43 +658,120 @@ void HypothesisVerification<PointT>::setHypotheses(std::vector<ObjectHypothesesG
 }
 
 template <typename PointT>
-bool HypothesisVerification<PointT>::isOutlier(HVRecognitionModel<PointT> &rm) const {
+bool HypothesisVerification<PointT>::isOutlier(const HVRecognitionModel<PointT> &rm) const {
   float visible_ratio = rm.visible_indices_by_octree_.size() / (float)rm.num_pts_full_model_;
-  float thresh =
-      param_.min_fitness_ +
-      (param_.min_fitness_ - param_.min_fitness_high_) * (visible_ratio - 0.5f) / (0.5f - param_.min_visible_ratio_);
+  float thresh = param_.min_fitness_ + (param_.min_fitness_ - param_.min_fitness_high_) * (visible_ratio - 0.5f) /
+                                           (0.5f - param_.min_visible_ratio_);
   float min_fitness_threshold = std::max<float>(param_.min_fitness_, std::min<float>(param_.min_fitness_high_, thresh));
 
   bool is_rejected = rm.oh_->confidence_ < min_fitness_threshold;
 
-  VLOG(1) << rm.oh_->class_id_ << " " << rm.oh_->model_id_ << " is rejected? " << is_rejected
+  VLOG(1) << rm.oh_->class_id_ << " " << rm.oh_->model_id_ << (is_rejected ? " is rejected" : "")
           << " with visible ratio of : " << visible_ratio << " and fitness " << rm.oh_->confidence_ << " (by thresh "
           << min_fitness_threshold << ")";
   return is_rejected;
 }
 
 template <typename PointT>
+void HypothesisVerification<PointT>::removeRedundantPoses() {
+  for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
+    for (size_t j = 0; j < obj_hypotheses_groups_[i].size(); j++) {
+      const HVRecognitionModel<PointT> &rm_a = *obj_hypotheses_groups_[i][j];
+
+      if (!rm_a.isRejected()) {
+        const Eigen::Matrix4f pose_a = rm_a.oh_->pose_refinement_ * rm_a.oh_->transform_;
+        const Eigen::Vector4f centroid_a = pose_a.block<4, 1>(0, 3);
+        const Eigen::Matrix3f rot_a = pose_a.block<3, 3>(0, 0);
+
+        for (size_t ii = i; ii < obj_hypotheses_groups_.size(); ii++) {
+          for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
+            if (i == ii && jj <= j)
+              continue;
+
+            HVRecognitionModel<PointT> &rm_b = *obj_hypotheses_groups_[ii][jj];
+            const Eigen::Matrix4f pose_b = rm_b.oh_->pose_refinement_ * rm_b.oh_->transform_;
+            const Eigen::Vector4f centroid_b = pose_b.block<4, 1>(0, 3);
+            const Eigen::Matrix3f rot_b = pose_b.block<3, 3>(0, 0);
+            const Eigen::Matrix3f rot_diff = rot_b * rot_a.transpose();
+
+            double rotx = std::abs(atan2(rot_diff(2, 1), rot_diff(2, 2)));
+            double roty = std::abs(
+                atan2(-rot_diff(2, 0), sqrt(rot_diff(2, 1) * rot_diff(2, 1) + rot_diff(2, 2) * rot_diff(2, 2))));
+            double rotz = std::abs(atan2(rot_diff(1, 0), rot_diff(0, 0)));
+            double dist = (centroid_a - centroid_b).norm();
+
+            if ((dist < param_.min_Euclidean_dist_between_centroids_) &&
+                (rotx < param_.min_angular_degree_dist_between_hypotheses_) &&
+                (roty < param_.min_angular_degree_dist_between_hypotheses_) &&
+                (rotz < param_.min_angular_degree_dist_between_hypotheses_)) {
+              rm_b.rejected_due_to_similar_hypothesis_exists_ = true;
+
+              VLOG(1) << rm_b.oh_->class_id_ << " " << rm_b.oh_->model_id_
+                      << " is rejected because a similar hypothesis already exists.";
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template <typename PointT>
 void HypothesisVerification<PointT>::extractEuclideanClustersSmooth() {
-  typename pcl::PointCloud<PointTWithNormal>::Ptr scene_downsampled_w_normals(new pcl::PointCloud<PointTWithNormal>);
-  pcl::concatenateFields(*scene_cloud_downsampled_, *scene_normals_downsampled_, *scene_downsampled_w_normals);
+  typename pcl::PointCloud<PointTWithNormal>::Ptr scene_w_normals(new pcl::PointCloud<PointTWithNormal>);
+
+  if (scene_cloud_->isOrganized()) {
+    pcl::concatenateFields(*scene_cloud_, *scene_normals_, *scene_w_normals);
+  } else {
+    pcl::concatenateFields(*scene_cloud_downsampled_, *scene_normals_downsampled_, *scene_w_normals);
+  }
 
   boost::function<bool(const PointTWithNormal &, const PointTWithNormal &, float)> custom_f =
       boost::bind(&HypothesisVerification<PointT>::customRegionGrowing, this, _1, _2, _3);
 
-  pcl_1_8::ConditionalEuclideanClustering<PointTWithNormal> cec(false);
-  cec.setInputCloud(scene_downsampled_w_normals);
-  cec.setConditionFunction(custom_f);
-  cec.setClusterTolerance(param_.cluster_tolerance_ * 3.);
-  cec.setMinClusterSize(param_.min_points_);
-  cec.setMaxClusterSize(std::numeric_limits<int>::max());
-  pcl_1_8::IndicesClusters clusters;
-  cec.segment(clusters);
+  ConditionalEuclideanSegmenterParameter ces_param;
+  ces_param.min_cluster_size_ = param_.min_points_;
+  ces_param.max_cluster_size_ = std::numeric_limits<int>::max();
+  ces_param.z_adaptive_ = param_.z_adaptive_;
+  ces_param.cluster_tolerance_ = param_.cluster_tolerance_;
+
+  ConditionalEuclideanSegmenter<PointTWithNormal> ces(ces_param);
+  ces.setInputCloud(scene_w_normals);
+  ces.setConditionFunction(custom_f);
+  ces.segment();
+  std::vector<std::vector<int>> clusters;
+  ces.getSegmentIndices(clusters);
+
+  // convert to downsample scene cloud indices
+  if (scene_cloud_->isOrganized()) {
+    size_t kept_clusters = 0;
+    for (size_t i = 0; i < clusters.size(); i++) {
+      size_t kept = 0;
+      for (size_t j = 0; j < clusters[i].size(); j++) {
+        int sidx_original = clusters[i][j];
+        int new_index = scene_indices_map_[sidx_original];
+        if (new_index >= 0) {
+          clusters[i][kept] = new_index;
+          kept++;
+        }
+      }
+      clusters[i].resize(kept);
+
+      if (clusters[i].size() >= param_.min_points_) {
+        clusters[kept_clusters] = clusters[i];
+        kept_clusters++;
+      }
+    }
+    clusters.resize(kept_clusters);
+  }
 
   scene_pt_smooth_label_id_ = Eigen::VectorXi::Zero(scene_cloud_downsampled_->points.size());
   for (size_t i = 0; i < clusters.size(); i++) {
-    for (int sidx : clusters[i].indices)
+    for (int sidx : clusters[i]) {
       scene_pt_smooth_label_id_(sidx) = i + 1;  // label "0" for points not belonging to any smooth region
+    }
   }
+  max_smooth_label_id_ = clusters.size();
 }
 
 // template<typename PointT, typename PointT>
@@ -631,7 +802,7 @@ void HypothesisVerification<PointT>::initialize() {
   elapsed_time_.push_back(std::pair<std::string, float>("number of hypotheses", num_hypotheses));
 
   {
-    StopWatch t("Downsampling scene cloud");
+    ScopeTime t("Downsampling scene cloud");
     downsampleSceneCloud();
   }
 
@@ -639,14 +810,11 @@ void HypothesisVerification<PointT>::initialize() {
                                                         scene_cloud_downsampled_->points.size()));
 
   if (img_boundary_distance_.empty()) {
-    const cv::Mat depth_registration_mask = cam_->getCameraDepthRegistrationMask();
-
-    if (depth_registration_mask.empty()) {
+    if (rgb_depth_overlap_.empty()) {
       LOG(WARNING) << "Depth registration mask not set. Using the whole image!";
-      img_boundary_distance_ = cv::Mat(cam_->getHeight(), cam_->getWidth(), CV_32FC1);
     } else {
       VLOG(1) << "Computing distance transform to image boundary.";
-      cv::distanceTransform(depth_registration_mask, img_boundary_distance_, CV_DIST_L2, 5);
+      cv::distanceTransform(rgb_depth_overlap_, img_boundary_distance_, CV_DIST_L2, 5);
     }
   }
 
@@ -654,7 +822,7 @@ void HypothesisVerification<PointT>::initialize() {
   {
 #pragma omp section
     {
-      StopWatch t("Computing octree");
+      ScopeTime t("Computing octree");
       octree_scene_downsampled_.reset(new pcl::octree::OctreePointCloudSearch<PointT>(param_.resolution_mm_ / 1000.0));
       octree_scene_downsampled_->setInputCloud(scene_cloud_downsampled_);
       octree_scene_downsampled_->addPointsFromInputCloud();
@@ -662,14 +830,14 @@ void HypothesisVerification<PointT>::initialize() {
 
 #pragma omp section
     {
-      StopWatch t("Computing kd-tree");
+      ScopeTime t("Computing kd-tree");
       kdtree_scene_.reset(new pcl::search::KdTree<PointT>);
       kdtree_scene_->setInputCloud(scene_cloud_downsampled_);
     }
 
 #pragma omp section
     {
-      StopWatch t("Computing octrees for model visibility computation");
+      ScopeTime t("Computing octrees for model visibility computation");
       for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
         for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
           HVRecognitionModel<PointT> &rm = *obj_hypotheses_groups_[i][jj];
@@ -681,7 +849,7 @@ void HypothesisVerification<PointT>::initialize() {
 
           auto model_octree_it = octree_model_representation_.find(rm.oh_->model_id_);
           if (model_octree_it == octree_model_representation_.end()) {
-            boost::shared_ptr<pcl::octree::OctreePointCloudPointVector<PointT>> octree(
+            std::shared_ptr<pcl::octree::OctreePointCloudPointVector<PointT>> octree(
                 new pcl::octree::OctreePointCloudPointVector<PointT>(0.015f));
             octree->setInputCloud(model_cloud);
             octree->addPointsFromInputCloud();
@@ -697,7 +865,7 @@ void HypothesisVerification<PointT>::initialize() {
     if (scene_cloud_->isOrganized())
       occlusion_clouds_.push_back(scene_cloud_);
     else {
-      StopWatch t("Input point cloud of scene is not organized. Doing depth-buffering to get organized point cloud");
+      ScopeTime t("Input point cloud of scene is not organized. Doing depth-buffering to get organized point cloud");
       ZBuffering<PointT> zbuf(cam_);
       typename pcl::PointCloud<PointT>::Ptr organized_cloud(new pcl::PointCloud<PointT>);
       zbuf.renderPointCloud(*scene_cloud_, *organized_cloud);
@@ -712,7 +880,7 @@ void HypothesisVerification<PointT>::initialize() {
 #pragma omp section
     {
       {
-        StopWatch t("Computing visible model points (1st run)");
+        ScopeTime t("Computing visible model points (1st run)");
 #pragma omp parallel for schedule(dynamic)
         for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
           for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
@@ -727,7 +895,7 @@ void HypothesisVerification<PointT>::initialize() {
         {
           std::stringstream desc;
           desc << "Pose refinement with " << param_.icp_iterations_ << " ICP iterations";
-          StopWatch t(desc.str());
+          ScopeTime t(desc.str());
 #pragma omp parallel for schedule(dynamic)
           for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
             for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
@@ -738,7 +906,7 @@ void HypothesisVerification<PointT>::initialize() {
         }
 
         {
-          StopWatch t("Computing visible model points (2nd run)");
+          ScopeTime t("Computing visible model points (2nd run)");
 #pragma omp parallel for schedule(dynamic)
           for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
             for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
@@ -758,6 +926,12 @@ void HypothesisVerification<PointT>::initialize() {
           elapsed_time_.push_back(std::pair<std::string, float>("visible object points", num_visible_object_points));
         }
       }
+
+      {
+        ScopeTime t("Removing similar poses");
+        removeRedundantPoses();
+      }
+
       //            {
       //                // just mask out the visible normals as well
       //                for(size_t i=0; i<obj_hypotheses_groups_.size(); i++)
@@ -774,42 +948,51 @@ void HypothesisVerification<PointT>::initialize() {
 
       {  // used for checking pairwise intersection of objects (relate amount of overlapping pixel of their 2D
          // silhouette)
-        StopWatch t("Computing 2D silhouette of visible object model");
+        ScopeTime t("Computing 2D silhouette of visible object model");
 #pragma omp parallel for schedule(dynamic)
         for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
           for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
             HVRecognitionModel<PointT> &rm = *obj_hypotheses_groups_[i][jj];
-            rm.processSilhouette(param_.do_smoothing_, param_.smoothing_radius_, param_.do_erosion_,
-                                 param_.erosion_radius_, cam_->getWidth());
+            if (!rm.isRejected()) {
+              rm.processSilhouette(param_.do_smoothing_, param_.smoothing_radius_, param_.do_erosion_,
+                                   param_.erosion_radius_, static_cast<int>(cam_.w));
+            }
           }
         }
       }
 
       {
-        StopWatch t("Computing visible octree nodes");
+        ScopeTime t("Computing visible octree nodes");
 #pragma omp parallel for schedule(dynamic)
         for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
           for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
             HVRecognitionModel<PointT> &rm = *obj_hypotheses_groups_[i][jj];
-            computeVisibleOctreeNodes(rm);
+            if (!rm.isRejected()) {
+              computeVisibleOctreeNodes(rm);
+            }
           }
         }
       }
-
       removeModelsWithLowVisibility();
     }
 
 #pragma omp section
     {
       if (param_.check_smooth_clusters_) {
-        StopWatch t("Extracting smooth clusters");
+        ScopeTime t("Extracting smooth clusters");
         extractEuclideanClustersSmooth();
+        for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
+          for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
+            auto &rm = *obj_hypotheses_groups_[i][jj];
+            rm.on_smooth_cluster_ = boost::dynamic_bitset<>(max_smooth_label_id_, 0);
+          }
+        }
       }
     }
 
 #pragma omp section
     if (!param_.ignore_color_even_if_exists_) {
-      StopWatch t("Converting scene color values");
+      ScopeTime t("Converting scene color values");
       colorTransf_->convert(*scene_cloud_downsampled_, scene_color_channels_);
       //            scene_color_channels_.col(0) = (scene_color_channels_.col(0) -
       //            Eigen::VectorXf::Ones(scene_color_channels_.rows())*50.f) / 50.f;
@@ -819,7 +1002,7 @@ void HypothesisVerification<PointT>::initialize() {
   }
 
   {
-    StopWatch t("Converting model color values");
+    ScopeTime t("Converting model color values");
     for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
       for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
         HVRecognitionModel<PointT> &rm = *obj_hypotheses_groups_[i][jj];
@@ -840,7 +1023,7 @@ void HypothesisVerification<PointT>::initialize() {
   }
 
   {
-    StopWatch t("Computing model to scene fitness");
+    ScopeTime t("Computing model to scene fitness");
 #pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
       for (size_t jj = 0; jj < obj_hypotheses_groups_[i].size(); jj++) {
@@ -854,8 +1037,8 @@ void HypothesisVerification<PointT>::initialize() {
 
   global_hypotheses_.resize(obj_hypotheses_groups_.size());
 
-  // do non-maxima surpression on all hypotheses in a hypotheses group based on model fitness (i.e. select only the one
-  // hypothesis in group with best model fit)
+  // do non-maxima surpression on all hypotheses in a hypotheses group based on model fitness (i.e. select only the
+  // one hypothesis in group with best model fit)
   size_t kept = 0;
   for (size_t i = 0; i < obj_hypotheses_groups_.size(); i++) {
     std::vector<typename HVRecognitionModel<PointT>::Ptr> ohg = obj_hypotheses_groups_[i];
@@ -884,23 +1067,42 @@ void HypothesisVerification<PointT>::initialize() {
 
   size_t kept_hypotheses = 0;
   for (size_t i = 0; i < global_hypotheses_.size(); i++) {
-    typename HVRecognitionModel<PointT>::Ptr rm = global_hypotheses_[i];
-
-    VLOG(1) << rm->oh_->class_id_ << " " << rm->oh_->model_id_ << " with hypothesis id " << i
-            << ", scene explained weights " << rm->scene_explained_weight_.sum() << ".";
+    const typename HVRecognitionModel<PointT>::Ptr rm = global_hypotheses_[i];
 
     rm->is_outlier_ = isOutlier(*rm);
 
     if (rm->is_outlier_)
       VLOG(1) << rm->oh_->class_id_ << " " << rm->oh_->model_id_ << " is rejected due to low model fitness score.";
 
-    if (!rm->isRejected())
+    if (!rm->isRejected()) {
+      VLOG(1) << rm->oh_->class_id_ << " " << rm->oh_->model_id_ << " with hypothesis id " << i
+              << ", scene explained weights " << rm->scene_explained_weight_.sum() << ".";
       global_hypotheses_[kept_hypotheses++] = global_hypotheses_[i];
-    else
+    } else {
       VLOG(1) << rm->oh_->class_id_ << " " << rm->oh_->model_id_ << " with hypothesis id " << i << " is rejected.";
+    }
   }
 
   global_hypotheses_.resize(kept_hypotheses);
+
+  if (param_.check_smooth_clusters_) {
+    kept_hypotheses = 0;
+    ScopeTime t("Computing smooth region intersection");
+    computeSmoothRegionOverlap();
+
+    for (size_t i = 0; i < global_hypotheses_.size(); i++) {
+      HVRecognitionModel<PointT> &rm = *global_hypotheses_[i];
+
+      if (!rm.isRejected() && rm.violates_smooth_cluster_check_ && smooth_region_overlap_.row(i).sum() == 0) {
+        rm.rejected_due_to_smooth_cluster_violation = true;
+        VLOG(1) << rm.oh_->class_id_ << " " << rm.oh_->model_id_ << " with hypothesis id " << i
+                << " rejected due to smooth cluster violation.";
+      } else {
+        global_hypotheses_[kept_hypotheses++] = global_hypotheses_[i];
+      }
+    }
+    global_hypotheses_.resize(kept_hypotheses);
+  }
 
   elapsed_time_.push_back(std::pair<std::string, float>("hypotheses left for global optimization", kept_hypotheses));
 
@@ -908,7 +1110,7 @@ void HypothesisVerification<PointT>::initialize() {
     return;
 
   {
-    StopWatch t("Computing pairwise intersection");
+    ScopeTime t("Computing pairwise intersection");
     computePairwiseIntersection();
   }
 
@@ -919,118 +1121,55 @@ void HypothesisVerification<PointT>::initialize() {
 template <typename PointT>
 void HypothesisVerification<PointT>::optimize() {
   if (VLOG_IS_ON(1)) {
-    VLOG(1) << global_hypotheses_.size() << " hypotheses are left for global verification after individual hypotheses "
-                                            "rejection. These are the left hypotheses: ";
+    VLOG(1) << global_hypotheses_.size()
+            << " hypotheses are left for global verification after individual hypotheses "
+               "rejection. These are the left hypotheses: ";
     for (size_t i = 0; i < global_hypotheses_.size(); i++)
-      VLOG(1) << global_hypotheses_[i]->oh_->class_id_ << " " << global_hypotheses_[i]->oh_->model_id_;
+      VLOG(1) << i << ": " << global_hypotheses_[i]->oh_->class_id_ << " " << global_hypotheses_[i]->oh_->model_id_;
   }
 
-  solution_ = boost::dynamic_bitset<>(global_hypotheses_.size(), 0);
-
-  if (param_.initial_status_)
-    solution_.set();
-
-  GHVSAModel<PointT> model;
-  double initial_cost = 0.;
-  model.cost_ = static_cast<mets::gol_type>(initial_cost);
-  model.setSolution(solution_);
-  model.setOptimizer(this);
-
-  GHVSAModel<PointT> *best = new GHVSAModel<PointT>(model);
-  GHVmove_manager<PointT> neigh(param_.use_replace_moves_);
-  neigh.setIntersectionCost(intersection_cost_);
-
-  // mets::best_ever_solution best_recorder (best);
-  cost_logger_.reset(new GHVCostFunctionLogger<PointT>(*best));
-  mets::noimprove_termination_criteria noimprove(param_.max_iterations_);
-
-  if (vis_cues_)
-    cost_logger_->setVisualizeFunction(visualize_cues_during_logger_);
-
-  switch (param_.opt_type_) {
-    case HV_OptimizationType::LocalSearch: {
-      StopWatch t("local search");
-      neigh.UseReplaceMoves(false);
-      mets::local_search<GHVmove_manager<PointT>> local(model, *(cost_logger_.get()), neigh, 0, false);
-      local.search();
-      (void)t;
-      break;
-    }
-    case HV_OptimizationType::TabuSearch: {
-      StopWatch t("TABU search");
-      mets::simple_tabu_list tabu_list(
-          5 * global_hypotheses_.size());  // ( initial_solution.size() * sqrt ( 1.0*initial_solution.size() ) ) ;
-      mets::best_ever_criteria aspiration_criteria;
-
-      std::cout << "max iterations:" << param_.max_iterations_ << std::endl;
-      mets::tabu_search<GHVmove_manager<PointT>> tabu_search(model, *(cost_logger_.get()), neigh, tabu_list,
-                                                             aspiration_criteria, noimprove);
-      // mets::tabu_search<move_manager> tabu_search(model, best_recorder, neigh, tabu_list, aspiration_criteria,
-      // noimprove);
-      try {
-        tabu_search.search();
-      } catch (mets::no_moves_error e) {
-      }
-      (void)t;
-      break;
-    }
-    case HV_OptimizationType::TabuSearchWithLSRM: {
-      StopWatch t("TABU search + LS (RM)");
-      GHVmove_manager<PointT> neigh4(false);
-      neigh4.setIntersectionCost(intersection_cost_);
-
-      mets::simple_tabu_list tabu_list(global_hypotheses_.size() * sqrt(1.0 * global_hypotheses_.size()));
-      mets::best_ever_criteria aspiration_criteria;
-      mets::tabu_search<GHVmove_manager<PointT>> tabu_search(model, *(cost_logger_.get()), neigh4, tabu_list,
-                                                             aspiration_criteria, noimprove);
-      // mets::tabu_search<move_manager> tabu_search(model, best_recorder, neigh, tabu_list, aspiration_criteria,
-      // noimprove);
-
-      try {
-        tabu_search.search();
-      } catch (mets::no_moves_error e) {
-      }
-
-      // after TS, we do LS with RM
-      GHVmove_manager<PointT> neigh4RM(true);
-      neigh4RM.setIntersectionCost(intersection_cost_);
-      mets::local_search<GHVmove_manager<PointT>> local(model, *(cost_logger_.get()), neigh4RM, 0, false);
-      local.search();
-      (void)t;
-      break;
-    }
-    case HV_OptimizationType::SimulatedAnnealing: {
-      StopWatch t("SA search");
-      // Simulated Annealing
-      // mets::linear_cooling linear_cooling;
-      mets::exponential_cooling linear_cooling;
-      mets::simulated_annealing<GHVmove_manager<PointT>> sa(model, *(cost_logger_.get()), neigh, noimprove,
-                                                            linear_cooling, initial_temp_, 1e-7, 1);
-      sa.setApplyAndEvaluate(true);
-      sa.search();
-      (void)t;
-      break;
-    }
-    default:
-      throw std::runtime_error("Specified optimization type not implememted!");
-  }
+  evaluated_solutions_.clear();
+  num_evaluations_ = 0;
+  best_solution_.solution_ = boost::dynamic_bitset<>(global_hypotheses_.size(), 0);
+  best_solution_.cost_ = std::numeric_limits<double>::max();
+  search();
 
   for (size_t i = 0; i < global_hypotheses_.size(); i++) {
-    if (solution_[i])
+    if (best_solution_.solution_[i])
       global_hypotheses_[i]->oh_->is_verified_ = true;
   }
 
-  GHVSAModel<PointT> best_seen = static_cast<const GHVSAModel<PointT> &>(cost_logger_->best_seen());
   std::stringstream info;
   info << "*****************************" << std::endl
-       << "Solution: " << solution_ << std::endl
-       << "Final cost: " << best_seen.cost_ << std::endl
-       << "Number of evaluations: " << cost_logger_->getTimesEvaluated() << std::endl
-       << "Number of accepted moves: " << cost_logger_->getAcceptedMovesSize() << std::endl
+       << "Solution: " << best_solution_.solution_ << std::endl
+       << "Final cost: " << best_solution_.cost_ << std::endl
+       << "Number of evaluations: " << num_evaluations_ << std::endl
        << "*****************************" << std::endl;
   VLOG(1) << info.str();
+}
 
-  delete best;
+template <typename PointT>
+void HypothesisVerification<PointT>::checkInput() {
+  if (scene_cloud_->isOrganized()) {
+    // check if camera calibration file is for the same image resolution as depth image
+    if (cam_.w != scene_cloud_->width || cam_.h != scene_cloud_->height) {
+      LOG(WARNING) << "Input cloud has different resolution (" << scene_cloud_->width << "x" << scene_cloud_->height
+                   << ") than resolution stated in camera calibration file (" << cam_.w << "x" << cam_.h
+                   << "). Will adjust camera calibration file accordingly.";
+      cam_.adjustToSize(scene_cloud_->width, scene_cloud_->height);
+    }
+
+    // check if provided rgb_depth_overlap mask is the same size as RGB image
+    if (!rgb_depth_overlap_.empty()) {
+      CHECK(static_cast<int>(cam_.w) == rgb_depth_overlap_.cols && static_cast<int>(cam_.h) == rgb_depth_overlap_.rows);
+    }
+  } else {
+    if (cam_.w != 640 || cam_.h != 480) {
+      LOG(INFO) << "Input cloud is not organized(" << scene_cloud_->width << "x" << scene_cloud_->height
+                << ") and resolution stated in camera calibration file (" << cam_.w << "x" << cam_.h
+                << ") is not VGA! Please check if this is okay.";
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1038,16 +1177,15 @@ template <typename PointT>
 void HypothesisVerification<PointT>::verify() {
   elapsed_time_.clear();
 
+  checkInput();
+
   {
-    StopWatch t("Verification of object hypotheses");
+    ScopeTime t("Verification of object hypotheses");
     initialize();
   }
 
-  if (vis_cues_)
-    visualize_cues_during_logger_ = boost::bind(&HypothesisVerification<PointT>::visualizeGOcues, this, _1, _2, _3);
-
   {
-    StopWatch t("Optimizing object hypotheses verification cost function");
+    ScopeTime t("Optimizing object hypotheses verification cost function");
     optimize();
   }
 
@@ -1102,12 +1240,12 @@ void HypothesisVerification<PointT>::computeModelFitness(HVRecognitionModel<Poin
     //        bool is_outlier = true;
     double radius = search_radius_;
     PointT query_pt;
-    query_pt.getVector3fMap() = rm.visible_cloud_->points[midx].getVector3fMap();
+    query_pt.getVector4fMap() = rm.visible_cloud_->points[midx].getVector4fMap();
     octree_scene_downsampled_->radiusSearch(query_pt, radius, nn_indices, nn_sqrd_distances);
 
     //        vis.addSphere(rm.visible_cloud_->points[midx], 0.005, 0., 1., 0., "queryPoint", vp1 );
 
-    const auto normal_m = rm.visible_cloud_normals_->points[midx].getNormalVector3fMap();
+    const auto normal_m = rm.visible_cloud_normals_->points[midx].getNormalVector4fMap();
     //        normal_m.normalize();
 
     for (size_t k = 0; k < nn_indices.size(); k++) {
@@ -1120,20 +1258,17 @@ void HypothesisVerification<PointT>::computeModelFitness(HVRecognitionModel<Poin
       //            vis.addPointCloud(scene_cloud_downsampled_, gray, "scene2", vp2);
       //            vis.setPointCloudRenderingProperties( pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, "scene2");
 
-      //            if (sqr_3D_dist > ( 1.5f * 1.5f * param_.inliers_threshold_ * param_.inliers_threshold_ ) ) ///TODO:
-      //            consider camera's noise level
+      //            if (sqr_3D_dist > ( 1.5f * 1.5f * param_.inliers_threshold_ * param_.inliers_threshold_ ) )
+      //            ///TODO: consider camera's noise level
       //                continue;
 
-      ModelSceneCorrespondence c;
-      c.model_id_ = midx;
-      c.scene_id_ = sidx;
+      ModelSceneCorrespondence c(sidx, midx);
       c.dist_3D_ = sqrt(sqrd_3D_dist);
 
-      const auto normal_s = scene_normals_downsampled_->points[sidx].getNormalVector3fMap();
+      const auto normal_s = scene_normals_downsampled_->points[sidx].getNormalVector4fMap();
       //            normal_s.normalize();
 
-      float dotp = std::min(0.99999f, std::max(-0.99999f, normal_m.dot(normal_s)));
-      c.normals_dotp_ = dotp;
+      c.normals_dotp_ = std::min(0.99999f, std::max(-0.99999f, normal_m.dot(normal_s)));
 
       //            CHECK (c.angle_surface_normals_rad_ <= M_PI) << "invalid normals: " << std::endl << normal_m <<
       //            std::endl << std::endl << normal_s << std::endl << std::endl << "dotp: " << dotp << std::endl <<
@@ -1199,8 +1334,12 @@ void HypothesisVerification<PointT>::computeModelFitness(HVRecognitionModel<Poin
     }
   }
 
-  boost::dynamic_bitset<> scene_explained_pts(scene_cloud_downsampled_->points.size(), 0);
-  boost::dynamic_bitset<> model_explained_pts(rm.visible_cloud_->points.size(), 0);
+  Eigen::Array<bool, Eigen::Dynamic, 1> scene_explained_pts(scene_cloud_downsampled_->points.size());
+  scene_explained_pts.setConstant(scene_cloud_downsampled_->points.size(), false);
+
+  Eigen::Array<bool, Eigen::Dynamic, 1> model_explained_pts(rm.visible_cloud_->points.size());
+  model_explained_pts.setConstant(rm.visible_cloud_->points.size(), false);
+
   Eigen::VectorXf modelFit = Eigen::VectorXf::Zero(rm.visible_cloud_->points.size());
   rm.scene_explained_weight_ = Eigen::SparseVector<float>(scene_cloud_downsampled_->points.size());
   rm.scene_explained_weight_.reserve(rm.model_scene_c_.size());
@@ -1209,14 +1348,33 @@ void HypothesisVerification<PointT>::computeModelFitness(HVRecognitionModel<Poin
     size_t sidx = c.scene_id_;
     size_t midx = c.model_id_;
 
-    if (!scene_explained_pts[sidx]) {
-      scene_explained_pts.set(sidx);
+    if (!scene_explained_pts(sidx)) {
+      scene_explained_pts(sidx) = true;
       rm.scene_explained_weight_.insert(sidx) = c.fitness_;
     }
 
-    if (!model_explained_pts[midx]) {
-      model_explained_pts.set(midx);
+    if (!model_explained_pts(midx)) {
+      model_explained_pts(midx) = true;
       modelFit(midx) = c.fitness_;
+    }
+  }
+
+  if (param_.check_smooth_clusters_) {
+    // save which smooth clusters align with hypotheses
+    for (int i = 1; i < max_smooth_label_id_; i++) {  // ignore label 0 as these are unlabeled clusters (which are e.g.
+      // smaller than the minimal required cluster size)
+      Eigen::Array<bool, Eigen::Dynamic, 1> s_pt_in_region = (scene_pt_smooth_label_id_.array() == i);
+      Eigen::Array<bool, Eigen::Dynamic, 1> explained_pt_in_region =
+          (s_pt_in_region.array() && scene_explained_pts.array());
+      size_t num_explained_pts_in_region = explained_pt_in_region.count();
+      size_t num_pts_in_smooth_regions = s_pt_in_region.count();
+
+      rm.on_smooth_cluster_[i] = num_explained_pts_in_region > 0;
+
+      if (num_explained_pts_in_region > param_.min_pts_smooth_cluster_to_be_epxlained_ &&
+          (float)(num_explained_pts_in_region) / num_pts_in_smooth_regions < param_.min_ratio_cluster_explained_) {
+        rm.violates_smooth_cluster_check_ = true;
+      }
     }
   }
 
@@ -1232,4 +1390,4 @@ std::vector<std::pair<std::string, float>> HypothesisVerification<PointT>::elaps
 
 // template class V4R_EXPORTS HypothesisVerification<pcl::PointXYZ>;
 template class V4R_EXPORTS HypothesisVerification<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

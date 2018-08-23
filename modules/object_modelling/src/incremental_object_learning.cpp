@@ -2,7 +2,7 @@
  * do_learning.cpp
  *
  * incrementally learning of objects by
- * transfering object indices from initial cloud to the remaining clouds
+ * transferring object indices from initial cloud to the remaining clouds
  * using given camera poses
  *
  *  Created on: June, 2015
@@ -23,6 +23,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/pcl_config.h>
 #include <pcl/recognition/cg/geometric_consistency.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/registration/icp.h>
@@ -33,20 +34,16 @@
 #include <v4r/common/convertCloud.h>
 #include <v4r/common/convertNormals.h>
 #include <v4r/common/noise_models.h>
-#include <v4r/common/normals.h>
 #include <v4r/common/occlusion_reasoning.h>
 #include <v4r/common/pcl_utils.h>
 #include <v4r/common/pcl_visualization_utils.h>
 #include <v4r/common/zbuffering.h>
+#include <v4r/config.h>
 #include <v4r/io/eigen.h>
 #include <v4r/io/filesystem.h>
-#include <v4r/registration/metrics.h>
-#include <v4r_config.h>
 #include <v4r/common/impl/DataMatrix2D.hpp>
 
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
-
-#include <v4r/features/sift_local_estimator.h>
 
 namespace v4r {
 namespace object_modelling {
@@ -106,12 +103,15 @@ boost::dynamic_bitset<> IOL::extractEuclideanClustersSmooth(const pcl::PointClou
 void IOL::updatePointNormalsFromSuperVoxels(const pcl::PointCloud<PointT>::Ptr &cloud,
                                             pcl::PointCloud<pcl::Normal>::Ptr &normals,
                                             const boost::dynamic_bitset<> &obj_mask,
-                                            boost::dynamic_bitset<> &obj_mask_out,
-                                            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &supervoxel_cloud,
-                                            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &supervoxel_cloud_organized) {
+                                            boost::dynamic_bitset<> &obj_mask_out) {
   assert(cloud->points.size() == normals->points.size() && cloud->points.size() == obj_mask.size());
 
+#if PCL_VERSION_COMPARE(<, 1, 8, 0)
   pcl::SupervoxelClustering<PointT> super(param_.voxel_resolution_, param_.seed_resolution_, false);
+#else
+  pcl::SupervoxelClustering<PointT> super(param_.voxel_resolution_, param_.seed_resolution_);
+  super.setUseSingleCameraTransform(false);
+#endif
   super.setInputCloud(cloud);
   super.setColorImportance(0.f);
   super.setSpatialImportance(0.5f);
@@ -120,8 +120,6 @@ void IOL::updatePointNormalsFromSuperVoxels(const pcl::PointCloud<PointT>::Ptr &
   std::map<uint32_t, pcl::Supervoxel<PointT>::Ptr> supervoxel_clusters;
   super.extract(supervoxel_clusters);
   super.refineSupervoxels(2, supervoxel_clusters);
-  supervoxel_cloud = super.getColoredVoxelCloud();
-  supervoxel_cloud_organized = super.getColoredCloud();
   const pcl::PointCloud<pcl::PointXYZL>::Ptr supervoxels_labels_cloud = super.getLabeledCloud();
 
   std::cout << "Found " << supervoxel_clusters.size() << " supervoxels." << std::endl;
@@ -249,7 +247,7 @@ boost::dynamic_bitset<> IOL::erodeIndices(const boost::dynamic_bitset<> &obj_mas
 bool IOL::write_model_to_disk(const std::string &models_dir, const std::string &model_name, bool save_views) {
   const std::string export_to = models_dir + "/" + model_name;
   io::createDirIfNotExist(export_to);
-  pcl::io::savePCDFileBinary(export_to + "/3D_model.pcd", *cloud_normals_oriented_);
+  pcl::io::savePCDFileBinaryCompressed(export_to + "/3D_model.pcd", *cloud_normals_oriented_);
 
   if (save_views)  // save recognition data with new poses
   {
@@ -258,7 +256,7 @@ bool IOL::write_model_to_disk(const std::string &models_dir, const std::string &
     for (size_t i = 0; i < keyframes_used_.size(); i++) {
       std::stringstream view_file;
       view_file << export_to << "/views/cloud_" << setfill('0') << setw(8) << i << ".pcd";
-      pcl::io::savePCDFileBinary(view_file.str(), *keyframes_used_[i]);
+      pcl::io::savePCDFileBinaryCompressed(view_file.str(), *keyframes_used_[i]);
       std::cout << view_file.str() << std::endl;
 
       std::string path_pose(view_file.str());
@@ -447,7 +445,9 @@ bool IOL::learn_object(const pcl::PointCloud<PointT> &cloud, const Eigen::Matrix
   pcl::PointCloud<pcl::Normal>::Ptr normals_filtered(new pcl::PointCloud<pcl::Normal>());
   std::vector<ClusterNormalsToPlanes::Plane::Ptr> planes;
 
-  computeNormals<PointT>(view.cloud_, view.normal_, param_.normal_method_);
+  ne_->setInputCloud(view.cloud_);
+  view.normal_ = ne_->compute();
+
   extractPlanePoints(view.cloud_, view.normal_, planes);
 
   octree_.setInputCloud(view.cloud_);
@@ -525,7 +525,7 @@ bool IOL::learn_object(const pcl::PointCloud<PointT> &cloud, const Eigen::Matrix
           Eigen::Matrix4f tf_inv = tf.inverse();
           pcl::transformPointCloud(*view.cloud_, *view_trans, tf_inv);
           OcclusionReasoner<PointT, PointT> occ_reasoner;
-          occ_reasoner.setCamera(cam_);
+          occ_reasoner.setCameraIntrinsics(cam_);
           occ_reasoner.setInputCloud(view_trans);
           occ_reasoner.setOcclusionCloud(grph_[view_id].cloud_);
           occ_reasoner.setOcclusionThreshold(0.01f);
@@ -586,8 +586,7 @@ bool IOL::learn_object(const pcl::PointCloud<PointT> &cloud, const Eigen::Matrix
 
   boost::dynamic_bitset<> obj_mask_enforced_by_supervoxel_consistency;
   updatePointNormalsFromSuperVoxels(view.cloud_, view.normal_, view.obj_mask_step_.back(),
-                                    obj_mask_enforced_by_supervoxel_consistency, view.supervoxel_cloud_,
-                                    view.supervoxel_cloud_organized_);
+                                    obj_mask_enforced_by_supervoxel_consistency);
   view.obj_mask_step_.push_back(obj_mask_enforced_by_supervoxel_consistency);
 
   boost::dynamic_bitset<> obj_mask_grown_by_smooth_surface = extractEuclideanClustersSmooth(
@@ -645,5 +644,5 @@ void IOL::printParams(std::ostream &ostr) const {
        << "===================================================" << std::endl
        << std::endl;
 }
-}
-}
+}  // namespace object_modelling
+}  // namespace v4r

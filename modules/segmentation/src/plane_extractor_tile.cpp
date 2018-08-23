@@ -526,7 +526,7 @@ void PlaneExtractorTile<PointT>::rawPatchClustering() {
           planeMatrices[currentId] = currentPlaneMatrix;
         }
 
-      } else  // if the current patch does not contain enought members
+      } else  // if the current patch does not contain enough members
         currentId = 0;
 
       // do some debug output
@@ -656,7 +656,7 @@ void PlaneExtractorTile<PointT>::postProcessing(bool doNormalTest, bool zTest) {
 
 template <typename PointT>
 PlaneExtractorTile<PointT>::PlaneExtractorTile(const PlaneExtractorTileParameter &p) : param_(p) {
-  maxAngle = M_PI / 180.0f * 10.0f;  // 10° max angle(maybe make it dependant on distance)
+  maxAngle = M_PI / 180.0f * 10.0f;  // 10° max angle(maybe make it dependent on distance)
   // minCosAngle=cos(maxAngle);
 
   maxBlockAngle = M_PI / 180.0f * 10.0f;
@@ -731,7 +731,7 @@ void PlaneExtractorTile<PointT>::compute() {
   }*/
   // cv::Mat patchIds(heightBlocks,widthBlocks,CV_32SC1);//TODO: init this later
   patchIds.setTo(cv::Scalar(0));  // test if this is necessary (but i think so)
-  maxId = 0;                      // everytime a new id is created, it is done by this number
+  maxId = 0;                      // every time a new id is created, it is done by this number
 
   rawPatchClustering();
 
@@ -831,4 +831,4 @@ void PlaneExtractorTile<PointT>::compute() {
 
 #define PCL_INSTANTIATE_PlaneExtractorTile(T) template class V4R_EXPORTS PlaneExtractorTile<T>;
 PCL_INSTANTIATE(PlaneExtractorTile, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

@@ -72,7 +72,8 @@ void save_bb_image(const pcl::PointCloud<PointT> &cloud, const std::vector<std::
 
 int main(int argc, char **argv) {
   typedef pcl::PointXYZRGB PointT;
-  std::string test_dir, out_dir = "/tmp/segmentation/";
+  bf::path test_dir, out_dir = "segmentation";
+  v4r::apps::CloudSegmenterParameter param;
 
   int margin = 0;
   bool save_bounding_boxes = true;
@@ -82,13 +83,15 @@ int main(int argc, char **argv) {
 
   po::options_description desc(
       "Point Cloud Segmentation Example\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message")("test_dir,t", po::value<std::string>(&test_dir)->required(),
-                                                       "Directory with test scenes stored as point clouds (.pcd).")(
-      "out_dir,o", po::value<std::string>(&out_dir)->default_value(out_dir), "Output directory.")(
-      "margin", po::value<int>(&margin)->default_value(margin), "margin when computing bounding box")(
-      "save_bb", po::value<bool>(&save_bounding_boxes)->default_value(save_bounding_boxes),
-      "if true, saves bounding boxes")("visualize,v", po::bool_switch(&visualize),
-                                       "If set, visualizes segmented clusters.");
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("test_dir,t", po::value<bf::path>(&test_dir)->required(),
+                     "Directory with test scenes stored as point clouds (.pcd).");
+  desc.add_options()("out_dir,o", po::value<bf::path>(&out_dir)->default_value(out_dir), "Output directory.");
+  desc.add_options()("margin", po::value<int>(&margin)->default_value(margin), "margin when computing bounding box");
+  desc.add_options()("save_bb", po::value<bool>(&save_bounding_boxes)->default_value(save_bounding_boxes),
+                     "if true, saves bounding boxes");
+  desc.add_options()("visualize,v", po::bool_switch(&visualize), "If set, visualizes segmented clusters.");
+  param.init(desc, "segmentation");
   po::variables_map vm;
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -102,8 +105,6 @@ int main(int argc, char **argv) {
     std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
   }
 
-  v4r::apps::CloudSegmenterParameter param;
-  to_pass_further = param.init(to_pass_further);
   v4r::apps::CloudSegmenter<PointT> cs(param);
   cs.initialize(to_pass_further);
 
@@ -113,27 +114,22 @@ int main(int argc, char **argv) {
 
   std::sort(sub_folder_names.begin(), sub_folder_names.end());
   for (size_t sub_folder_id = 0; sub_folder_id < sub_folder_names.size(); sub_folder_id++) {
-    bf::path sequence_path = test_dir;
-    sequence_path /= sub_folder_names[sub_folder_id];
-
-    bf::path out_path = out_dir;
-    out_path /= sub_folder_names[sub_folder_id];
+    bf::path sequence_path = test_dir / sub_folder_names[sub_folder_id];
+    bf::path out_path = out_dir / sub_folder_names[sub_folder_id];
 
     v4r::io::createDirIfNotExist(out_path);
 
     std::vector<std::string> views = v4r::io::getFilesInDirectory(sequence_path, ".*.pcd", false);
 
     for (size_t v_id = 0; v_id < views.size(); v_id++) {
-      bf::path fn = sequence_path;
-      fn /= views[v_id];
+      bf::path fn = sequence_path / views[v_id];
 
       std::string out_basename = views[v_id];
       boost::replace_last(out_basename, ".pcd", "");
 
-      bf::path out_fn = out_dir;
-      out_fn /= out_basename;
+      bf::path out_fn = out_dir / out_basename;
 
-      std::cout << "Segmenting file " << fn.string() << std::endl;
+      LOG(INFO) << "Segmenting file " << fn.string();
 
       typename pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
 

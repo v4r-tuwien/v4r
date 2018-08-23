@@ -5,7 +5,6 @@ namespace v4r {
 
 template <typename PointT>
 void Harris3DKeypointExtractor<PointT>::compute() {
-#if PCL_VERSION >= 100702
   typename pcl::search::OrganizedNeighbor<PointT>::Ptr search_method(new pcl::search::OrganizedNeighbor<PointT>());
   pcl::HarrisKeypoint3D<PointT, pcl::PointXYZI> detector;
   detector.setNonMaxSupression(true);
@@ -22,12 +21,8 @@ void Harris3DKeypointExtractor<PointT>::compute() {
   keypoint_indices_.resize(keypoints_indices->indices.size());
   for (size_t i = 0; i < keypoints_indices->indices.size(); i++)
     keypoint_indices_[i] = keypoints_indices->indices[i];
-
-#else
-  std::cerr << "HARRIS 3D is not available with keypointindices for this PCL version!" << std::endl;
-#endif
 }
 
 template class V4R_EXPORTS Harris3DKeypointExtractor<pcl::PointXYZ>;
 template class V4R_EXPORTS Harris3DKeypointExtractor<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

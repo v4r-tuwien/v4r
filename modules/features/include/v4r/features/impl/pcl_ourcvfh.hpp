@@ -460,8 +460,9 @@ void v4r::OURCVFHEstimation<PointInT, PointNT, PointOutT>::computeRFAndShapeDist
             weights[ii] *= 0.5f - wz * 0.5f;
         }
 
-        int h_index = (d <= 0) ? 0 : std::min<int>(size_hists - 1,
-                                                   std::ceil(size_hists * (d / distance_normalization_factor)) - 1);
+        int h_index =
+            (d <= 0) ? 0
+                     : std::min<int>(size_hists - 1, std::ceil(size_hists * (d / distance_normalization_factor)) - 1);
         for (int j = 0; j < num_hists; j++)
           quadrants[j][h_index] += hist_incr * weights[j];
       }

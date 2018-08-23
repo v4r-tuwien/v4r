@@ -7,7 +7,6 @@ if(NOT V4R_DEPENDENCIES_FOUND)
 endif()
 
 v4r_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
-v4r_include_modules(${SEMSEG_DEPS})
 
 add_executable(train3DEF train3DEF.cpp )
 add_executable(evaluate3DEF evaluate3DEF.cpp )

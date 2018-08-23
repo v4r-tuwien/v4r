@@ -48,7 +48,7 @@ namespace v4r {
 class V4R_EXPORTS BasePyramid {
  public:
   BasePyramid();
-  typedef boost::shared_ptr<BasePyramid> Ptr;
+  typedef std::shared_ptr<BasePyramid> Ptr;
 
   void setStartLevel(int start_level_);
   int getStartLevel();
@@ -154,5 +154,5 @@ class V4R_EXPORTS BasePyramid {
   virtual void checkLevels();
   virtual void combineConspicuityMaps(cv::Mat &sm_map, cv::Mat &consp_map);
 };
-}
+}  // namespace v4r
 #endif  // PYRAMID_BASE_HPP

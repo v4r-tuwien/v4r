@@ -309,4 +309,4 @@ void NMBasedCloudIntegration<PointT>::compute(typename pcl::PointCloud<PointT>::
 }
 
 template class V4R_EXPORTS NMBasedCloudIntegration<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

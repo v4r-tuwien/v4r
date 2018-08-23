@@ -62,6 +62,8 @@ int main(int argc, char **argv) {
   bf::path test_dir;
   bf::path out_dir = "/tmp/object_recognition_results/";
   bf::path recognizer_config_dir = "cfg";
+  std::vector<std::string> obj_models_to_search = {};  //< object identities to be detected. If empty, all object models
+  // of the object model database will be searched.
   int verbosity = -1;
 
   po::options_description desc("Object Instance Recognizer\n======================================\n**Allowed options");
@@ -70,7 +72,7 @@ int main(int argc, char **argv) {
       "test_dir,t", po::value<bf::path>(&test_dir)->required(),
       "Directory with test scenes stored as point clouds (.pcd). The camera pose is taken directly from the pcd header "
       "fields \"sensor_orientation_\" and \"sensor_origin_\" (if the test directory contains subdirectories, each "
-      "subdirectory is considered as seperate sequence for multiview recognition)");
+      "subdirectory is considered as separate sequence for multiview recognition)");
   desc.add_options()("out_dir,o", po::value<bf::path>(&out_dir)->default_value(out_dir),
                      "Output directory where recognition results will be stored.");
   desc.add_options()(
@@ -78,6 +80,10 @@ int main(int argc, char **argv) {
       "Path to config directory containing the xml config files for the various recognition pipelines and parameters.");
   desc.add_options()("verbosity", po::value<int>(&verbosity)->default_value(verbosity),
                      "set verbosity level for output (<0 minimal output)");
+  desc.add_options()("object_models_to_search",
+                     po::value<std::vector<std::string>>(&obj_models_to_search)->multitoken(),
+                     "object identities to be detected. If empty, all object models "
+                     "of the object model database will be searched.");
   po::variables_map vm;
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -102,17 +108,34 @@ int main(int argc, char **argv) {
   v4r::apps::ObjectRecognizer<PT> recognizer;
   recognizer.initialize(to_pass_further, recognizer_config_dir);
 
-  std::vector<std::string> sub_folder_names = v4r::io::getFoldersInDirectory(test_dir);
-  if (sub_folder_names.empty())
+  std::vector<std::string> sub_folder_names;
+  if (!bf::is_regular_file(test_dir)) {
+    sub_folder_names = v4r::io::getFoldersInDirectory(test_dir);
+    if (sub_folder_names.empty())
+      sub_folder_names.push_back("");
+  } else {
     sub_folder_names.push_back("");
+  }
 
   for (const std::string &sub_folder_name : sub_folder_names) {
     recognizer.resetMultiView();
-    std::vector<std::string> views = v4r::io::getFilesInDirectory(test_dir / sub_folder_name, ".*.pcd", false);
+    std::vector<std::string> views;
+
+    if (bf::is_regular(test_dir))
+      views.push_back("");
+    else
+      views = v4r::io::getFilesInDirectory(test_dir / sub_folder_name, ".*.pcd", false);
+
     for (size_t v_id = 0; v_id < views.size(); v_id++) {
       bf::path test_path = test_dir / sub_folder_name / views[v_id];
 
-      LOG(INFO) << "Recognizing file " << test_path.string();
+      std::stringstream info_ss;
+      info_ss << "Recognizing file " << test_path.string();
+      LOG(INFO) << info_ss.str();
+
+      if (!FLAGS_logtostderr)
+        std::cout << info_ss.str() << std::endl;
+
       pcl::PointCloud<PT>::Ptr cloud(new pcl::PointCloud<PT>());
       pcl::io::loadPCDFile(test_path.string(), *cloud);
 
@@ -120,13 +143,14 @@ int main(int argc, char **argv) {
       //            cloud->sensor_orientation_ = Eigen::Quaternionf::Identity();
       //            cloud->sensor_origin_ = Eigen::Vector4f::Zero(4);
 
-      std::vector<v4r::ObjectHypothesesGroup> generated_object_hypotheses = recognizer.recognize(cloud);
+      std::vector<v4r::ObjectHypothesesGroup> generated_object_hypotheses =
+          recognizer.recognize(cloud, obj_models_to_search);
       std::vector<std::pair<std::string, float>> elapsed_time = recognizer.getElapsedTimes();
 
-      if (!out_dir.empty())  // write results to disk (for each verified hypothesis add a row in the text file with
-                             // object name, dummy confidence value and object pose in row-major order)
-      {
-        std::string out_basename = views[v_id];
+      if (!out_dir.empty()) {
+        // write results to disk (for each verified hypothesis add a row in the text file with
+        // object name, dummy confidence value and object pose in row-major order)
+        std::string out_basename = test_path.filename().string();
         boost::replace_last(out_basename, ".pcd", ".anno");
         bf::path out_path = out_dir / sub_folder_name / out_basename;
 

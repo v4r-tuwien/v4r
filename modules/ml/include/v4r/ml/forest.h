@@ -106,5 +106,5 @@ class V4R_EXPORTS Forest {
   virtual ~Forest();
 };
 }
-}
+}  // namespace v4r
 #endif  // FOREST_H

@@ -27,9 +27,9 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <v4r/config.h>
 #include <v4r/io/filesystem.h>
 #include <v4r/recognition/IMKOptimizeModel.h>
-#include <v4r_config.h>
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <fstream>
@@ -44,7 +44,7 @@
 #include <v4r/reconstruction/impl/projectPointToImage.hpp>
 #include "pcl/common/transforms.h"
 //#include <v4r/features/FeatureDetector_KD_FAST_IMGD.h>
-#ifdef HAVE_SIFTGPU
+#if HAVE_SIFTGPU
 #define USE_SIFT_GPU
 #include <v4r/features/FeatureDetector_KD_SIFTGPU.h>
 #else

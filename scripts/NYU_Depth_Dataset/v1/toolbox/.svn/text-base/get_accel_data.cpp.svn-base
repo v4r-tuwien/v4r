@@ -30,7 +30,7 @@ void mexFunction(int nlhs, mxArray* plhs[], const int nrhs, const mxArray* prhs[
   int data_size = get_data_size(fp);
   if (data_size != sizeof(freenect_raw_tilt_state)) {
     mexErrMsgIdAndTxt("filename:notAccel",
-        "file %s's size doesnt match freenect_raw_tilt_state.", filename);
+        "file %s's size does not match freenect_raw_tilt_state.", filename);
   }
   
   freenect_raw_tilt_state state;

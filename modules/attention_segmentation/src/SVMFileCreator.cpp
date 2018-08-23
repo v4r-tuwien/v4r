@@ -94,11 +94,11 @@ void SVMFileCreator::process() {
     FILE *features_file_as = std::fopen(filename_base_as.c_str(), "a");  // second level results
 
     current_file_name = filename_base + ".pos";
-    FILE *positive_file = std::fopen(current_file_name.c_str(), "a");  // first level positiv results
+    FILE *positive_file = std::fopen(current_file_name.c_str(), "a");  // first level positive results
     current_file_name = filename_base + ".neg";
     FILE *negative_file = std::fopen(current_file_name.c_str(), "a");  // first level negative results
     current_file_name = filename_base_as + ".pos";
-    FILE *positive_file_as = std::fopen(current_file_name.c_str(), "a");  // second level positiv results
+    FILE *positive_file_as = std::fopen(current_file_name.c_str(), "a");  // second level positive results
     current_file_name = filename_base_as + ".neg";
     FILE *negative_file_as = std::fopen(current_file_name.c_str(), "a");  // second level negative results
 
@@ -548,4 +548,4 @@ void SVMFileCreator::process() {
   //     }
   //   }
 }
-}
+}  // namespace svm

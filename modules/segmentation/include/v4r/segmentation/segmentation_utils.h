@@ -23,4 +23,4 @@ template <typename PointT>
 V4R_EXPORTS void visualizeClusters(const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
                                    const std::vector<std::vector<int>> &cluster_indices,
                                    const std::string &window_title = "Segmentation results");
-}
+}  // namespace v4r

@@ -179,7 +179,7 @@ void TSFGlobalCloudFilteringSimple::getGlobalCloudMasked(const std::vector<v4r::
       pcl::PointXYZRGBNormal,
       pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>::AlignedPointTVector
       AlignedPointXYZRGBNormalVector;
-  boost::shared_ptr<AlignedPointXYZRGBNormalVector> oc_cloud;
+  std::shared_ptr<AlignedPointXYZRGBNormalVector> oc_cloud;
   oc_cloud.reset(new AlignedPointXYZRGBNormalVector());
   octree.reset(new pcl::octree::OctreePointCloudVoxelCentroid<
                pcl::PointXYZRGBNormal, pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>(
@@ -275,7 +275,7 @@ void TSFGlobalCloudFilteringSimple::getGlobalCloudFiltered(const std::vector<v4r
       pcl::PointXYZRGBNormal,
       pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>::AlignedPointTVector
       AlignedPointXYZRGBNormalVector;
-  boost::shared_ptr<AlignedPointXYZRGBNormalVector> oc_cloud;
+  std::shared_ptr<AlignedPointXYZRGBNormalVector> oc_cloud;
   oc_cloud.reset(new AlignedPointXYZRGBNormalVector());
   octree.reset(new pcl::octree::OctreePointCloudVoxelCentroid<
                pcl::PointXYZRGBNormal, pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>(
@@ -626,7 +626,7 @@ void TSFGlobalCloudFilteringSimple::getMesh(const pcl::PointCloud<pcl::PointXYZR
 //   int f_idx = 0;
 
 //   // int idx_vt =0;
-//   PCL_INFO ("Writting faces...\n");
+//   PCL_INFO ("Writing faces...\n");
 //   for (int m = 0; m < nr_meshes; ++m)
 //   {
 //     if (m > 0)
@@ -666,7 +666,7 @@ void TSFGlobalCloudFilteringSimple::getMesh(const pcl::PointCloud<pcl::PointXYZR
 //   /* Write material defination for OBJ file*/
 //   // Open file
 //   PCL_INFO ("Writing material files\n");
-//   //dont do it if no material to write
+//   //don't do it if no material to write
 //   if(tex_mesh.tex_materials.size() ==0)
 //     return (0);
 
@@ -745,4 +745,4 @@ void TSFGlobalCloudFilteringSimple::setCameraParameter(const cv::Mat &_intrinsic
       dist_coeffs(0, i) = _dist_coeffs.at<double>(0, i);
   }
 }
-}
+}  // namespace v4r

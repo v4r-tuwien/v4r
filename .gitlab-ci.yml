@@ -1,109 +1,168 @@
-# we use ROS indigo for now
 variables:
   GENERATOR: "Ninja"
+  CI_ORIGIN_NAMESPACE: v4r
+  CI_ORIGIN_REGISTRY_IMAGE: $CI_REGISTRY/$CI_ORIGIN_NAMESPACE/$CI_PROJECT_NAME
 
-# Ubuntu 14.04
-ubuntu-trusty:
-  image: ubuntu:trusty
-  variables:
-    CI_ROS_DISTRO: indigo
-    UBUNTU_DISTRO: trusty
+stages:
+  - docker
+  - check
+  - build
+  - release
 
+#######################################################################
+#                            Docker stage                             #
+#######################################################################
+
+# Reusable snippet to login into Docker registry
+.docker-login: &docker-login-script
   before_script:
-    - sudo apt-get update -qq > /dev/null
-    - sudo apt-get install -qq -y wget ninja-build > /dev/null
-    - sudo ./setup.sh $UBUNTU_DISTRO $CI_ROS_DISTRO > /dev/null
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
 
-  stage: build
-  script:
-    - mkdir v4r-build
-    - cd v4r-build
-    - cmake .. -G $GENERATOR
-    - cmake --build .
-
-# Ubuntu 14.04 debian package generation
-ubuntu-trusty-build-package:
-  image: ubuntu:trusty
-  variables:
-    CI_ROS_DISTRO: indigo
-    UBUNTU_DISTRO: trusty
-
-  before_script:
-    - sudo apt-get update -qq > /dev/null
-    - sudo apt-get install -qq -y wget sed > /dev/null
-    - sudo ./setup.sh $UBUNTU_DISTRO $CI_ROS_DISTRO > /dev/null
-    - sudo apt-get install -qq -y python-bloom devscripts > /dev/null
-    - sudo cp /usr/local/bin/cmake /usr/bin/cmake
-    - sudo cp /usr/local/bin/ccmake /usr/bin/ccmake
-    - sudo rm -rf /usr/share/cmake*
-    - sudo cp -r /usr/local/share/cmake-3.10 /usr/share
-
-  stage: build
-  script:
-    - bloom-generate debian --os-name ubuntu --os-version $UBUNTU_DISTRO --ros-distro $CI_ROS_DISTRO
-    - sed -i 's/dh $@/dh $@ --parallel/' debian/rules
-    - sed -i 's?v4r\//usr\/lib\/?v4r/usr/lib/:$(CURDIR)/debian/v4r/usr/share/V4R/3rdparty/lib/?' debian/rules
-    - debuild -rfakeroot -us -uc -b -j8
-    - mkdir build
-    - mv ../*.deb build
-
-  # This stage is only executed for new tags
-  only:
+# Build "clang" image to enable style check
+clang:
+  stage: docker
+  except:
     - tags
+  <<: *docker-login-script
+  script: ./.gitlab/scripts/build_clang_image.sh
 
-  # The files which are to be made available in GitLab
+# Build "codespell" image to enable spelling check
+codespell:
+  stage: docker
+  except:
+    - tags
+  <<: *docker-login-script
+  script: ./.gitlab/scripts/build_codespell_image.sh
+
+# Build "env" image with V4R dependencies (Xenial + Kinetic)
+env:xenial:
+  stage: docker
+  variables:
+    UBUNTU_DISTRO: xenial
+    ROS_DISTRO: kinetic
+  <<: *docker-login-script
+  script: ./.gitlab/scripts/build_env_image.sh
+
+# Build "env" image with V4R dependencies (Bionic + Melodic)
+env:bionic:
+  stage: docker
+  variables:
+    UBUNTU_DISTRO: bionic
+    ROS_DISTRO: melodic
+  <<: *docker-login-script
+  script: ./.gitlab/scripts/build_env_image.sh
+
+#######################################################################
+#                             Check stage                             #
+#######################################################################
+
+formatting:
+  stage: check
+  except:
+    - tags
+  image: $CI_ORIGIN_REGISTRY_IMAGE/clang
+  script:
+    - ./scripts/dev/clang-format-all -d apps modules samples > patch
+    - "[ -s patch ] && files=$(grep '+++ b/' patch | awk '{a = substr($2,3); print a}') && echo 'The code in the following files does not comply with the V4R style guide:' && for f in $files; do echo '  '$f; done && echo 'Please download and apply the generated patch to fix the style.'"
+    - "[ ! -s patch ]"
   artifacts:
+    when: on_failure
     paths:
-      - build/*
+      - "patch"
 
-# Ubuntu 16.04
-ubuntu-xenial:
-  image: ubuntu:xenial
-  variables:
-    CI_ROS_DISTRO: kinetic
-    UBUNTU_DISTRO: xenial
-
-  before_script:
-    - apt-get update -qq > /dev/null
-    - apt-get install -qq -y wget sudo ninja-build > /dev/null
-    - sudo ./setup.sh $UBUNTU_DISTRO $CI_ROS_DISTRO
-
-  stage: build
+spelling:
+  stage: check
+  except:
+    - tags
+  image: $CI_ORIGIN_REGISTRY_IMAGE/codespell
   script:
-    - apt-get install -y libgoogle-glog-dev libatlas-base-dev libeigen3-dev libsuitesparse-dev> /dev/null
+    - codespell --skip=3rdparty,.git --check-filenames --quiet-level=2 --ignore-words=/home/ignore.txt
+  allow_failure: true
+
+#######################################################################
+#                             Build stage                             #
+#######################################################################
+
+# Reusable snippet to configure/build/test V4R
+.build-v4r: &build-v4r-script-xenial
+  script:
     - mkdir v4r-build
     - cd v4r-build
-    - cmake .. -G $GENERATOR -DPCL_APPS_LIBRARY:=/usr/lib/x86_64-linux-gnu/libpcl_apps.so.1.7
+    - cmake .. -G $GENERATOR -DPCL_APPS_LIBRARY:=/usr/lib/x86_64-linux-gnu/libpcl_apps.so.1.7 -DV4R_WARNINGS_ARE_ERRORS=ON -DBUILD_TESTS=ON
     - cmake --build .
+    - cmake --build . -- tests
 
-# Ubuntu 16.04 debian package generation
-ubuntu-xenial-build-package:
-  image: ubuntu:xenial
-  variables:
-    CI_ROS_DISTRO: kinetic
-    UBUNTU_DISTRO: xenial
-
-  before_script:
-    - apt-get update -qq > /dev/null
-    - apt-get install -qq -y wget sed sudo > /dev/null
-    - sudo ./setup.sh $UBUNTU_DISTRO $CI_ROS_DISTRO
-    - sudo apt-get install -qq -y python-bloom devscripts > /dev/null
-
-  stage: build
+# Reusable snippet to configure/build/test V4R
+.build-v4r: &build-v4r-script
   script:
-    - bloom-generate debian --os-name ubuntu --os-version $UBUNTU_DISTRO --ros-distro $CI_ROS_DISTRO
+    - mkdir v4r-build
+    - cd v4r-build
+    - cmake .. -G $GENERATOR -DV4R_WARNINGS_ARE_ERRORS=OFF -DV4R_WARNINGS_ARE_ERRORS=ON -DBUILD_TESTS=ON
+    - cmake --build .
+    - cmake --build . -- tests
+
+# Build V4R inside "env" container (Xenial + Kinetic)
+build:xenial:
+  stage: build
+  except:
+    - tags
+  variables:
+    UBUNTU_DISTRO: xenial
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/env/$UBUNTU_DISTRO:$CI_PIPELINE_ID
+  image: $IMAGE_TAG
+  <<: *build-v4r-script-xenial
+
+# Build V4R inside "env" container (Bionic + Melodic)
+build:bionic:
+  stage: build
+  except:
+    - tags
+  variables:
+    UBUNTU_DISTRO: bionic
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/env/$UBUNTU_DISTRO:$CI_PIPELINE_ID
+  image: $IMAGE_TAG
+  <<: *build-v4r-script
+
+#######################################################################
+#                            Release stage                            #
+#######################################################################
+
+# Reusable snippet to build debian package for V4R from scratch
+.build-debian-package: &build-debian-package-script
+  script:
+    - bloom-generate debian --os-name ubuntu --os-version $UBUNTU_DISTRO --ros-distro $ROS_DISTRO
     - sed -i 's/dh $@/dh $@ --parallel/' debian/rules
     - sed -i 's?v4r\//usr\/lib\/?v4r/usr/lib/:$(CURDIR)/debian/v4r/usr/share/V4R/3rdparty/lib/?' debian/rules
-    - cat debian/rules
     - debuild -rfakeroot -us -uc -b -j8
     - mkdir build
     - mv ../*.deb build
 
-  # This stage is only executed for new tags
+# Release (Xenial + Kinetic)
+release:xenial:
+  stage: release
   only:
     - tags
-
-  # The files which are to be made available in GitLab
+  variables:
+    UBUNTU_DISTRO: xenial
+    ROS_DISTRO: kinetic
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/env/$UBUNTU_DISTRO:$CI_PIPELINE_ID
+  image: $IMAGE_TAG
   artifacts:
     paths:
     - build/*
+  <<: *build-debian-package-script
+
+# Release (Bionic + Melodic)
+release:bionic:
+  stage: release
+  only:
+    - tags
+  variables:
+    UBUNTU_DISTRO: bionic
+    ROS_DISTRO: melodic
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/env/$UBUNTU_DISTRO:$CI_PIPELINE_ID
+  image: $IMAGE_TAG
+  artifacts:
+    paths:
+    - build/*
+  <<: *build-debian-package-script

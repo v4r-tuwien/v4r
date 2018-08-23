@@ -185,7 +185,7 @@ static void EvaluateResult(v4r::EntangledForestData* data, string filename, std:
         color = colorCode[resultlbl];
       } else {
         // point has not been labeled, e.g. filtered out
-        color = {0, 0, 0};
+        color = {{0, 0, 0}};
         rgb_pt.x = 0.0;
         rgb_pt.y = 0.0;
         rgb_pt.z = 0.0;

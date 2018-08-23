@@ -37,6 +37,8 @@
 **
 ****************************************************************************/
 
+#include <glog/logging.h>
+
 #include "v4r/attention_segmentation/sequential_fitter.h"
 
 using namespace pcl;
@@ -137,13 +139,11 @@ void SequentialFitter::compute_boundary(FittingSurface *fitting) {
 }
 void SequentialFitter::compute_interior(FittingSurface *fitting) {
   // iterate interior points
-  // std::vector<double> wInt(m_data.interior.PointCount(), m_params.forceInterior);
   FittingSurface::Parameter paramFP(m_params.forceInterior, m_params.stiffnessInterior, 0.0, m_params.forceBoundary,
                                     m_params.stiffnessBoundary, 0.0);
 
   for (int i = 0; i < m_params.iterationsInterior; i++) {
     fitting->assemble(paramFP);
-    //    fitting->assemble(wBnd, wInt, m_params.stiffnessBoundary, m_params.stiffnessInterior);
     fitting->solve();
   }
 }
@@ -210,7 +210,7 @@ void SequentialFitter::setCorners(pcl::PointIndices::Ptr &corners, bool flip_on_
     throw std::runtime_error("[SequentialFitter::setCorners] Error: to few corners (<4)\n");
 
   if (corners->indices.size() > 4)
-    printf("[SequentialFitter::setCorners] Warning: to many corners (>4)\n");
+    LOG(WARNING) << "to many corners (>4)";
 
   bool flip = false;
   pcl::PointXYZRGB &pt0 = m_cloud->at(corners->indices[0]);
@@ -257,8 +257,6 @@ ON_NurbsSurface SequentialFitter::compute(bool assemble) {
   //  TomGine::tgRenderModel box;
 
   if (m_data.boundary.size() > 0) {
-    //    throw std::runtime_error("[SequentialFitter::compute] Error: empty boundary point-cloud.\n");
-
     compute_quadfit();
 
     nurbs = FittingSurface::initNurbs4Corners(m_params.order, m_corners[0], m_corners[1], m_corners[2], m_corners[3]);
@@ -332,7 +330,7 @@ ON_NurbsSurface SequentialFitter::compute(bool assemble) {
 
 ON_NurbsSurface SequentialFitter::compute_boundary(const ON_NurbsSurface &nurbs) {
   if (m_data.boundary.size() <= 0) {
-    printf("[SequentialFitter::compute_boundary] Warning, no boundary points given: setBoundary()\n");
+    LOG(WARNING) << "no boundary points given: setBoundary()";
     return nurbs;
   }
 
@@ -352,7 +350,7 @@ ON_NurbsSurface SequentialFitter::compute_boundary(const ON_NurbsSurface &nurbs)
 
 ON_NurbsSurface SequentialFitter::compute_interior(const ON_NurbsSurface &nurbs) {
   if (m_data.boundary.size() <= 0) {
-    printf("[SequentialFitter::compute_interior] Warning, no interior points given: setInterior()\n");
+    LOG(WARNING) << "no interior points given: setInterior()";
     return nurbs;
   }
   FittingSurface *fitting = new FittingSurface(&m_data, nurbs);
@@ -413,12 +411,12 @@ ON_NurbsSurface SequentialFitter::grow(float max_dist, float max_angle, unsigned
     throw std::runtime_error("[SequentialFitter::grow] No boundary given.");
 
   if (unsigned(this->m_data.boundary.size()) != num_bnd) {
-    printf("[SequentialFitter::grow] %lu %u\n", this->m_data.boundary.size(), num_bnd);
+    LOG(ERROR) << "boundary size mismatch." << this->m_data.boundary.size() << " " << num_bnd;
     throw std::runtime_error("[SequentialFitter::grow] size of boundary and boundary parameters do not match.");
   }
 
   if (this->m_boundary_indices->indices.size() != num_bnd) {
-    printf("[SequentialFitter::grow] %lu %u\n", this->m_boundary_indices->indices.size(), num_bnd);
+    LOG(ERROR) << "boundary index size mismatch." << this->m_boundary_indices->indices.size() << " " << num_bnd;
     throw std::runtime_error("[SequentialFitter::grow] size of boundary indices and boundary parameters do not match.");
   }
 
@@ -427,6 +425,7 @@ ON_NurbsSurface SequentialFitter::grow(float max_dist, float max_angle, unsigned
 
   for (unsigned i = 0; i < num_bnd; i++) {
     Eigen::Vector3d r, tu, tv, n, bn;
+    bn.setZero();
     double pointAndTangents[9];
     double u = this->m_data.boundary_param[i](0);
     double v = this->m_data.boundary_param[i](1);
@@ -520,8 +519,7 @@ ON_NurbsSurface SequentialFitter::grow(float max_dist, float max_angle, unsigned
     int_err += (m_data.interior_error[i] * div_err);
   }
 
-  printf("[SequentialFitter::grow] average interior error: %e\n", int_err);
-
+  VLOG(1) << "average interior error: " << int_err;
   return m_nurbs;
 }
 

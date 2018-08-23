@@ -92,7 +92,6 @@ class SupervoxelSegmentation {
   pcl::PointCloud<pcl::PointXYZL>::Ptr mSVLabeledVoxelCloud;
   typename pcl::PointCloud<PointInT>::Ptr mSVVoxelCentroidCloud;
   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr mSVColoredCloud;
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr mSVColoredVoxelCloud;
   std::multimap<uint32_t, uint32_t> mSVAdjacency;
 
   static bool sortDistances(std::vector<double> i, std::vector<double> j);
@@ -281,4 +280,4 @@ class SupervoxelSegmentation {
 
   void drawSupervoxelAdjacency(pcl::visualization::PCLVisualizer *visualizer, int &viewport);
 };
-}
+}  // namespace v4r

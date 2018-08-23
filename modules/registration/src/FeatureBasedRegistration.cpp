@@ -7,9 +7,10 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <v4r/common/graph_geometric_consistency.h>
 #include <v4r/common/miscellaneous.h>
+#include <v4r/common/pcl_opencv.h>
 #include <v4r/registration/FeatureBasedRegistration.h>
 
-#include <v4r/features/sift_local_estimator.h>
+#include <v4r/features/FeatureDetector_KD_SIFTGPU.h>
 
 namespace v4r {
 namespace Registration {
@@ -25,9 +26,9 @@ FeatureBasedRegistration<PointT>::FeatureBasedRegistration() {
 
 template <class PointT>
 void FeatureBasedRegistration<PointT>::initialize(std::vector<std::pair<int, int>> &session_ranges) {
-  typename v4r::SIFTLocalEstimation<PointT> estimator;
+  FeatureDetector_KD_SIFTGPU estimator;
 
-  // computes features and keypoints for the views of all sessions using appropiate object indices
+  // computes features and keypoints for the views of all sessions using appropriate object indices
   size_t total_views = this->getTotalNumberOfClouds();
   std::cout << "total views in initialize:" << total_views << std::endl;
 
@@ -40,7 +41,7 @@ void FeatureBasedRegistration<PointT>::initialize(std::vector<std::pair<int, int
   flann_data_.resize(session_ranges.size());
   flann_index_.resize(session_ranges.size());
 
-  std::vector<boost::shared_ptr<pcl::octree::OctreePointCloudOccupancy<PointT>>> octree_sessions(session_ranges.size());
+  std::vector<std::shared_ptr<pcl::octree::OctreePointCloudOccupancy<PointT>>> octree_sessions(session_ranges.size());
 
   for (size_t i = 0; i < session_ranges.size(); i++) {
     for (int t = session_ranges[i].first; t <= session_ranges[i].second; t++)
@@ -58,10 +59,26 @@ void FeatureBasedRegistration<PointT>::initialize(std::vector<std::pair<int, int
     sift_keypoints_[i].reset(new pcl::PointCloud<PointT>);
     sift_normals_[i].reset(new pcl::PointCloud<pcl::Normal>);
 
-    std::vector<std::vector<float>> sift_descs;
-    estimator.setInputCloud(cloud);
-    estimator.setIndices(indices);
-    estimator.compute(sift_descs);
+    PCLOpenCVConverter<PointT> pcl_opencv_converter;
+    pcl_opencv_converter.setInputCloud(cloud);
+    auto colorImage = pcl_opencv_converter.getRGBImage();
+
+    cv::Mat sift_descs;
+    std::vector<cv::KeyPoint> keypoints;
+
+    cv::Mat object_mask;
+    if (!indices.empty()) {
+      object_mask = cv::Mat_<unsigned char>(colorImage.rows, colorImage.cols);
+      object_mask.setTo(0);
+
+      for (int idx : indices) {
+        int v = idx / colorImage.cols;
+        int u = idx % colorImage.cols;
+        object_mask.at<unsigned char>(v, u) = 255;
+      }
+    }
+    estimator.detectAndCompute(colorImage, keypoints, sift_descs, object_mask);
+
     typename pcl::PointCloud<PointT>::Ptr sift_keys(new pcl::PointCloud<PointT>);
     std::vector<int> sift_kp_indices = estimator.getKeypointIndices();
     pcl::copyPointCloud(*cloud, sift_kp_indices, *sift_keys);
@@ -88,7 +105,7 @@ void FeatureBasedRegistration<PointT>::initialize(std::vector<std::pair<int, int
 
     pcl::copyPointCloud(*sift_keys, non_occupied, *sift_keypoints_[i]);
 
-    sift_features_[i] = filterVector(sift_descs, non_occupied);
+    sift_features_[i] = filterCvMat(sift_descs, non_occupied);
 
     pcl::copyPointCloud(*normals, original_indices_non_occupied, *sift_normals_[i]);
 
@@ -98,19 +115,22 @@ void FeatureBasedRegistration<PointT>::initialize(std::vector<std::pair<int, int
     octree_sessions[cloud_idx_to_session[i]]->setInputCloud(sift_keys_trans);
     octree_sessions[cloud_idx_to_session[i]]->addPointsFromInputCloud();*/
 
-    model_features_[cloud_idx_to_session[i]].insert(model_features_[cloud_idx_to_session[i]].end(),
-                                                    sift_features_[i].begin(), sift_features_[i].end());
+    if (model_features_[cloud_idx_to_session[i]].empty())
+      model_features_[cloud_idx_to_session[i]] = sift_features_[i];
+    else
+      cv::vconcat(model_features_[cloud_idx_to_session[i]], sift_features_[i],
+                  model_features_[cloud_idx_to_session[i]]);
   }
 
   for (size_t i = 0; i < session_ranges.size(); i++) {
-    flann::Matrix<float> flann_data(new float[model_features_[i].size() * 128], model_features_[i].size(), 128);
+    flann::Matrix<float> flann_data(new float[model_features_[i].rows * model_features_[i].cols],
+                                    model_features_[i].rows, model_features_[i].cols);
 
-    for (size_t r = 0; r < model_features_[i].size(); ++r)
-      for (size_t j = 0; j < 128; ++j)
-        flann_data.ptr()[r * 128 + j] = model_features_[i][r][j];
+    for (int r = 0; r < model_features_[i].rows; r++)
+      for (int j = 0; j < model_features_[i].cols; j++)
+        flann_data.ptr()[r * model_features_[i].cols + j] = model_features_[i].template at<float>(i, j);
 
     flann_data_[i] = flann_data;
-
     flann_index_[i] = new flann::Index<DistT>(flann_data_[i], flann::KDTreeIndexParams(4));
     flann_index_[i]->buildIndex();
   }
@@ -125,15 +145,17 @@ void FeatureBasedRegistration<PointT>::compute(int s1, int s2) {
 
   int knn = 1;
 
-  for (size_t i = 0; i < model_features_[s2].size(); ++i) {
-    int size_feat = 128;
+  for (int i = 0; i < model_features_[s2].rows; i++) {
+    int size_feat = model_features_[s2].cols;
     flann::Matrix<int> indices;
     flann::Matrix<float> distances;
     distances = flann::Matrix<float>(new float[knn], 1, knn);
     indices = flann::Matrix<int>(new int[knn], 1, knn);
 
     flann::Matrix<float> p = flann::Matrix<float>(new float[size_feat], 1, size_feat);
-    memcpy(&p.ptr()[0], &model_features_[s2][i][0], size_feat * sizeof(float));
+    for (int v = 0; v < model_features_[s2].cols; v++) {
+      p[0][v] = model_features_[s2].template at<float>(i, v);
+    }
     flann_index_[s1]->knnSearch(p, indices, distances, knn, flann::SearchParams(kdtree_splits_));
 
     for (int n = 0; n < knn; n++) {
@@ -236,7 +258,7 @@ void FeatureBasedRegistration<PointT>::compute(int s1, int s2) {
       }
     }
 
-//#define VIS_SVD
+      //#define VIS_SVD
 
 #ifdef VIS_SVD
     pcl::visualization::PCLVisualizer vis("pairwise alignment (svd)");
@@ -277,14 +299,14 @@ void FeatureBasedRegistration<PointT>::compute(int s1, int s2) {
     crsac.setInlierThreshold(inlier_threshold_);
     crsac.setMaximumIterations(50000);
 
-    boost::shared_ptr<pcl::Correspondences> remaining(new pcl::Correspondences());
-    crsac.getRemainingCorrespondences(*cor, *remaining);
+    pcl::Correspondences remaining;
+    crsac.getRemainingCorrespondences(*cor, remaining);
 
-    std::cout << "Correspondences after filtering: " << remaining->size() << std::endl;
+    std::cout << "Correspondences after filtering: " << remaining.size() << std::endl;
 
     Eigen::Matrix4f svd_pose;
     pcl::registration::TransformationEstimationSVD<PointT, PointT, float> svd;
-    svd.estimateRigidTransformation(*kps_s2, *kps_s1, *remaining, svd_pose);
+    svd.estimateRigidTransformation(*kps_s2, *kps_s1, remaining, svd_pose);
 
     std::cout << svd_pose << std::endl;
 
@@ -333,11 +355,12 @@ void FeatureBasedRegistration<PointT>::compute(int s1, int s2) {
 
 template <class PointT>
 std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
-FeatureBasedRegistration<PointT>::estimateViewTransformationBySIFT(
-    const pcl::PointCloud<PointT> &src_cloud, const pcl::PointCloud<PointT> &dst_cloud,
-    const std::vector<int> &src_sift_keypoint_indices, const std::vector<int> &dst_sift_keypoint_indices,
-    const std::vector<std::vector<float>> &src_sift_signatures,
-    const std::vector<std::vector<float>> &dst_sift_signatures, bool use_gc) {
+FeatureBasedRegistration<PointT>::estimateViewTransformationBySIFT(const pcl::PointCloud<PointT> &src_cloud,
+                                                                   const pcl::PointCloud<PointT> &dst_cloud,
+                                                                   const std::vector<int> &src_sift_keypoint_indices,
+                                                                   const std::vector<int> &dst_sift_keypoint_indices,
+                                                                   const cv::Mat &src_sift_signatures,
+                                                                   const cv::Mat &dst_sift_signatures, bool use_gc) {
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transformations;
   const int K = 1;
   flann::Matrix<int> indices = flann::Matrix<int>(new int[K], 1, K);
@@ -349,22 +372,22 @@ FeatureBasedRegistration<PointT>::estimateViewTransformationBySIFT(
   }
 
   // Build Flann Index for kNN search
-  boost::shared_ptr<flann::Index<DistT>> flann_index;
+  std::shared_ptr<flann::Index<DistT>> flann_index;
 
-  size_t rows = dst_sift_signatures.size();
-  size_t cols = dst_sift_signatures[0].size();  // number of histogram bins
+  size_t rows = dst_sift_signatures.rows;
+  size_t cols = dst_sift_signatures.cols;  // number of histogram bins
 
   flann::Matrix<float> flann_data(new float[rows * cols], rows, cols);
 
   for (size_t i = 0; i < rows; ++i) {
     for (size_t j = 0; j < cols; ++j)
-      flann_data.ptr()[i * cols + j] = dst_sift_signatures[i][j];
+      flann_data.ptr()[i * cols + j] = dst_sift_signatures.at<float>(i, j);
   }
   flann_index.reset(new flann::Index<DistT>(flann_data, flann::KDTreeIndexParams(4)));
   flann_index->buildIndex();
 
-  boost::shared_ptr<pcl::PointCloud<PointT>> pSiftKeypointsSrc(new pcl::PointCloud<PointT>);
-  boost::shared_ptr<pcl::PointCloud<PointT>> pSiftKeypointsDst(new pcl::PointCloud<PointT>);
+  typename pcl::PointCloud<PointT>::Ptr pSiftKeypointsSrc(new pcl::PointCloud<PointT>);
+  typename pcl::PointCloud<PointT>::Ptr pSiftKeypointsDst(new pcl::PointCloud<PointT>);
   pcl::copyPointCloud(src_cloud, src_sift_keypoint_indices, *pSiftKeypointsSrc);
   pcl::copyPointCloud(dst_cloud, dst_sift_keypoint_indices, *pSiftKeypointsDst);
 
@@ -372,10 +395,11 @@ FeatureBasedRegistration<PointT>::estimateViewTransformationBySIFT(
   temp_correspondences->resize(pSiftKeypointsSrc->size());
 
   for (size_t keypointId = 0; keypointId < pSiftKeypointsSrc->points.size(); keypointId++) {
-    // do kNN search
-    const std::vector<float> &descr = src_sift_signatures[keypointId];
-    flann::Matrix<float> p = flann::Matrix<float>(new float[descr.size()], 1, descr.size());
-    memcpy(&p.ptr()[0], &descr[0], p.cols * p.rows * sizeof(float));
+    flann::Matrix<float> p = flann::Matrix<float>(new float[128], 1, 128);
+
+    for (int i = 0; i < 128; i++)
+      p.ptr()[i] = src_sift_signatures.at<float>(keypointId, i);
+
     flann_index->knnSearch(p, indices, distances, K, flann::SearchParams(128));
     delete[] p.ptr();
 
@@ -419,7 +443,7 @@ FeatureBasedRegistration<PointT>::estimateViewTransformationBySIFT(
   }
   return transformations;
 }
-}
+}  // namespace Registration
 
 template class V4R_EXPORTS Registration::FeatureBasedRegistration<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

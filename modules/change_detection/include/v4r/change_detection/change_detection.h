@@ -198,4 +198,4 @@ class V4R_EXPORTS ChangeDetector {
   static const ChangeDetectorParameters DEFAULT_PARAMETERS;
   ChangeDetectorParameters params;
 };
-}
+}  // namespace v4r

@@ -44,10 +44,7 @@ cv::Mat PCLOpenCVConverter<PointT>::getRGBImage() {
   if (cloud_->isOrganized())
     output_matrix_ = cv::Mat_<cv::Vec3b>(cloud_->height, cloud_->width);
   else {
-    if (!cam_)
-      throw std::runtime_error("Point cloud is not organized and camera parameters are not set.");
-
-    output_matrix_ = cv::Mat_<cv::Vec3b>(cam_->getHeight(), cam_->getWidth());
+    output_matrix_ = cv::Mat_<cv::Vec3b>(cam_.h, cam_.w);
   }
 
   output_matrix_.setTo(background_color_);
@@ -60,7 +57,7 @@ cv::Mat PCLOpenCVConverter<PointT>::getNormalizedDepth() {
   if (cloud_->isOrganized())
     output_matrix_ = cv::Mat_<uchar>(cloud_->height, cloud_->width);
   else
-    output_matrix_ = cv::Mat_<uchar>(cam_->getHeight(), cam_->getWidth());
+    output_matrix_ = cv::Mat_<uchar>(cam_.h, cam_.w);
 
   output_matrix_.setTo(255);
 
@@ -72,7 +69,7 @@ cv::Mat PCLOpenCVConverter<PointT>::extractDepth() {
   if (cloud_->isOrganized())
     output_matrix_ = cv::Mat_<float>(cloud_->height, cloud_->width);
   else
-    output_matrix_ = cv::Mat_<float>(cam_->getHeight(), cam_->getWidth());
+    output_matrix_ = cv::Mat_<float>(cam_.h, cam_.w);
 
   output_matrix_.setTo(std::numeric_limits<float>::quiet_NaN());
 
@@ -84,7 +81,7 @@ cv::Mat PCLOpenCVConverter<PointT>::getOccupiedPixel() {
   if (cloud_->isOrganized())
     output_matrix_ = cv::Mat_<uchar>(cloud_->height, cloud_->width);
   else
-    output_matrix_ = cv::Mat_<uchar>(cam_->getHeight(), cam_->getWidth());
+    output_matrix_ = cv::Mat_<uchar>(cam_.h, cam_.w);
 
   output_matrix_.setTo(0);
 
@@ -94,7 +91,8 @@ cv::Mat PCLOpenCVConverter<PointT>::getOccupiedPixel() {
 template <class PointT>
 template <typename MatType>
 cv::Mat PCLOpenCVConverter<PointT>::fillMatrix(std::vector<MatType> (PCLOpenCVConverter<PointT>::*pf)(int, int)) {
-  CHECK(!cloud_->points.empty());
+  if (cloud_->points.empty())
+    LOG(WARNING) << "Input cloud is empty!";
 
   if (!cloud_->isOrganized())
     computeOrganizedCloud();
@@ -128,7 +126,7 @@ cv::Mat PCLOpenCVConverter<PointT>::fillMatrix(std::vector<MatType> (PCLOpenCVCo
 
 template <class PointT>
 void PCLOpenCVConverter<PointT>::computeOrganizedCloud() {
-  CHECK(!cloud_->isOrganized() && cam_ && cam_->getWidth() > 0 && cam_->getHeight() > 0);
+  CHECK(!cloud_->isOrganized() && cam_.w > 0 && cam_.h > 0);
 
   ZBufferingParameter zBufParams;
   zBufParams.do_smoothing_ = true;
@@ -147,20 +145,17 @@ void PCLOpenCVConverter<PointT>::computeOrganizedCloud() {
   index_map_ = zbuf.getIndexMap();
 
   if (!indices_.empty()) {
-    size_t width = cam_->getWidth();
-    size_t height = cam_->getHeight();
-
     boost::dynamic_bitset<> fg_mask = createMaskFromIndices(indices_, cloud_->points.size());
 
     std::vector<int> new_indices(indices_.size());
 
     size_t kept = 0;
-    for (size_t u = 0; u < width; u++) {
-      for (size_t v = 0; v < height; v++) {
+    for (size_t u = 0; u < cam_.w; u++) {
+      for (size_t v = 0; v < cam_.h; v++) {
         int orig_idx = index_map_(v, u);
 
         if (orig_idx >= 0 && fg_mask[orig_idx]) {
-          new_indices[kept++] = v * width + u;
+          new_indices[kept++] = v * cam_.w + u;
         }
       }
     }
@@ -173,4 +168,4 @@ void PCLOpenCVConverter<PointT>::computeOrganizedCloud() {
 
 #define PCL_INSTANTIATE_PCLOpenCVConverter(T) template class V4R_EXPORTS PCLOpenCVConverter<T>;
 PCL_INSTANTIATE(PCLOpenCVConverter, PCL_RGB_POINT_TYPES)
-}
+}  // namespace v4r

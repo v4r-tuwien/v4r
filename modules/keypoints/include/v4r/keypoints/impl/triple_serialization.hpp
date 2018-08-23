@@ -39,7 +39,7 @@
 
 #include "triple.hpp"
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -57,7 +57,7 @@ void serialize(Archive &ar, v4r::triple<F, S, T> &t, const unsigned int version)
   ar &t.second;
   ar &t.third;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 #endif

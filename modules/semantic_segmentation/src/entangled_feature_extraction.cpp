@@ -781,4 +781,4 @@ void EntangledForestFeatureExtraction::getFeatures(std::vector<std::vector<doubl
 void EntangledForestFeatureExtraction::prepareClassification(EntangledForestData *d) {
   d->LoadTestDataLive(mUnaries, mPairwisePtPl, mPairwiseIPtPl, mPairwiseVAngle, mPairwiseHAngle, mPairwiseEuclid);
 }
-}
+}  // namespace v4r

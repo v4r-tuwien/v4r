@@ -18,7 +18,6 @@
 #include <v4r/common/pcl_opencv.h>
 #include <v4r/io/eigen.h>
 #include <v4r/io/filesystem.h>
-#include <v4r/io/filesystem.h>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <sstream>
@@ -67,7 +66,7 @@ int main(int argc, char** argv) {
         << "  assumes .txt file extension)>]" << std::endl
         << "  [-indices_prefix <prefix of object indices filenames for displaying ( default: " << indices_prefix
         << "  assumes .pcd file extension)>]" << std::endl
-        << "  [-multi_view <if true, displays each point clouds in seperate viewport ( default: " << multi_view << ")>]"
+        << "  [-multi_view <if true, displays each point clouds in separate viewport ( default: " << multi_view << ")>]"
         << std::endl
         << std::endl;
     return -1;
@@ -138,9 +137,6 @@ int main(int argc, char** argv) {
     }
 
     if (center) {
-#if PCL_VERSION < 100702
-      std::cout << "Centering is not implemented on your PCL version!" << std::endl;
-#else
       PointT centroid;
       pcl::computeCentroid(*cloud, centroid);
       for (size_t pt_id = 0; pt_id < cloud->points.size(); pt_id++) {
@@ -148,7 +144,6 @@ int main(int argc, char** argv) {
         cloud->points[pt_id].y -= centroid.y;
         cloud->points[pt_id].z -= centroid.z;
       }
-#endif
     }
     if (multi_view) {  // Setting up the visualization
       int col_id = file_id % cols;

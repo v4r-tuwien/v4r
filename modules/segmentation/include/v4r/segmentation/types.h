@@ -46,19 +46,23 @@
  */
 
 #pragma once
+#include <v4r/core/macros.h>
+#include <iostream>
 
 namespace v4r {
-enum SegmentationType {
-  OrganizedConnectedComponents = 0x01,  // 00000001
-  EuclideanSegmentation = 0x02,         // 00000010
-  ConnectedComponents2D = 0x04,         // 00000100
-  SmoothEuclideanClustering = 0x08      // 00001000
+enum class SegmentationType {
+  ORGANIZED_CONNECTED_COMPONENTS,
+  EUCLIDEAN_SEGMENTATION,
+  CONNECTED_COMPONENTS_2D,
+  SMOOTH_EUCLIDEAN_CLUSTERING
 };
 
-enum PlaneExtractionType {
-  OrganizedMultiplane = 0x01,  // 00000001
-  SAC = 0x02,                  // 00000010
-  SACNormals = 0x04,           // 00000100
-  Tile = 0x08                  // 00001000
-};
-}
+V4R_EXPORTS std::istream &operator>>(std::istream &in, SegmentationType &t);
+V4R_EXPORTS std::ostream &operator<<(std::ostream &out, const SegmentationType &t);
+
+enum class PlaneExtractionType { ORGANIZED_MULTIPLANE, SAC, SAC_NORMALS, TILE };
+
+V4R_EXPORTS std::istream &operator>>(std::istream &in, PlaneExtractionType &t);
+V4R_EXPORTS std::ostream &operator<<(std::ostream &out, const PlaneExtractionType &t);
+
+}  // namespace v4r

@@ -274,7 +274,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="layoutWidget1">
     <property name="geometry">
      <rect>
       <x>660</x>
@@ -382,7 +382,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="layoutWidget2">
     <property name="geometry">
      <rect>
       <x>660</x>
@@ -419,8 +419,8 @@
     </layout>
    </widget>
    <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
+   <zorder>layoutWidget1</zorder>
+   <zorder>layoutWidget2</zorder>
    <zorder>glView</zorder>
    <zorder>statusLabel</zorder>
    <zorder>layoutWidget4</zorder>

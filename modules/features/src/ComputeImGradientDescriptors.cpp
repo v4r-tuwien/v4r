@@ -173,4 +173,4 @@ cv::Mat &descriptors)
     memcpy(&descriptors.at<float>(i,0), &desc[0], 128*sizeof(float));
   }
 }*/
-}
+}  // namespace v4r

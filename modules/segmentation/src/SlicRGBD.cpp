@@ -597,4 +597,4 @@ void SlicRGBD::setCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_cloud,
     if (isnan(ref_cloud.points[i].getVector3fMap()) || isnan(ref_normals.points[i].getNormalVector3fMap()))
       valid[i] = false;
 }
-}
+}  // namespace v4r

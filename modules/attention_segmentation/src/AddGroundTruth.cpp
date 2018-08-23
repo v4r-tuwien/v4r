@@ -194,4 +194,4 @@ void AddGroundTruth::compute(int type) {
     }
   }
 }
-}
+}  // namespace v4r

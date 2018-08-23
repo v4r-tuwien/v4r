@@ -3,7 +3,7 @@
 In this tutorial you will learn how to model objects with an RGB-D camera. These 3D models can used for training an object recognizer or used for object tracking
 
 ## Object modelling  
-* Place the object on a flat surface on a newspaper or something similar. This allows you to rotate the object without touching it. The texture on the newspaper also helps view registration. The pictures below were taken with the object on a turn table, which is the most convenient way of rotating the object. You can also model objects without a turntable by putting the object on the floor for instance and moving your camera. In this case just skip the step definining the ROI.
+* Place the object on a flat surface on a newspaper or something similar. This allows you to rotate the object without touching it. The texture on the newspaper also helps view registration. The pictures below were taken with the object on a turn table, which is the most convenient way of rotating the object. You can also model objects without a turntable by putting the object on the floor for instance and moving your camera. In this case just skip the step defining the ROI.
 * Start the modelling tool: ~/somewhere/v4r/bin/RTMT
 * Press "Camera Start": You should now see the camera image  
   ![](images/object-modeling-01.jpg)

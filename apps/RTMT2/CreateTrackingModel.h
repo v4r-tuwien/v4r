@@ -64,7 +64,6 @@
 #include <queue>
 #include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 #include <v4r/keypoints/impl/invPose.hpp>
 #include <v4r/reconstruction/impl/projectPointToImage.hpp>

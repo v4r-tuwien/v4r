@@ -249,7 +249,7 @@ bool KeyframeManagementRGBD2::createView(Shm &data, ObjectView::Ptr &view_ptr) {
   _view.image = data.image;
   data.image = cv::Mat();
 
-  estDesc->extract(_view.image, _view.keys, _view.descs);
+  estDesc->compute(_view.image, _view.keys, _view.descs);
 
   _view.computeCenter();
 
@@ -671,4 +671,4 @@ void KeyframeManagementRGBD2::setMinDistAddProjections(const double &dist) {
   param.min_dist_add_proj = dist;
   sqr_min_dist_add_proj = param.min_dist_add_proj * param.min_dist_add_proj;
 }
-}
+}  // namespace v4r

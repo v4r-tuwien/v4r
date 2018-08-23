@@ -76,6 +76,6 @@ std::vector<ObjectChangeForVisual<PointType>> ObjectsHistory<PointType>::getChan
 
   return changes;
 }
-}
+}  // namespace v4r
 
 #endif /* OBJECTHISTORY_HPP_ */

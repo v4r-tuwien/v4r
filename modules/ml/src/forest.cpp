@@ -271,7 +271,7 @@ void Forest::RefineLeafNodes(ClassificationData& data, int verbosityLevel) {
     }
   }
 
-  // normalize distributions (account for inbalanced amount of available data per label)
+  // normalize distributions (account for imbalanced amount of available data per label)
   for (int t = 0; t < nTrees; ++t) {
     trees[t].UpdateLeafNodes(labels, data.GetCountPerLabel());
   }

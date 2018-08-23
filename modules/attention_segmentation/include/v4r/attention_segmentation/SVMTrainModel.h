@@ -80,6 +80,9 @@ class V4R_EXPORTS SVMTrainModel {
   bool have_input_file_name;
   bool have_model_file_name;
 
+  char *line;
+  int max_line_len;
+
  public:
   SVMTrainModel();
   ~SVMTrainModel(){};
@@ -103,10 +106,14 @@ class V4R_EXPORTS SVMTrainModel {
   void setNoPrint(bool _no_print);
   int train(double &RecRate, std::vector<int> &ConfusionTable);
 
+  static void print_null(const char *s);
+  void exit_input_error(int line_num);
+  char *readline(FILE *input);
+
  private:
   void readProblem(const char *filename);
   void do_cross_validation(double &RecRate, std::vector<int> &ConfusionTable);
 };
-}
+}  // namespace svm
 
 #endif  // SVM_TRAIN_MODEL_H

@@ -1,7 +1,5 @@
 #include <v4r/features/rops_local_estimator.h>
 
-#if PCL_VERSION >= 100702
-
 #include <glog/logging.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/rops_estimation.h>
@@ -11,7 +9,7 @@
 namespace v4r {
 
 template <typename PointT>
-void ROPSLocalEstimation<PointT>::compute(std::vector<std::vector<float>>& signatures) {
+void ROPSLocalEstimation<PointT>::compute(cv::Mat& signatures) {
   //    if (param_.adaptative_MLS_)
   //    {
   //        throw std::runtime_error("Adaptive MLS is not implemented yet!");
@@ -89,15 +87,13 @@ void ROPSLocalEstimation<PointT>::compute(std::vector<std::vector<float>>& signa
   keypoint_indices_ = indices_;
 
   int size_feat = 352;
-  signatures = std::vector<std::vector<float>>(descriptors.points.size(), std::vector<float>(size_feat));
+  signatures = cv::Mat_<float>(descriptors.points.size(), 352);
 
   for (size_t k = 0; k < descriptors.points.size(); k++)
     for (int i = 0; i < size_feat; i++)
-      signatures[k][i] = descriptors.points[k].histogram[i];
+      signatures.at<float>(k, i) = descriptors.points[k].histogram[i];
 }
 
 template class V4R_EXPORTS ROPSLocalEstimation<pcl::PointXYZ>;
 template class V4R_EXPORTS ROPSLocalEstimation<pcl::PointXYZRGB>;
-}
-
-#endif
+}  // namespace v4r

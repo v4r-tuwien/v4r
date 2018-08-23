@@ -66,6 +66,6 @@ inline bool CmpDecIIF(const tripleIIF &i, const tripleIIF &j) {
   return (i.third > j.third);
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

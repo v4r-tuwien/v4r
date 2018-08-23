@@ -84,6 +84,6 @@ class Camera {
 
   void Activate() const;
 };
-}
+}  // namespace tg
 
 #endif

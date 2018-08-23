@@ -38,7 +38,7 @@
 #include <boost/serialization/vector.hpp>
 #include <opencv2/opencv.hpp>
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -78,8 +78,8 @@ void serialize(Archive &ar, ::cv::Mat_<T> &m, const unsigned int version) {
     ar &boost::serialization::make_array(m.ptr(), data_size);
   }
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 BOOST_SERIALIZATION_SPLIT_FREE(::cv::Mat)
 namespace boost {
@@ -118,8 +118,8 @@ void load(Archive &ar, ::cv::Mat &m, const unsigned int version) {
   size_t data_size = m.cols * m.rows * elem_size;
   ar &boost::serialization::make_array(m.ptr(), data_size);
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 BOOST_SERIALIZATION_SPLIT_FREE(cv::KeyPoint)
 namespace boost {
@@ -147,8 +147,8 @@ void load(Archive &ar, cv::KeyPoint &p, const unsigned int __attribute__((unused
   ar &p.octave;
   ar &p.class_id;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 namespace boost {
 namespace serialization {
@@ -159,7 +159,7 @@ void serialize(Archive &ar, cv::Point2f &pt, const unsigned int version) {
   ar &pt.x;
   ar &pt.y;
 }
-}
-}
+}  // namespace serialization
+}  // namespace boost
 
 #endif

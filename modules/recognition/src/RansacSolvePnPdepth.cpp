@@ -92,7 +92,7 @@ unsigned RansacSolvePnPdepth::countInliers(const std::vector<Eigen::Vector3f> &p
                                            const std::vector<float> &_inv_depth, const Eigen::Matrix4f &pose) {
   unsigned cnt = 0;
 
-  Eigen::Vector2f im_pt;
+  Eigen::Vector2f im_pt(0, 0);
   Eigen::Vector3f pt3;
   bool have_dist = !dist_coeffs.empty();
 
@@ -443,4 +443,4 @@ void RansacSolvePnPdepth::setParameter(const Parameter &_p) {
     param.pnp_method = cv::SOLVEPNP_P3P;
 #endif
 }
-}
+}  // namespace v4r

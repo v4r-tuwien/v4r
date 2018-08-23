@@ -173,7 +173,7 @@ bool KeypointSlamRGBD2::track(const cv::Mat &image, const DataMatrix2D<Eigen::Ve
                               Eigen::Matrix4f &current_pose, double &current_conf, int &cam_id) {
   // v4r::ScopeTime t("tracking");
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(im_gray);
 
@@ -315,4 +315,4 @@ void KeypointSlamRGBD2::reset() {
     om->reset();
   }
 }
-}
+}  // namespace v4r

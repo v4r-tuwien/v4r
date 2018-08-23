@@ -81,4 +81,4 @@ void SACNormalsPlaneExtractor<PointT>::compute() {
 
 #define PCL_INSTANTIATE_SACNormalsPlaneExtractor(T) template class V4R_EXPORTS SACNormalsPlaneExtractor<T>;
 PCL_INSTANTIATE(SACNormalsPlaneExtractor, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

@@ -83,7 +83,7 @@ class SVMFileCreator {
   /** Set relations **/
   void setSurfaces(std::vector<v4r::SurfaceModel::Ptr> _surfaces);
 
-  /** Print aditional positive/negative file for analysation. **/
+  /** Print additional positive/negative file for analysation. **/
   void setAnalyzeOutput(bool _analyze) {
     analyze = _analyze;
   }
@@ -111,6 +111,6 @@ class SVMFileCreator {
   /** Print relations for both levels to file (append) **/
   void process();
 };
-}
+}  // namespace svm
 
 #endif

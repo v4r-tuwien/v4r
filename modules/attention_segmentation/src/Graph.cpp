@@ -42,7 +42,7 @@
  * @author Andreas Richtsfeld
  * @date July 2011
  * @version 0.1
- * @brief Create graph from realtions.
+ * @brief Create graph from relations.
  */
 
 #include "v4r/attention_segmentation/Graph.h"
@@ -205,7 +205,7 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
     if (!std::isnan(pcl_cloud->points[i].z))
       if (normals->points[i].curvature > max_curv)
         max_curv = normals->points[i].curvature;
-  printf("[Graph::BuildFromPointCloud] Max curvature: %5.5f\n", max_curv);
+  VLOG(1) << "Max curvature: << " << max_curv;
 
   // pre-calculate color distance
   float color_dist[pcl_cloud->points.size()][4];
@@ -222,7 +222,7 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
                ((float)pt_0.b / 255. - (float)pt_1.b / 255.) * ((float)pt_0.b / 255. - (float)pt_1.b / 255.));
       if (color_dist[idx][0] > max_color)
         max_color = color_dist[idx][0];
-      // printf("color dist[0]: %4.3f\n", color_dist[idx][0]);
+
       pt_0 = pcl_cloud->points[idx];
       pt_1 = pcl_cloud->points[idx + pcl_cloud->width];
       color_dist[idx][1] =
@@ -231,7 +231,7 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
                ((float)pt_0.b / 255. - (float)pt_1.b / 255.) * ((float)pt_0.b / 255. - (float)pt_1.b / 255.));
       if (color_dist[idx][1] > max_color)
         max_color = color_dist[idx][1];
-      // printf("color dist[1]: %4.3f\n", color_dist[idx][1]);
+
       pt_0 = pcl_cloud->points[idx];
       pt_1 = pcl_cloud->points[idx + pcl_cloud->width + 1];
       color_dist[idx][2] =
@@ -240,7 +240,7 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
                ((float)pt_0.b / 255. - (float)pt_1.b / 255.) * ((float)pt_0.b / 255. - (float)pt_1.b / 255.));
       if (color_dist[idx][2] > max_color)
         max_color = color_dist[idx][2];
-      // printf("color dist[2]: %4.3f\n", color_dist[idx][2]);
+
       if (col != 0) {
         pt_0 = pcl_cloud->points[idx];
         pt_1 = pcl_cloud->points[idx + pcl_cloud->width - 1];
@@ -252,7 +252,6 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
           max_color = color_dist[idx][3];
       } else
         color_dist[idx][3] = 1.0;
-      // printf("color dist[3]: %4.3f\n", color_dist[idx][3]);
     }
   }
 
@@ -319,7 +318,7 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
       e.b = idx + 1;
       e.type = 1;
       e.w = color_dist[idx][0] / max_color;
-      // printf("color distance: %4.3f\n", e.w);
+
       // normals angle
       double angle = 0.0;
       if (std::isnan(pcl_cloud->points[idx].z))
@@ -341,7 +340,6 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
       e.b = idx + pcl_cloud->width;
       e.type = 1;
       e.w = color_dist[idx][1] / max_color;
-      // printf("color distance: %4.3f\n", e.w);
 
       // normals angle
       angle = 0.0;
@@ -364,7 +362,6 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
       e.b = idx + pcl_cloud->width + 1;
       e.type = 1;
       e.w = color_dist[idx][2] / max_color;
-      // printf("color distance: %4.3f\n", e.w);
 
       // normals angle
       angle = 0.0;
@@ -388,7 +385,6 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
         e.b = idx + pcl_cloud->width - 1;
         e.type = 1;
         e.w = color_dist[idx][3] / max_color;
-        // printf("color distance: %4.3f\n", e.w);
 
         // normals angle
         angle = 0.0;
@@ -416,17 +412,5 @@ void Graph::BuildFromPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_pcl_clo
   }
   num_edges = edges.size();
   e = edges;
-
-  /// HACK: OLD STUFF
-  /// curvature
-  //       float curv = normals->points[idx].curvature;
-  //       e.w = curv / max_curv;
-  //       if(isnan(pcl_cloud->points[idx].z) || z_dist > 0.004)
-  //         e.w = 1.0f;
-  /// curvature
-  //       curv = normals->points[idx].curvature;
-  //       e.w = curv * 10.;
-  //       if(isnan(pcl_cloud->points[idx].z) || z_dist > 0.004)
-  //         e.w = 1.0f;
 }
-}
+}  // namespace gc

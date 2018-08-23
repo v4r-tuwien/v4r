@@ -147,7 +147,7 @@ class RegistrationCostFunctor {
       std::vector<int> pointIdxNKNSearch;
       std::vector<float> pointNKNSquaredDistance;
       if (nl_icp->octrees_[k_]->nearestKSearch(p, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-        residuals[i] = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+        residuals[i] = std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
       } else {
         residuals[i] = 0.0;
       }
@@ -389,8 +389,8 @@ class RegistrationCostFunction : public ceres::CostFunction {
       std::vector<int> pointIdxNKNSearch;
       std::vector<float> pointNKNSquaredDistance;
       if (nl_icp->octrees_[k_]->nearestKSearch(p, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-        residuals[i] = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
-        // residuals[i] = sqrt(pointNKNSquaredDistance[0]);
+        residuals[i] = std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+        // residuals[i] = std::sqrt(pointNKNSquaredDistance[0]);
       } else {
         residuals[i] = 0.0;
       }
@@ -446,11 +446,13 @@ class RegistrationCostFunction : public ceres::CostFunction {
           p_minus.x -= step / 2.f;
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_plus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            distance_plus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_plus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_minus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            distance_minus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_minus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           Lx = distance_plus - distance_minus;
@@ -469,12 +471,14 @@ class RegistrationCostFunction : public ceres::CostFunction {
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_plus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
             // idx_match_plus = pointIdxNKNSearch[0];
-            distance_plus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_plus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_minus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
             // idx_match_minus = pointIdxNKNSearch[0];
-            distance_minus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_minus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           Ly = distance_plus - distance_minus;
@@ -493,11 +497,13 @@ class RegistrationCostFunction : public ceres::CostFunction {
           p_minus.z -= step / 2.f;
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_plus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            distance_plus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_plus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           if (nl_icp->octrees_[k_]->nearestKSearch(p_minus, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
-            distance_minus = std::min(sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
+            distance_minus =
+                std::min<float>(std::sqrt(pointNKNSquaredDistance[0]), nl_icp->max_correspondence_distance_);
           }
 
           Lz = distance_plus - distance_minus;
@@ -1274,7 +1280,7 @@ void v4r::Registration::MvLMIcp<PointT>::computeAdjacencyMatrix() {
         } else {
           if (octrees_[i]->nearestKSearch(clouds_transformed_with_ip_[j]->points[kk], 1, pointIdxNKNSearch,
                                           pointNKNSquaredDistance) > 0) {
-            float d = sqrt(pointNKNSquaredDistance[0]);
+            float d = std::sqrt(pointNKNSquaredDistance[0]);
             if (d < inlier) {
               overlap++;
             }

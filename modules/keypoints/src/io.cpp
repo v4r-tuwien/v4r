@@ -72,5 +72,5 @@ bool read(const std::string &file, ArticulatedObject::Ptr &model) {
   }
   return false;
 }
-}
-}  //--END--
+}  // namespace io
+}  // namespace v4r

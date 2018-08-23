@@ -104,8 +104,7 @@ void Fourier::setInputImage(cv::Mat &_image) {
 
 void Fourier::setIndices(pcl::PointIndices::Ptr _indices) {
   if (!have_image) {
-    printf("[Fourier::setIndices]: Error: No image available.\n");
-    return;
+    throw std::runtime_error("[Fourier::setIndices]: Error: No image available.");
   }
 
   indices = _indices;
@@ -141,8 +140,7 @@ void Fourier::setIndices(std::vector<int> &_indices) {
 
 void Fourier::setIndices(cv::Rect _rect) {
   if (!have_image) {
-    printf("[Fourier::setIndices]: Error: No image available.\n");
-    return;
+    throw std::runtime_error("[Fourier::setIndices]: Error: No image available.");
   }
 
   if (_rect.y >= height) {
@@ -161,7 +159,8 @@ void Fourier::setIndices(cv::Rect _rect) {
     _rect.width = width - _rect.x;
   }
 
-  printf("[Fourier] _rect = %d,%d,%d,%d.\n", _rect.x, _rect.y, _rect.x + _rect.width, _rect.y + _rect.height);
+  VLOG(1) << "_rect = " << _rect.x << ", " << _rect.y << ", " << _rect.x + _rect.width << ", "
+          << _rect.y + _rect.height;
 
   indices.reset(new pcl::PointIndices);
   for (int r = _rect.y; r < (_rect.y + _rect.height); r++) {
@@ -185,14 +184,13 @@ void Fourier::setIndices(cv::Rect _rect) {
 
 void Fourier::compute() {
   if (!have_image) {
-    printf("[Fourier::compute] Error: No image set.\n");
-    return;
+    throw std::runtime_error("[Fourier::compute]: Error: No image available.");
   }
 
   double SX_r[kmax];
   double SX_i[kmax];
 
-  // neigbouring values N = 8
+  // neighboring values N = 8
   // p3 p2 p1
   // p4 *  p0
   // p5 p6 p7
@@ -254,9 +252,6 @@ void Fourier::compute() {
   }
 
   for (unsigned int idx = 0; idx < indices->indices.size(); idx++) {
-    // int i = indices->indices.at(idx)/width;
-    // int j = indices->indices.at(idx)%width;
-
     for (int k = 0; k < kmax; k++) {
       if (!(used[(indices->indices.size()) * k + idx]))
         continue;
@@ -339,7 +334,7 @@ void Fourier::compute() {
 
 double Fourier::compare(Fourier::Ptr f) {
   if (!computed) {
-    printf("[Fourier::compare] Error: DFT not computed. Abort.\n");
+    LOG(ERROR) << "DFT not computed. Abort.";
     return 0.;
   }
 
@@ -350,24 +345,7 @@ double Fourier::compare(Fourier::Ptr f) {
     }
   }
 
-  //   // Compare histogram with euclidean distance
-  //   double euclidean = 0.;
-  //   for(int k=0; k<kmax; k++) {
-  //     for(int n=0; n<N; n++) {
-  //       euclidean += fabs(bins_0[k][n] - bins_1[k][n]);
-  //     }
-  //   }
-  //   euclidean = sqrt(euclidean);
-  //
-  //   // print results
-  //   for(int k=0; k<kmax; k++)
-  //     for(int n=0; n<N; n++)
-  //       printf("bin[%u][%u]: %3.3f-%3.3f => %3.3f\n", k, n, bins_0[k][n], bins_1[k][n], sqrt(bins_0[k][n] *
-  //       bins_1[k][n]));
-  //
-  //   printf("[Fourier::compare] fidelity: %4.3f / euclidean: %4.3f\n", fidelity, euclidean);
-
   return fidelity;
 }
 
-}  // end surface
+}  // namespace v4r

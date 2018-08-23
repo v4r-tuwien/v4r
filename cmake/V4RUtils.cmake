@@ -1,5 +1,5 @@
 # Search packages for host system instead of packages for target system
-# in case of cross compilation thess macro should be defined by toolchain file
+# in case of cross compilation this macro should be defined by toolchain file
 if(NOT COMMAND find_host_package)
   macro(find_host_package)
     find_package(${ARGN})
@@ -173,6 +173,7 @@ MACRO(v4r_check_compiler_flag LANG FLAG RESULT)
   endif()
 ENDMACRO()
 
+
 macro(v4r_check_flag_support lang flag varname)
   if(CMAKE_BUILD_TYPE)
     set(CMAKE_TRY_COMPILE_CONFIGURATION ${CMAKE_BUILD_TYPE})
@@ -195,88 +196,36 @@ macro(v4r_check_flag_support lang flag varname)
   v4r_check_compiler_flag("${_lang}" "${ARGN} ${flag}" ${${varname}})
 endmacro()
 
-# turns off warnings
-macro(v4r_warnings_disable)
-  if(NOT ENABLE_NOISY_WARNINGS)
-    set(_flag_vars "")
-    set(_msvc_warnings "")
-    set(_gxx_warnings "")
-    foreach(arg ${ARGN})
-      if(arg MATCHES "^CMAKE_")
-        list(APPEND _flag_vars ${arg})
-      elseif(arg MATCHES "^/wd")
-        list(APPEND _msvc_warnings ${arg})
-      elseif(arg MATCHES "^-W")
-        list(APPEND _gxx_warnings ${arg})
-      endif()
-    endforeach()
-    if(MSVC AND _msvc_warnings AND _flag_vars)
-      foreach(var ${_flag_vars})
-        foreach(warning ${_msvc_warnings})
-          set(${var} "${${var}} ${warning}")
-        endforeach()
-      endforeach()
-    elseif((CMAKE_COMPILER_IS_GNUCXX OR (UNIX AND CV_ICC)) AND _gxx_warnings AND _flag_vars)
-      foreach(var ${_flag_vars})
-        foreach(warning ${_gxx_warnings})
-          if(NOT warning MATCHES "^-Wno-")
-            string(REPLACE "${warning}" "" ${var} "${${var}}")
-            string(REPLACE "-W" "-Wno-" warning "${warning}")
-          endif()
-          v4r_check_flag_support(${var} "${warning}" _varname)
-          if(${_varname})
-            set(${var} "${${var}} ${warning}")
-          endif()
-        endforeach()
-      endforeach()
-    endif()
-    unset(_flag_vars)
-    unset(_msvc_warnings)
-    unset(_gxx_warnings)
-  endif(NOT ENABLE_NOISY_WARNINGS)
-endmacro()
 
-# Provides an option that the user can optionally select.
-# Can accept condition to control when option is available for user.
+# Create an option that the user can control.
+#
+# The macro has two operating modes. First is when only positional arguments are given. In this case a binary switch
+# option is created. If additional arguments are provided, then a string cache variable with constrained set of possible
+# values is created. The constraits are defined by the _value and consequent arguments.
+#
+# Positional arguments:
+#   _variable : name of the variable
+#   _description : option description
+#   _value : default value
+#
 # Usage:
-#   option(<option_variable> "help string describing the option" <initial value or boolean expression> [IF <condition>])
-macro(V4R_OPTION variable description value)
-  set(__value ${value})
-  set(__condition "")
-  set(__varname "__value")
-  foreach(arg ${ARGN})
-    if(arg STREQUAL "IF" OR arg STREQUAL "if")
-      set(__varname "__condition")
+#   v4r_option(<option_variable> "help string describing the option" ON)
+#       - create binary option which is enabled by default
+#   v4r_option(<option_variable> "help string describing the option" "Release" "Debug" "None")
+#       - create an option that is constrained to have one of the three values, and is set by default to "Release"
+macro(v4r_option _variable _description _value)
+  if("${ARGN}" STREQUAL "")
+    if(${_value})
+      option(${_variable} "${_description}" ON)
     else()
-      list(APPEND ${__varname} ${arg})
-    endif()
-  endforeach()
-  unset(__varname)
-  if(__condition STREQUAL "")
-    set(__condition 2 GREATER 1)
-  endif()
-
-  if(${__condition})
-    if(__value MATCHES ";")
-      if(${__value})
-        option(${variable} "${description}" ON)
-      else()
-        option(${variable} "${description}" OFF)
-      endif()
-    elseif(DEFINED ${__value})
-      if(${__value})
-        option(${variable} "${description}" ON)
-      else()
-        option(${variable} "${description}" OFF)
-      endif()
-    else()
-      option(${variable} "${description}" ${__value})
+      option(${_variable} "${_description}" OFF)
     endif()
   else()
-    unset(${variable} CACHE)
+    set(_options ${_value})
+    list(APPEND _options ${ARGN})
+    set(${_variable} ${_value} CACHE STRING "${_description}")
+    set_property(CACHE ${_variable} PROPERTY STRINGS ${_options})
   endif()
-  unset(__condition)
-  unset(__value)
 endmacro()
 
 
@@ -364,6 +313,21 @@ macro(v4r_list_filterout lst regex)
 endmacro()
 
 
+# Strip version requirement specifications from the list of dependencies
+macro(v4r_list_strip_versions lst)
+  set(_out_list "")
+  foreach(item ${${lst}})
+    string(REGEX REPLACE "([^<>=]+)(=|>|<|>=|<=)[0-9]+(\.[0-9]+)*$" "\\1" _out ${item})
+    list(APPEND _out_list ${_out})
+  endforeach()
+  # For some reason setting lst to _out_list does not work, thus this trick
+  foreach(item ${_out_list})
+    list(REMOVE_AT ${lst} 0)
+    list(APPEND ${lst} ${item})
+  endforeach()
+endmacro()
+
+
 # stable & safe duplicates removal macro
 macro(v4r_list_unique __lst)
   if(${__lst})
@@ -388,28 +352,6 @@ macro(v4r_list_sort __lst)
 endmacro()
 
 
-# add prefix to each item in the list
-macro(v4r_list_add_prefix LST PREFIX)
-  set(__tmp "")
-  foreach(item ${${LST}})
-    list(APPEND __tmp "${PREFIX}${item}")
-  endforeach()
-  set(${LST} ${__tmp})
-  unset(__tmp)
-endmacro()
-
-
-# add suffix to each item in the list
-macro(v4r_list_add_suffix LST SUFFIX)
-  set(__tmp "")
-  foreach(item ${${LST}})
-    list(APPEND __tmp "${item}${SUFFIX}")
-  endforeach()
-  set(${LST} ${__tmp})
-  unset(__tmp)
-endmacro()
-
-
 # gets and removes the first element from list
 macro(v4r_list_pop_front LST VAR)
   if(${LST})
@@ -418,38 +360,6 @@ macro(v4r_list_pop_front LST VAR)
   else()
     set(${VAR} "")
   endif()
-endmacro()
-
-
-# simple regex escaping routine (does not cover all cases!!!)
-macro(v4r_regex_escape var regex)
-  string(REGEX REPLACE "([+.*^$])" "\\\\1" ${var} "${regex}")
-endmacro()
-
-
-# convert list of paths to full paths
-macro(v4r_convert_to_full_paths VAR)
-  if(${VAR})
-    set(__tmp "")
-    foreach(path ${${VAR}})
-      get_filename_component(${VAR} "${path}" ABSOLUTE)
-      list(APPEND __tmp "${${VAR}}")
-    endforeach()
-    set(${VAR} ${__tmp})
-    unset(__tmp)
-  endif()
-endmacro()
-
-
-# convert list of paths to libraries names without lib prefix
-macro(v4r_convert_to_lib_name var)
-  set(tmp "")
-  foreach(path ${ARGN})
-    get_filename_component(tmp_name "${path}" NAME)
-    v4r_get_libname(tmp_name "${tmp_name}")
-    list(APPEND tmp "${tmp_name}")
-  endforeach()
-  set(${var} ${tmp} PARENT_SCOPE)
 endmacro()
 
 
@@ -521,101 +431,6 @@ macro(v4r_parse_header FILENAME FILE_VAR)
   endforeach()
 endmacro()
 
-function(v4r_target_link_libraries target)
-  set(LINK_DEPS ${ARGN})
-  target_link_libraries(${target} ${LINK_DEPS})
-endfunction()
-
-function(_v4r_append_target_includes target)
-  if(V4R_TARGET_SYSTEM_INCLUDE_DIRS_${target})
-    target_include_directories(${target} SYSTEM PRIVATE ${V4R_TARGET_SYSTEM_INCLUDE_DIRS_${target}})
-    unset(V4R_TARGET_SYSTEM_INCLUDE_DIRS_${target} CACHE)
-  endif()
-  if(V4R_TARGET_PRIVATE_INCLUDE_DIRS_${target})
-    target_include_directories(${target} PRIVATE ${V4R_TARGET_PRIVATE_INCLUDE_DIRS_${target}})
-    unset(V4R_TARGET_PRIVATE_INCLUDE_DIRS_${target} CACHE)
-  endif()
-endfunction()
-
-function(v4r_add_executable target)
-  add_executable(${target} ${ARGN})
-  _v4r_append_target_includes(${target})
-endfunction()
-
-function(v4r_add_library target)
-  set(cuda_objs "")
-  if(HAVE_CUDA)
-    set(cuda_srcs "")
-
-    foreach(var ${ARGN})
-      if(var MATCHES ".cu")
-        list(APPEND cuda_srcs ${var})
-      endif()
-    endforeach()
-
-    if(cuda_srcs)
-      v4r_include_directories(${CUDA_INCLUDE_DIRS})
-      v4r_cuda_compile(cuda_objs ${lib_cuda_srcs} ${lib_cuda_hdrs})
-    endif()
-    set(V4R_MODULE_${target}_CUDA_OBJECTS ${cuda_objs} CACHE INTERNAL "Compiled CUDA object files")
-  endif()
-
-  add_library(${target} ${ARGN} ${cuda_objs})
-
-  _v4r_append_target_includes(${target})
-endfunction()
-
-macro(v4r_get_libname var_name)
-  get_filename_component(__libname "${ARGN}" NAME)
-  # libv4r_core.so.3.3 -> opencv_core
-  string(REGEX REPLACE "^lib(.+)\\.(a|so)(\\.[.0-9]+)?$" "\\1" __libname "${__libname}")
-  set(${var_name} "${__libname}")
-endmacro()
-
-# build the list of v4r libs and dependencies for all modules
-#  _modules - variable to hold list of all modules
-#  _extra - variable to hold list of extra dependencies
-#  _3rdparty - variable to hold list of prebuilt 3rdparty libraries
-macro(v4r_get_all_libs _modules _extra _3rdparty)
-  set(${_modules} "")
-  set(${_extra} "")
-  set(${_3rdparty} "")
-  foreach(m ${V4R_MODULES_PUBLIC})
-    if(TARGET ${m})
-      get_target_property(deps ${m} INTERFACE_LINK_LIBRARIES)
-      if(NOT deps)
-        set(deps "")
-      endif()
-    else()
-      set(deps "")
-    endif()
-    list(INSERT ${_modules} 0 ${deps} ${m})
-    foreach (dep ${deps} ${V4R_LINKER_LIBS})
-      if (NOT DEFINED V4R_MODULE_${dep}_LOCATION)
-        if (TARGET ${dep})
-          # get_target_property(_output ${dep} ARCHIVE_OUTPUT_DIRECTORY)
-          # if ("${_output}" STREQUAL "${3P_LIBRARY_OUTPUT_PATH}")
-            # list(INSERT ${_3rdparty} 0 ${dep})
-          # else()
-            # list(INSERT ${_extra} 0 ${dep})
-          # endif()
-        else()
-          list(INSERT ${_extra} 0 ${dep})
-        endif()
-      endif()
-    endforeach()
-  endforeach()
-
-  # split 3rdparty libs and modules
-  list(REMOVE_ITEM ${_modules} ${${_3rdparty}} ${${_extra}} non_empty_list)
-
-  # convert CMake lists to makefile literals
-  foreach(lst ${_modules} ${_3rdparty} ${_extra})
-    v4r_list_unique(${lst})
-    v4r_list_reverse(${lst})
-  endforeach()
-endmacro()
-
 
 # Append elements to an internal cached list (help string is preserved)
 # A new list is created if the variable does not exist yet
@@ -625,6 +440,32 @@ macro(v4r_append _list)
   else()
     get_property(_help_string CACHE "${_list}" PROPERTY HELPSTRING)
     list(APPEND ${_list} ${ARGN})
+    set(${_list} ${${_list}} CACHE INTERNAL "${_help_string}")
+  endif()
+endmacro()
+
+
+# Prepend elements to an internal cached list (help string is preserved)
+# A new list is created if the variable does not exist yet
+macro(v4r_prepend _list)
+  if(NOT DEFINED ${_list})
+    set(${_list} ${ARGN} CACHE INTERNAL "")
+  else()
+    get_property(_help_string CACHE "${_list}" PROPERTY HELPSTRING)
+    list(INSERT ${_list} 0 ${ARGN})
+    set(${_list} ${${_list}} CACHE INTERNAL "${_help_string}")
+  endif()
+endmacro()
+
+
+# Remove item to an internal cached list (help string is preserved)
+# A new empty list is created if the variable does not exist yet
+macro(v4r_remove_item _list)
+  if(NOT DEFINED ${_list})
+    set(${_list} ${ARGN} CACHE INTERNAL "")
+  else()
+    get_property(_help_string CACHE "${_list}" PROPERTY HELPSTRING)
+    list(REMOVE_ITEM ${_list} ${ARGN})
     set(${_list} ${${_list}} CACHE INTERNAL "${_help_string}")
   endif()
 endmacro()
@@ -651,6 +492,20 @@ macro(v4r_add_imported_library _name)
     endif()
   else()
     set(_type "INTERFACE")
+  endif()
+
+  # Filter include directories (remove non-existent)
+  # Motivation: on certain systems PCL adds an incorrect path to freetype2 to its include directories list.
+  # Adding such a directory to the INTERFACE_INCLUDE_DIRECTORIES property of a target leads to CMake error.
+  if(ARG_INTERFACE_INCLUDE_DIRECTORIES)
+    set(_filtered "")
+    foreach(_include ${ARG_INTERFACE_INCLUDE_DIRECTORIES})
+      if(EXISTS ${_include})
+        list(APPEND _filtered "${_include}")
+      endif()
+    endforeach()
+    list(REMOVE_DUPLICATES _filtered)
+    set(ARG_INTERFACE_INCLUDE_DIRECTORIES ${_filtered})
   endif()
 
   # Create library and set properties
@@ -697,5 +552,79 @@ function(v4r_get_imported_library_location _target _result)
     endif()
   else()
     set(${_result} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
+
+# Check if a dependency is available and has an appropriate version.
+# Dependency "xyz" is considered available if one of the following holds:
+#   * HAVE_xyz cache variable is set to true
+#   * HAVE_XYZ cache variable is set to true
+#   * xyz is a library
+# Positional arguments:
+#   dependency : name of the dependency followed by an optional version requirement specification
+#   result : variable where to store the result
+# Usage:
+#   v4r_check_dependency_available(opencv _result) : check that OpenCV is available, version does not matter
+#   v4r_check_dependency_available(opencv==2.4.8 _result) : check that OpenCV 2.4.8 is available
+#   v4r_check_dependency_available(opencv>=3 _result) : check that OpenCV 3 or above is available
+function(v4r_check_dependency_available dependency result)
+  # Test if dependency has version requirement specification
+  if(${dependency} MATCHES "[<>=]")
+    # Extract name and version
+    string(REGEX REPLACE "[<>=]" ";" _tokens ${dependency})
+    list(GET _tokens 0 _dep_name)
+    list(REVERSE _tokens)
+    list(GET _tokens 0 _dep_version)
+    string(TOUPPER "${_dep_name}" _DEP_NAME)
+    # Check if the specification is valid (=, >, <, >=, or <= followed by a digit[.digit[...] version)
+    if(${dependency} MATCHES "[^<>=]+(=|>|<|>=|<=)[0-9]+(\.[0-9]+)*$")
+      if(DEFINED ${_DEP_NAME}_VERSION)
+        set(_version_ok 0)
+        if(${dependency} MATCHES "<=")
+          if((${_DEP_NAME}_VERSION VERSION_LESS _dep_version) OR (${_DEP_NAME}_VERSION VERSION_EQUAL _dep_version))
+            set(_version_ok 1)
+          endif()
+        elseif(${dependency} MATCHES ">=")
+          if((${_DEP_NAME}_VERSION VERSION_GREATER _dep_version) OR (${_DEP_NAME}_VERSION VERSION_EQUAL _dep_version))
+            set(_version_ok 1)
+          endif()
+        elseif(${dependency} MATCHES "=")
+          if(${_DEP_NAME}_VERSION VERSION_EQUAL _dep_version)
+            set(_version_ok 1)
+          endif()
+        elseif(${dependency} MATCHES "<")
+          if(${_DEP_NAME}_VERSION VERSION_LESS _dep_version)
+            set(_version_ok 1)
+          endif()
+        elseif(${dependency} MATCHES ">")
+          if(${_DEP_NAME}_VERSION VERSION_GREATER _dep_version)
+            set(_version_ok 1)
+          endif()
+        endif()
+      else()
+        message(AUTHOR_WARNING "${dependency}: no version associated with ${_dep_name}, ignoring version requirement")
+        set(_version_ok 1)
+      endif()
+    else()
+      message(AUTHOR_WARNING "${dependency}: invalid version requirement, ignoring it")
+      set(_version_ok 1)
+    endif()
+  else()
+    # No version specification means version is okay
+    set(_dep_name ${dependency})
+    set(_version_ok 1)
+  endif()
+  if(NOT _version_ok)
+    set(${result} NO PARENT_SCOPE)
+  elseif(TARGET ${_dep_name} OR EXISTS ${_dep_name})
+    set(${result} YES PARENT_SCOPE)
+  else()
+    string(TOUPPER "${_dep_name}" _DEP_NAME)
+    if(HAVE_${_dep_name} OR HAVE_${_DEP_NAME})
+      set(${result} YES PARENT_SCOPE)
+    else()
+      set(${result} NO PARENT_SCOPE)
+    endif()
   endif()
 endfunction()

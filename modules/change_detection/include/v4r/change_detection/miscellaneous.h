@@ -19,7 +19,7 @@ V4R_EXPORTS typename pcl::PointCloud<PointType>::Ptr downsampleCloud(typename pc
 
 template <class PointType>
 V4R_EXPORTS Eigen::Affine3f resetViewpoint(typename pcl::PointCloud<PointType>::Ptr input);
-}
+}  // namespace v4r
 
 #include <v4r/change_detection/impl/miscellaneous.hpp>
 

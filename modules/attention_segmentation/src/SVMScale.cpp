@@ -117,7 +117,7 @@ void SVMScale::compute() {
     fp1.close();
   } else {
     std::cerr << features_filename.c_str() << std::endl;
-    fprintf(stderr, "cant open file.\n");
+    fprintf(stderr, "can't open file.\n");
     exit(1);
   }
 

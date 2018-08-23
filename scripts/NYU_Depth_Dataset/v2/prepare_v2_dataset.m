@@ -28,29 +28,29 @@ labelnames_file = 'labelnames.txt';
 
 if (savelabels || savepointclouds || savecameraangles) && ~exist(dataset_file, 'file')
     fprintf(1, 'Downloading dataset...');
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v2/nyu_depth_v2_labeled.mat', dataset_file);
+    websave(dataset_file, 'https://data.acin.tuwien.ac.at/index.php/s/Sh819DueUpxRBQ8/download');
     fprintf(1, 'Done\n');
 end
 if savecameraangles && ~exist(accel_calib_file, 'file')
     fprintf(1, 'Downloading accelerometer calibration...');    
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/accel_calib_for_daniel.mat', accel_calib_file);
+    websave(accel_calib_file, 'https://data.acin.tuwien.ac.at/index.php/s/sKDtG4qgwbZmgAv/download');
     fprintf(1, 'Done\n');
 end
 if saveindexfiles
     fprintf(1, 'Downloading train/test split files...');    
     if ~exist(split_file, 'file')
-        urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v2/splits.mat', split_file);
+        websave(split_file, 'https://data.acin.tuwien.ac.at/index.php/s/GiJZfBkx8I68bNn/download');
     end    
     fprintf(1, 'Done\n');
 end
 if ~exist(colorcode_file, 'file')
     fprintf(1, 'Downloading color code file...');        
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v2/color_code.txt', colorcode_file);
+    websave(colorcode_file, 'https://data.acin.tuwien.ac.at/index.php/s/gmsp8NoxzMGvQF7/download');
     fprintf(1, 'Done\n');
 end
 if ~exist(labelnames_file, 'file')
     fprintf(1, 'Downloading label names file...');        
-    urlwrite('https://repo.acin.tuwien.ac.at/tmp/permanent/NYU_Depth_Dataset/v2/labelnames.txt', labelnames_file);
+    websave(labelnames_file, 'https://data.acin.tuwien.ac.at/index.php/s/C4Vj7tBnDA6iym6/download');
     fprintf(1, 'Done\n');
 end
 

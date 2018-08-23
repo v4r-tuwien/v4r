@@ -86,4 +86,4 @@ int CombineMaps(std::vector<cv::Mat> &maps, cv::Mat &combinedMap, int combinatio
       return (AM_PARAMETERS);
   }
 }
-}
+}  // namespace v4r

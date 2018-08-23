@@ -64,7 +64,6 @@
 #include <opencv2/opencv.hpp>
 #include <queue>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 #include <v4r/keypoints/impl/invPose.hpp>
 #include <v4r/reconstruction/impl/projectPointToImage.hpp>
@@ -86,7 +85,7 @@ class StoreTrackingModel : public QThread {
   void storeTrackingModel(
       const std::string &_folder, const std::string &_objectname,
       const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-      const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
+      const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
       const std::vector<cv::Mat_<unsigned char>> &_masks,
       const Eigen::Matrix4f &_object_base_transform = Eigen::Matrix4f::Identity());
 
@@ -119,7 +118,7 @@ class StoreTrackingModel : public QThread {
   std::string folder;
   std::string objectname;
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> cameras;
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> clouds;
   std::vector<cv::Mat_<unsigned char>> masks;
 
   Eigen::Matrix4f object_base_transform;

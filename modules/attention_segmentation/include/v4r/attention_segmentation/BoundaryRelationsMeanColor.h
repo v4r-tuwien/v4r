@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary color and standart deviation.
+ * @brief Class to calculate boundary color and standard deviation.
  */
 
 #ifndef BOUNDARY_RELATIONS_MEANCOLOR_H
@@ -60,7 +60,7 @@ class V4R_EXPORTS BoundaryRelationsMeanColor : public BoundaryRelationsBase {
 
  private:
  public:
-  typedef boost::shared_ptr<BoundaryRelationsMeanColor> Ptr;
+  typedef std::shared_ptr<BoundaryRelationsMeanColor> Ptr;
 
   BoundaryRelationsMeanColor();
   ~BoundaryRelationsMeanColor();
@@ -68,6 +68,6 @@ class V4R_EXPORTS BoundaryRelationsMeanColor : public BoundaryRelationsBase {
   //@ep: not so sure that the type of the return argument is the best
   virtual v4r::meanVal compute();
 };
-}
+}  // namespace v4r
 
 #endif  // BOUNDARY_RELATIONS_MEANCOLOR_H

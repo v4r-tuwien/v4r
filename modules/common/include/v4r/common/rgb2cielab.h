@@ -62,7 +62,7 @@ class V4R_EXPORTS RGB2CIELAB : public ColorTransform {
   void initializeLUT();
 
  public:
-  typedef boost::shared_ptr<RGB2CIELAB> Ptr;
+  typedef std::shared_ptr<RGB2CIELAB> Ptr;
 
   RGB2CIELAB() {
     initializeLUT();
@@ -98,5 +98,5 @@ class V4R_EXPORTS RGB2CIELAB : public ColorTransform {
     return 3;
   }
 };
-}
+}  // namespace v4r
 #endif

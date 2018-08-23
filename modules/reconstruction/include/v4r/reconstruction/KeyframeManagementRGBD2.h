@@ -60,7 +60,6 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 //#include "v4r/TomGine/tgTomGineThread.h"
 #include <v4r/core/macros.h>
@@ -92,8 +91,9 @@ class V4R_EXPORTS KeyframeManagementRGBD2 {
     ProjLKPoseTrackerRT::Parameter kt_param;
     Parameter(unsigned _min_model_points = 50, double _max_dist_tracking_view = 2., int _min_not_reliable_poses = 5,
               float _inl_dist_px = 2, double _min_dist_add_proj = 0.02, double _min_conf = .2,
-              double _dist_err_loop = 0.02, const FeatureDetector_KD_FAST_IMGD::Parameter &_det_param =
-                                                FeatureDetector_KD_FAST_IMGD::Parameter(300, 1.44, 3, 17, 3),
+              double _dist_err_loop = 0.02,
+              const FeatureDetector_KD_FAST_IMGD::Parameter &_det_param =
+                  FeatureDetector_KD_FAST_IMGD::Parameter(300, 1.44, 3, 17, 3),
               const ZAdaptiveNormals::Parameter &_n_param = ZAdaptiveNormals::Parameter(0.02, 5, true, 0.005125, 0.003),
               const KeypointPoseDetectorRT::Parameter &_kd_param = KeypointPoseDetectorRT::Parameter(),
               const ProjLKPoseTrackerRT::Parameter &_kt_param = ProjLKPoseTrackerRT::Parameter())
@@ -143,7 +143,7 @@ class V4R_EXPORTS KeyframeManagementRGBD2 {
   cv::Mat_<double> intrinsic;
 
   // ---- dbg draw ----
-  // SmartPtr<TomGine::tgTomGineThread> tgwin2;
+  // std::shared_ptr<TomGine::tgTomGineThread> tgwin2;
   // std::vector<Eigen::Vector3f> cams;
   // ---- end dbg ----
 
@@ -241,12 +241,12 @@ class V4R_EXPORTS KeyframeManagementRGBD2 {
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
   void setMinDistAddProjections(const double &dist);
 
-  typedef SmartPtr<::v4r::KeyframeManagementRGBD2> Ptr;
-  typedef SmartPtr<::v4r::KeyframeManagementRGBD2 const> ConstPtr;
+  typedef std::shared_ptr<::v4r::KeyframeManagementRGBD2> Ptr;
+  typedef std::shared_ptr<::v4r::KeyframeManagementRGBD2 const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -155,4 +155,4 @@ void ImGDescOrientation::compute(const cv::Mat_<unsigned char> &im, const cv::Ma
 
   ComputeAngle(weight, angle);
 }
-}
+}  // namespace v4r

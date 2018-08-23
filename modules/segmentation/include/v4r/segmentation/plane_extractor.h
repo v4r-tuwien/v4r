@@ -189,7 +189,7 @@ class V4R_EXPORTS PlaneExtractor {
     return plane_inliers_;
   }
 
-  typedef boost::shared_ptr<PlaneExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<PlaneExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<PlaneExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<PlaneExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

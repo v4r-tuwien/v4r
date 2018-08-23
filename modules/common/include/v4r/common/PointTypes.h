@@ -178,6 +178,6 @@ class V4R_EXPORTS PointXYZ {
   }
 };
 
-}  //--END--
+}  // namespace v4r
 
 #endif

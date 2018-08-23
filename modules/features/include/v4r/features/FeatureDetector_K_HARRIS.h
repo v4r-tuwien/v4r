@@ -45,8 +45,7 @@
  *
  */
 
-#ifndef KP_FEATURE_DETECTOR_HARRIS_HH
-#define KP_FEATURE_DETECTOR_HARRIS_HH
+#pragma once
 
 #include <opencv2/features2d/features2d.hpp>
 #include "ComputeImGDescOrientations.h"
@@ -74,11 +73,11 @@ class V4R_EXPORTS FeatureDetector_K_HARRIS : public FeatureDetector {
   };
 
  private:
+  using FeatureDetector::descr_name_;
+
   Parameter param;
 
-  cv::Mat_<unsigned char> im_gray;
-
-  std::vector<cv::Point2f> pts;
+  cv::Mat_<unsigned char> im_gray_;
 
   ComputeImGDescOrientations::Ptr imGOri;
 
@@ -86,14 +85,11 @@ class V4R_EXPORTS FeatureDetector_K_HARRIS : public FeatureDetector {
   FeatureDetector_K_HARRIS(const Parameter &_p = Parameter());
   ~FeatureDetector_K_HARRIS();
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys);
+  void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+              const cv::Mat &object_mask = cv::Mat()) override final;
 
-  typedef SmartPtr<::v4r::FeatureDetector_K_HARRIS> Ptr;
-  typedef SmartPtr<::v4r::FeatureDetector_K_HARRIS const> ConstPtr;
+  typedef std::shared_ptr<FeatureDetector_K_HARRIS> Ptr;
+  typedef std::shared_ptr<FeatureDetector_K_HARRIS const> ConstPtr;
 };
 
-/*************************** INLINE METHODES **************************/
-
-}  //--END--
-
-#endif
+}  // namespace v4r

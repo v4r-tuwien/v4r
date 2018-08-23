@@ -93,17 +93,22 @@ class V4R_EXPORTS SegmenterParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Segmentation Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
-        "seg_min_cluster_size", po::value<size_t>(&min_cluster_size_)->default_value(min_cluster_size_),
-        "minimum number of points in a cluster")(
-        "seg_max_cluster_size", po::value<size_t>(&max_cluster_size_)->default_value(max_cluster_size_), "")(
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()("seg_min_cluster_size", po::value<size_t>(&min_cluster_size_)->default_value(min_cluster_size_),
+                       "minimum number of points in a cluster");
+    desc.add_options()("seg_max_cluster_size", po::value<size_t>(&max_cluster_size_)->default_value(max_cluster_size_),
+                       "");
+    desc.add_options()(
         "seg_distance_threshold", po::value<double>(&distance_threshold_)->default_value(distance_threshold_),
         "tolerance in meters for difference in perpendicular distance (d component of plane equation) to the plane "
-        "between neighboring points, to be considered part of the same plane")(
+        "between neighboring points, to be considered part of the same plane");
+    desc.add_options()(
         "seg_angular_threshold_deg", po::value<double>(&angular_threshold_deg_)->default_value(angular_threshold_deg_),
         "tolerance in gradients for difference in normal direction between neighboring points, to be considered part "
-        "of the same plane.")("seg_wsize", po::value<int>(&wsize_)->default_value(wsize_), "")(
-        "seg_object_cluster_tolerance", po::value<float>(&cluster_tolerance_)->default_value(cluster_tolerance_), "");
+        "of the same plane.");
+    desc.add_options()("seg_wsize", po::value<int>(&wsize_)->default_value(wsize_), "");
+    desc.add_options()("seg_object_cluster_tolerance",
+                       po::value<float>(&cluster_tolerance_)->default_value(cluster_tolerance_), "");
     po::variables_map vm;
     po::parsed_options parsed =
         po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
@@ -131,9 +136,9 @@ class V4R_EXPORTS Segmenter {
       clusters_;  ///< segmented clusters. Each cluster represents a bunch of indices of the input cloud
 
  public:
-  virtual ~Segmenter() {}
+  virtual ~Segmenter() = default;
 
-  Segmenter() {}
+  Segmenter() = default;
 
   /**
    * @brief sets the cloud which ought to be segmented
@@ -159,14 +164,14 @@ class V4R_EXPORTS Segmenter {
     indices = clusters_;
   }
 
-  virtual bool getRequiresNormals() = 0;
+  virtual bool getRequiresNormals() const = 0;
 
   /**
    * @brief segment
    */
   virtual void segment() = 0;
 
-  typedef boost::shared_ptr<Segmenter<PointT>> Ptr;
-  typedef boost::shared_ptr<Segmenter<PointT> const> ConstPtr;
+  typedef std::shared_ptr<Segmenter<PointT>> Ptr;
+  typedef std::shared_ptr<Segmenter<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

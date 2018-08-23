@@ -1,2 +1,3 @@
-set(the_description "Core headers")
-v4r_define_module(core)
+v4r_add_module(
+  DESCRIPTION "Core headers"
+)

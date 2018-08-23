@@ -40,10 +40,10 @@
 #include <glog/logging.h>
 #include <v4r/apps/ViewRenderer.h>
 #include <v4r/common/miscellaneous.h>
+#include <v4r/config.h>
 #include <v4r/rendering/depthmapRenderer.h>
-#include <v4r_modules.h>
 
-#ifdef HAVE_V4R_RENDERING
+#if HAVE_V4R_RENDERING
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <v4r/rendering/depthmapRenderer.h>
@@ -57,7 +57,7 @@ namespace v4r {
 namespace apps {
 
 void ViewRenderer::render(const bf::path &input_path, const bf::path &out_path) {
-#ifdef HAVE_V4R_RENDERING
+#if HAVE_V4R_RENDERING
 
   if (v4r::io::existsFolder(out_path)) {
     if (param_.overwrite) {
@@ -68,8 +68,8 @@ void ViewRenderer::render(const bf::path &input_path, const bf::path &out_path) 
     }
   }
 
-  v4r::DepthmapRenderer renderer(cam_->getWidth(), cam_->getHeight());
-  renderer.setIntrinsics(cam_->getFocalLengthX(), cam_->getFocalLengthY(), cam_->getCx(), cam_->getCy());
+  v4r::DepthmapRenderer renderer(static_cast<int>(cam_.w), static_cast<int>(cam_.h));
+  renderer.setIntrinsics(cam_.fx, cam_.fy, cam_.cx, cam_.cy);
 
   v4r::DepthmapRendererModel model(input_path.string(), "", param_.autoscale);
 
@@ -117,7 +117,7 @@ void ViewRenderer::render(const bf::path &input_path, const bf::path &out_path) 
     if (model.hasColor() || model.hasTexture()) {
       const pcl::PointCloud<pcl::PointXYZRGB> cloud = renderer.renderPointcloudColor(visible);
 
-      pcl::io::savePCDFileBinary(output_fn.string(), cloud);
+      pcl::io::savePCDFileBinaryCompressed(output_fn.string(), cloud);
 
       // TODO avoid duplication of this block
       cam_pose = v4r::RotTrans2Mat4f(cloud.sensor_orientation_, cloud.sensor_origin_);
@@ -133,7 +133,7 @@ void ViewRenderer::render(const bf::path &input_path, const bf::path &out_path) 
 
     } else {
       const pcl::PointCloud<pcl::PointXYZ> cloud = renderer.renderPointcloud(visible);
-      pcl::io::savePCDFileBinary(output_fn.string(), cloud);
+      pcl::io::savePCDFileBinaryCompressed(output_fn.string(), cloud);
 
       cam_pose = v4r::RotTrans2Mat4f(cloud.sensor_orientation_, cloud.sensor_origin_);
 
@@ -164,5 +164,5 @@ void ViewRenderer::render(const bf::path &input_path, const bf::path &out_path) 
                 "view rendering!";
 #endif
 }
-}
-}
+}  // namespace apps
+}  // namespace v4r

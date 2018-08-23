@@ -52,7 +52,6 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -72,8 +71,8 @@ class V4R_EXPORTS Cluster {
     indices.push_back(idx);
   }
 
-  typedef SmartPtr<::v4r::Cluster> Ptr;
-  typedef SmartPtr<::v4r::Cluster const> ConstPtr;
+  typedef std::shared_ptr<::v4r::Cluster> Ptr;
+  typedef std::shared_ptr<::v4r::Cluster const> ConstPtr;
 };
 
 /**
@@ -91,6 +90,6 @@ class V4R_EXPORTS Clustering {
   virtual void getClusters(std::vector<std::vector<int>> &) = 0;
   virtual void getCenters(DataMatrix2Df &) = 0;
 };
-}
+}  // namespace v4r
 
 #endif

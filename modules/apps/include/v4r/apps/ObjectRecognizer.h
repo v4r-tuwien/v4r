@@ -51,12 +51,12 @@
 #include <v4r/apps/ObjectRecognizerParameter.h>
 #include <v4r/apps/visualization.h>
 #include <v4r/common/normals.h>
+#include <v4r/config.h>
 #include <v4r/core/macros.h>
 #include <v4r/io/filesystem.h>
 #include <v4r/recognition/hypotheses_verification.h>
 #include <v4r/recognition/local_recognition_pipeline.h>
 #include <v4r/recognition/multi_pipeline_recognizer.h>
-#include <v4r_modules.h>
 #include <boost/serialization/vector.hpp>
 
 namespace bf = boost::filesystem;
@@ -65,6 +65,11 @@ namespace v4r {
 
 namespace apps {
 
+/**
+ * @brief Class that sets up multi-pipeline object recognizer
+ * @author Thomas Faeulhammer
+ * @tparam PointT
+ */
 template <typename PointT>
 class V4R_EXPORTS ObjectRecognizer {
  private:
@@ -78,19 +83,21 @@ class V4R_EXPORTS ObjectRecognizer {
 
   typename v4r::ObjectRecognitionVisualizer<PointT>::Ptr rec_vis_;  ///< visualization object
 
-  typename v4r::apps::CloudSegmenter<PointT>::Ptr cloud_segmenter_;  ///< cloud segmenter for plane removal (if enabled)
+  typename v4r::apps::CloudSegmenter<PointT>::Ptr plane_extractor_;  ///< cloud segmenter for plane removal (if enabled)
 
-  bool visualize_;          ///< if true, visualizes objects
-  bool skip_verification_;  ///< if true, will only generate hypotheses but not verify them
+  bool visualize_;  ///< if true, visualizes objects
   bf::path models_dir_;
 
-  ObjectRecognizerParameter param_;
+  ObjectRecognizerParameter param_;  ///< parameters for object recognition
 
-  Camera::ConstPtr camera_;
+  typename Source<PointT>::Ptr model_database_;  ///< object model database
 
-  typename Source<PointT>::Ptr model_database_;
+  void setupLocal2DPipeLine();
+  FeatureDetector::Ptr getFeatureDetector(const v4r::FeatureDetector::Type &type) const;
 
-  // MULTI-VIEW STUFF
+  /**
+   * @brief helper class for multi-view recognition system
+   */
   class View {
    public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -104,7 +111,7 @@ class V4R_EXPORTS ObjectRecognizer {
   };
   std::vector<View> views_;  ///< all views in sequence
 
-#ifdef HAVE_V4R_CHANGE_DETECTION
+#if HAVE_V4R_CHANGE_DETECTION
   /**
    * @brief detectChanges detect changes in multi-view sequence (e.g. objects removed or added to the scene within
    * observation period)
@@ -121,7 +128,7 @@ class V4R_EXPORTS ObjectRecognizer {
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ObjectRecognizer() : visualize_(false), skip_verification_(false) {}
+  ObjectRecognizer() : visualize_(false) {}
 
   /**
    * @brief initialize initialize Object recognizer (sets up model database, recognition pipeline and hypotheses
@@ -143,29 +150,36 @@ class V4R_EXPORTS ObjectRecognizer {
                   const boost::filesystem::path &config_folder = bf::path("cfg"));
 
   /**
-   * @brief recognize recognize objects in point cloud
+   * @brief recognize recognize objects in point cloud together with their 6DoF pose
    * @param cloud (organized) point cloud
+   * @param obj_models_to_search object model identities to detect. If empty, all object models in database will be
+   * tried to detect
    * @return
    */
-  std::vector<ObjectHypothesesGroup> recognize(const typename pcl::PointCloud<PointT>::ConstPtr &cloud);
+  std::vector<ObjectHypothesesGroup> recognize(
+      const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
+      const std::vector<std::string> &obj_models_to_search = std::vector<std::string>());
 
-  typename pcl::PointCloud<PointT>::ConstPtr getModel(const std::string &model_name, int resolution_mm) const {
-    bool found;
-    typename Source<PointT>::ConstPtr mdb = mrec_->getModelDatabase();
-    typename Model<PointT>::ConstPtr model = mdb->getModelById("", model_name, found);
-    if (!found) {
-      std::cerr << "Could not find model with name " << model_name << std::endl;
-      typename pcl::PointCloud<PointT>::ConstPtr foo;
-      return foo;
-    }
+  /**
+   * @brief get point cloud of object model
+   * @param model_name identity of object model to return
+   * @param resolution_mm  resolution of point cloud model in milli meter
+   * @return point cloud of object model or nullptr if it does not exist
+   */
+  typename pcl::PointCloud<PointT>::ConstPtr getModel(const std::string &model_name, int resolution_mm) const;
 
-    return model->getAssembled(resolution_mm);
-  }
-
+  /**
+   * @brief get path to models directory
+   * @return
+   */
   bf::path getModelsDir() const {
     return models_dir_;
   }
 
+  /**
+   * @brief set path to models directory
+   * @param dir
+   */
   void setModelsDir(const bf::path &dir) {
     models_dir_ = dir;
   }
@@ -187,22 +201,22 @@ class V4R_EXPORTS ObjectRecognizer {
   }
 
   /**
-   * @brief getCamera get pointer to camera parameters
-   * @return camera parameter
+   * @brief getCamera get camera intrinsic parameters
+   * @return camera intrinsic parameter
    */
-  Camera::ConstPtr getCamera() const {
-    return camera_;
+  Intrinsics getCameraIntrinsics() const {
+    return param_.cam_;
   }
 
   /**
-   * @brief setCamera set the camera used for z-buffering
-   * @param cam camera parameters
+   * @brief setCamera set the camera intrinsics used for z-buffering
+   * @param cam camera intrinsic parameters
    */
-  void setCamera(const Camera::ConstPtr &cam) {
-    camera_ = cam;
+  void setCameraIntrinsics(const Intrinsics &cam) {
+    param_.cam_ = cam;
 
     if (hv_) {
-      hv_->setCamera(camera_);
+      hv_->setCameraIntrinsics(param_.cam_);
     }
   }
 
@@ -211,5 +225,5 @@ class V4R_EXPORTS ObjectRecognizer {
    */
   void resetMultiView();
 };
-}
-}
+}  // namespace apps
+}  // namespace v4r

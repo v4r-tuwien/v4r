@@ -58,7 +58,6 @@
 #include <stdexcept>
 #include <string>
 #include <v4r/common/impl/DataMatrix2D.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
 namespace v4r {
@@ -116,12 +115,12 @@ class V4R_EXPORTS ProjLKPoseTrackerRT {
   void setSourceCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
   void setTargetCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
 
-  typedef SmartPtr<::v4r::ProjLKPoseTrackerRT> Ptr;
-  typedef SmartPtr<::v4r::ProjLKPoseTrackerRT const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ProjLKPoseTrackerRT> Ptr;
+  typedef std::shared_ptr<::v4r::ProjLKPoseTrackerRT const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -17,7 +17,7 @@ If you use V4R in your work, please cite the appropriate moduls:
 
 ## Object Instance Recognition  
 
-Thomas Fäulhammer, Michael Zillich, Johann Prankl, Markus Vincze, "A Multi-Modal RGB-D Object Recognizer", IAPR Internation Conference on Pattern Recognition (ICPR), 2016,
+Thomas Fäulhammer, Michael Zillich, Johann Prankl, Markus Vincze, "A Multi-Modal RGB-D Object Recognizer", IAPR International Conference on Pattern Recognition (ICPR), 2016,
 
 ```
 @incproceedings{faeulhammer2016_ICPR,  

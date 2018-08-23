@@ -47,7 +47,7 @@ class V4R_EXPORTS PartialModelRegistrationBase {
   Eigen::Matrix4f getPose(size_t i) const;
   pcl::PointCloud<pcl::Normal>::ConstPtr getNormal(size_t i) const;
 };
-}
-}
+}  // namespace Registration
+}  // namespace v4r
 
 #endif

@@ -55,7 +55,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
 #include <string>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 #ifndef KP_NO_CERES_AVAILABLE
 #include <ceres/ceres.h>
@@ -134,8 +133,8 @@ class V4R_EXPORTS ProjLKPoseTrackerLM {
   void setSourceCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
   void setTargetCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
 
-  typedef SmartPtr<::v4r::ProjLKPoseTrackerLM> Ptr;
-  typedef SmartPtr<::v4r::ProjLKPoseTrackerLM const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ProjLKPoseTrackerLM> Ptr;
+  typedef std::shared_ptr<::v4r::ProjLKPoseTrackerLM const> ConstPtr;
 };
 
 /***************************** inline methods *******************************/
@@ -147,6 +146,6 @@ inline bool ProjLKPoseTrackerLM::contains(const std::vector<int> &idx, int num) 
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

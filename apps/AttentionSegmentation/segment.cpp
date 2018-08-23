@@ -28,6 +28,7 @@
  * @version 0.1
  * @brief Segments complete scene.
  */
+#include <glog/logging.h>
 
 #include <stdio.h>  /* printf, scanf, puts, NULL */
 #include <stdlib.h> /* srand, rand */
@@ -38,15 +39,16 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/program_options.hpp>
 
 #include "v4r/attention_segmentation/EPEvaluation.h"
 #include "v4r/attention_segmentation/PCLUtils.h"
 #include "v4r/attention_segmentation/segmentation.h"
 
+namespace {
 void readData(std::string filename, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pcl_cloud,
               pcl::PointCloud<pcl::PointXYZRGBL>::Ptr &pcl_cloud_l) {
   if (!(pclAddOns::readPointCloud<pcl::PointXYZRGBL>(filename.c_str(), pcl_cloud_l))) {
-    // exit(0);
     if (!(pclAddOns::readPointCloud<pcl::PointXYZRGB>(filename.c_str(), pcl_cloud))) {
       exit(0);
     }
@@ -105,129 +107,265 @@ void showSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, cv::Mat &kIm
     }
   }
 }
+}  // namespace
 
-void printUsage(char *av) {
-  printf(
-      "Usage: %s cloud.pcd model.txt scaling_params.txt [save_image.png times_file.txt evaluation.txt]\n"
-      " Options:\n"
-      "   [-h] ... show this help.\n"
-      "   cloud.pcd            ... specify rgbd-image filename\n"
-      "   model.txt            ... model filename\n"
-      "   scaling_params.txt   ... file with scaling params\n"
-      "   save_image.png       ... image with segmentation results\n"
-      "   times.txt            ... file to write times to\n"
-      "   evaluation.txt       ... file to write segmentation evaluation\n",
-      av);
-  std::cout << " Example: " << av
-            << " cloud.pcd model.txt scaling_params.txt [save_image.png times.txt evaluation.txt] " << std::endl;
-}
+// int main(int argc, char *argv[]) {
+//  if (argc < 4) {
+//    printUsage(argv[0]);
+//    exit(0);
+//  }
 
-int main(int argc, char *argv[]) {
-  if (argc < 4) {
-    printUsage(argv[0]);
-    exit(0);
-  }
+//  std::string rgbd_filename = argv[1];
+//  std::string model_file_name = argv[2];
+//  std::string scaling_params_name = argv[3];
 
-  std::string rgbd_filename = argv[1];
-  std::string model_file_name = argv[2];
-  std::string scaling_params_name = argv[3];
+//  bool saveImage = false;
+//  std::string save_image_filename;
+//  if (argc >= 5) {
+//    saveImage = true;
+//    save_image_filename = argv[4];
+//  }
 
+//  bool writeTime = false;
+//  std::string times_filename;
+//  if (argc >= 6) {
+//    writeTime = true;
+//    times_filename = argv[5];
+//  }
+
+//  bool writeEvaluation = false;
+//  std::string evaluation_filename;
+//  if (argc >= 7) {
+//    writeEvaluation = true;
+//    evaluation_filename = argv[6];
+//  }
+
+//  pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l(new pcl::PointCloud<pcl::PointXYZRGBL>());  ///< labeled
+//  pcl-cloud pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud(
+//      new pcl::PointCloud<pcl::PointXYZRGB>());  ///< original pcl point cloud
+
+//  readData(rgbd_filename, pcl_cloud, pcl_cloud_l);
+
+//  v4r::Segmenter segmenter;
+//  segmenter.setPointCloud(pcl_cloud);
+//  segmenter.setModelFilename(model_file_name);
+//  segmenter.setScaling(scaling_params_name);
+
+//  segmenter.segment();
+
+//  if (writeTime) {
+//    v4r::TimeEstimates tEst = segmenter.getTimeEstimates();
+//    FILE *f;
+//    // check if file exists
+//    if (!boost::filesystem::exists(times_filename)) {
+//      f = fopen(times_filename.c_str(), "a");
+//      fprintf(f, "%12s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s\n", "image_name", "normals",
+//              "patches", "patchImage", "neighbours", "border", "preRelations", "initModelSurf", "SurfModelling",
+//              "relations", "graphSegment", "maskCreation", "total");
+//    } else {
+//      f = fopen(times_filename.c_str(), "a");
+//    }
+
+//    assert(tEst.times_surfaceModelling.size() == 1);
+//    assert(tEst.times_relationsComputation.size() == 1);
+//    assert(tEst.times_relationsComputation.size() == 1);
+//    assert(tEst.times_graphBasedSegmentation.size() == 1);
+//    assert(tEst.times_maskCreation.size() == 1);
+
+//    boost::filesystem::path rgbd_filename_path(rgbd_filename);
+//    fprintf(f, "%12s %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld\n",
+//            rgbd_filename_path.filename().c_str(), tEst.time_normalsCalculation, tEst.time_patchesCalculation,
+//            tEst.time_patchImageCalculation, tEst.time_neighborsCalculation, tEst.time_borderCalculation,
+//            tEst.time_relationsPreComputation, tEst.time_initModelSurfaces, tEst.times_surfaceModelling.at(0),
+//            tEst.times_relationsComputation.at(0), tEst.times_graphBasedSegmentation.at(0),
+//            tEst.times_maskCreation.at(0), tEst.time_total);
+
+//    fclose(f);
+//  }
+
+//  // if we are not saving something -- show it
+//  if (!saveImage) {
+//    std::vector<cv::Mat> masks = segmenter.getMasks();
+//    assert(masks.size() == 1);
+
+//    cv::Mat kImage;
+//    showSegmentation(pcl_cloud, kImage, masks.at(0));
+
+//    cv::imshow("kImage", kImage);
+//    cv::waitKey(-1);
+
+//    return (0);
+//  }
+
+//  if (saveImage) {
+//    std::vector<cv::Mat> masks = segmenter.getMasks();
+//    assert(masks.size() == 1);
+
+//    cv::Mat kImage;
+//    showSegmentation(pcl_cloud, kImage, masks.at(0));
+
+//    cv::imwrite(save_image_filename, kImage);
+
+//    std::string mask_name = save_image_filename + "_mask.png";
+//    cv::imwrite(mask_name, masks.at(0));
+//  }
+
+//  if (writeEvaluation) {
+//    std::vector<cv::Mat> masks = segmenter.getMasks();
+//    assert(masks.size() == 1);
+//    EPEvaluation::evaluate(pcl_cloud_l, masks.at(0), rgbd_filename, evaluation_filename);
+//  }
+
+//  return (0);
+//}
+
+int main(int argc, char **argv) {
+  namespace po = boost::program_options;
+  // FLAGS_logtostderr = 1;
+  // FLAGS_v = 1;
+
+  std::string rgbd_filename("");
+  std::string model_file_name("");
+  std::string scaling_params_name("");
+  std::string save_image_filename("");
+  std::string times_filename("");
+  std::string evaluation_filename("");
   bool saveImage = false;
-  std::string save_image_filename;
-  if (argc >= 5) {
-    saveImage = true;
-    save_image_filename = argv[4];
-  }
-
   bool writeTime = false;
-  std::string times_filename;
-  if (argc >= 6) {
-    writeTime = true;
-    times_filename = argv[5];
-  }
-
   bool writeEvaluation = false;
-  std::string evaluation_filename;
-  if (argc >= 7) {
-    writeEvaluation = true;
-    evaluation_filename = argv[6];
+
+  po::options_description desc(
+      "Object Segmentation Example\n======================================\nSupports google logging. Example: "
+      "activating output on console + setting verbose "
+      "level:\nGLOG_logtostderr=1 "
+      "GLOG_v=1 ./segment -p input.pcd -m "
+      "ST-TrainAll.txt.model -s "
+      "ST-TrainAll.txt.scalingparams\n======================================\n**Allowed options");
+  desc.add_options()("help,h", "produce helpmessage")(
+      "pointcloud,p", po::value<std::string>(&rgbd_filename)->required()->value_name("FILEPATH"), "pointcloud file")(
+      "model,m", po::value<std::string>(&model_file_name)->required()->value_name("FILEPATH"), "svm model file")(
+      "scale,s", po::value<std::string>(&scaling_params_name)->required()->value_name("FILEPATH"), "svm scaling file")(
+      "output,o", po::value<std::string>(&save_image_filename)->value_name("FILEPATH"), "save output to file")(
+      "times,t", po::value<std::string>(&times_filename)->value_name("FILEPATH"), "save runtimes to file")(
+      "eval,e", po::value<std::string>(&evaluation_filename)->value_name("FILEPATH"), "save evaluation to file");
+
+  po::variables_map vm;
+  po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
+  po::store(parsed, vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 0;
   }
 
-  pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l(new pcl::PointCloud<pcl::PointXYZRGBL>());  ///< labeled pcl-cloud
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud(
-      new pcl::PointCloud<pcl::PointXYZRGB>());  ///< original pcl point cloud
+  try {
+    po::notify(vm);
+  } catch (std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
+    return 1;
+  }
 
-  readData(rgbd_filename, pcl_cloud, pcl_cloud_l);
+  if (vm.count("output")) {
+    saveImage = true;
+  }
 
-  v4r::Segmenter segmenter;
-  segmenter.setPointCloud(pcl_cloud);
-  segmenter.setModelFilename(model_file_name);
-  segmenter.setScaling(scaling_params_name);
+  if (vm.count("times")) {
+    writeTime = true;
+  }
 
-  segmenter.segment();
+  if (vm.count("eval")) {
+    writeEvaluation = true;
+  }
 
-  if (writeTime) {
-    v4r::TimeEstimates tEst = segmenter.getTimeEstimates();
-    FILE *f;
-    // check if file exists
-    if (!boost::filesystem::exists(times_filename)) {
-      f = fopen(times_filename.c_str(), "a");
-      fprintf(f, "%12s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s\n", "image_name", "normals",
-              "patches", "patchImage", "neighbours", "border", "preRelations", "initModelSurf", "SurfModelling",
-              "relations", "graphSegment", "maskCreation", "total");
-    } else {
-      f = fopen(times_filename.c_str(), "a");
+  // init logging
+  google::InitGoogleLogging(argv[0]);
+
+  // start segmenter call
+  try {
+    pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l(
+        new pcl::PointCloud<pcl::PointXYZRGBL>());  ///< labeled pcl-cloud
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud(
+        new pcl::PointCloud<pcl::PointXYZRGB>());  ///< original pcl point cloud
+
+    readData(rgbd_filename, pcl_cloud, pcl_cloud_l);
+
+    v4r::Segmenter segmenter;
+    segmenter.setPointCloud(pcl_cloud);
+    segmenter.setModelFilename(model_file_name);
+    segmenter.setScaling(scaling_params_name);
+
+    LOG(INFO) << "starting segmentation";
+    segmenter.segment();
+    LOG(INFO) << "finished segmentation";
+
+    if (writeTime) {
+      v4r::TimeEstimates tEst = segmenter.getTimeEstimates();
+      FILE *f;
+      // check if file exists
+      if (!boost::filesystem::exists(times_filename)) {
+        f = fopen(times_filename.c_str(), "a");
+        fprintf(f, "%12s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s %20s\n", "image_name", "normals",
+                "patches", "patchImage", "neighbours", "border", "preRelations", "initModelSurf", "SurfModelling",
+                "relations", "graphSegment", "maskCreation", "total");
+      } else {
+        f = fopen(times_filename.c_str(), "a");
+      }
+
+      assert(tEst.times_surfaceModelling.size() == 1);
+      assert(tEst.times_relationsComputation.size() == 1);
+      assert(tEst.times_relationsComputation.size() == 1);
+      assert(tEst.times_graphBasedSegmentation.size() == 1);
+      assert(tEst.times_maskCreation.size() == 1);
+
+      boost::filesystem::path rgbd_filename_path(rgbd_filename);
+      fprintf(f, "%12s %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld\n",
+              rgbd_filename_path.filename().c_str(), tEst.time_normalsCalculation, tEst.time_patchesCalculation,
+              tEst.time_patchImageCalculation, tEst.time_neighborsCalculation, tEst.time_borderCalculation,
+              tEst.time_relationsPreComputation, tEst.time_initModelSurfaces, tEst.times_surfaceModelling.at(0),
+              tEst.times_relationsComputation.at(0), tEst.times_graphBasedSegmentation.at(0),
+              tEst.times_maskCreation.at(0), tEst.time_total);
+
+      fclose(f);
     }
 
-    assert(tEst.times_surfaceModelling.size() == 1);
-    assert(tEst.times_relationsComputation.size() == 1);
-    assert(tEst.times_relationsComputation.size() == 1);
-    assert(tEst.times_graphBasedSegmentation.size() == 1);
-    assert(tEst.times_maskCreation.size() == 1);
+    // write evaluation
+    if (writeEvaluation) {
+      std::vector<cv::Mat> masks = segmenter.getMasks();
+      assert(masks.size() == 1);
+      EPEvaluation::evaluate(pcl_cloud_l, masks.at(0), rgbd_filename, evaluation_filename);
+    }
 
-    boost::filesystem::path rgbd_filename_path(rgbd_filename);
-    fprintf(f, "%12s %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld %20lld\n",
-            rgbd_filename_path.filename().c_str(), tEst.time_normalsCalculation, tEst.time_patchesCalculation,
-            tEst.time_patchImageCalculation, tEst.time_neighborsCalculation, tEst.time_borderCalculation,
-            tEst.time_relationsPreComputation, tEst.time_initModelSurfaces, tEst.times_surfaceModelling.at(0),
-            tEst.times_relationsComputation.at(0), tEst.times_graphBasedSegmentation.at(0),
-            tEst.times_maskCreation.at(0), tEst.time_total);
+    // if we are not saving something -- show it
+    if (!saveImage) {
+      std::vector<cv::Mat> masks = segmenter.getMasks();
+      assert(masks.size() == 1);
 
-    fclose(f);
+      cv::Mat kImage;
+      showSegmentation(pcl_cloud, kImage, masks.at(0));
+
+      cv::imshow("kImage", kImage);
+      cv::waitKey(-1);
+
+      return 0;
+    }
+
+    if (saveImage) {
+      std::vector<cv::Mat> masks = segmenter.getMasks();
+      assert(masks.size() == 1);
+
+      cv::Mat kImage;
+      showSegmentation(pcl_cloud, kImage, masks.at(0));
+
+      cv::imwrite(save_image_filename, kImage);
+
+      std::string mask_name = save_image_filename + "_mask.png";
+      cv::imwrite(mask_name, masks.at(0));
+    }
+
+  } catch (std::exception &e) {
+    LOG(ERROR) << "Error while executing segmentation: " << e.what();
+    return 1;
   }
 
-  // if we are not saving something -- show it
-  if (!saveImage) {
-    std::vector<cv::Mat> masks = segmenter.getMasks();
-    assert(masks.size() == 1);
-
-    cv::Mat kImage;
-    showSegmentation(pcl_cloud, kImage, masks.at(0));
-
-    cv::imshow("kImage", kImage);
-    cv::waitKey(-1);
-
-    return (0);
-  }
-
-  if (saveImage) {
-    std::vector<cv::Mat> masks = segmenter.getMasks();
-    assert(masks.size() == 1);
-
-    cv::Mat kImage;
-    showSegmentation(pcl_cloud, kImage, masks.at(0));
-
-    cv::imwrite(save_image_filename, kImage);
-
-    std::string mask_name = save_image_filename + "_mask.png";
-    cv::imwrite(mask_name, masks.at(0));
-  }
-
-  if (writeEvaluation) {
-    std::vector<cv::Mat> masks = segmenter.getMasks();
-    assert(masks.size() == 1);
-    EPEvaluation::evaluate(pcl_cloud_l, masks.at(0), rgbd_filename, evaluation_filename);
-  }
-
-  return (0);
+  return 0;
 }

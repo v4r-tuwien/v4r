@@ -50,19 +50,17 @@ struct MiddlePoint {
   float distance;
   pcl::Normal normal;
   pcl::PointXYZ point;
-  MiddlePoint();
+  MiddlePoint() {
+    num = 0;
+    distance = 0;
+    normal.normal[0] = 0;
+    normal.normal[1] = 0;
+    normal.normal[2] = 0;
+    point.x = 0;
+    point.y = 0;
+    point.z = 0;
+  }
 };
-
-MiddlePoint::MiddlePoint() {
-  num = 0;
-  distance = 0;
-  normal.normal[0] = 0;
-  normal.normal[1] = 0;
-  normal.normal[2] = 0;
-  point.x = 0;
-  point.y = 0;
-  point.z = 0;
-}
 
 class V4R_EXPORTS Symmetry3DMap : public BaseMap {
  private:

@@ -7,7 +7,7 @@ Following these guidelines helps to communicate that you respect the time of the
 
 ## Dependencies
 V4R is an open-source project with the goal to be easily installed on different platforms by providing released Debian packages for Ubuntu systems. To allow packaging the V4R library, all dependencies need to be defined in `package.xml`. The required names for specific packages can be found [here](https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml). Packages not included in this list need to be added as [3rdparty libraries](https://rgit.acin.tuwien.ac.at/v4r/v4r_internal/wikis/how-to-add-third-party-dependency) to V4R. Whenever possible, try to depend on packaged libraries. This especially applies to PCL and OpenCV. Currently this means contribute your code such that it is compatible to PCL 1.7.2 and OpenCV 2.4.9.  
-Also, even though V4R stands for Vision for Robotics, our library is independent of ROS. If you need a ROS component, put your core algorithms into this V4R library and create wrapper interfaces in the seperate [v4r_ros_wrappers repository](https://rgit.acin.tuwien.ac.at/v4r/v4r_ros_wrappers).
+Also, even though V4R stands for Vision for Robotics, our library is independent of ROS. If you need a ROS component, put your core algorithms into this V4R library and create wrapper interfaces in the separate [v4r_ros_wrappers repository](https://rgit.acin.tuwien.ac.at/v4r/v4r_ros_wrappers).
 
 ## Using the issue tracker
 
@@ -18,7 +18,7 @@ The issue tracker for [internal](https://rgit.acin.tuwien.ac.at/v4r/v4r_internal
 ## Pull requests
 
 Pull requests let you tell others about changes you've pushed to a repository on GitHub. Once a pull request is sent, interested parties can review the set of changes, discuss potential modifications, and even push follow-up commits if necessary. Therefore, this is the preferred way of pushing your changes - **do not** push your changes directly onto the master branch!
-Also, keep your pull requests small and focussed on a specific issue/feature. Do not accumulate months of changes into a single pull request! Such a pull request can not be reviewed!
+Also, keep your pull requests small and focused on a specific issue/feature. Do not accumulate months of changes into a single pull request! Such a pull request can not be reviewed!
 
 Good pull requests - patches, improvements, new features - are a fantastic help. They should remain focused in scope and avoid containing unrelated commits.
 
@@ -110,7 +110,7 @@ As V4R additionally grants the authors of the files to use **their** code contri
 
 <a name="structure"></a>
 ## Structure
-The repostiory consists of several folders and files containing specific parts of the library. This section gives a short introduction to the most important ones.
+The repository consists of several folders and files containing specific parts of the library. This section gives a short introduction to the most important ones.
 
 ### ./3rdparty
 See Dependencies.

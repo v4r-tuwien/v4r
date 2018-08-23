@@ -39,34 +39,31 @@
 
 #include <pcl/filters/project_inliers.h>
 #include <v4r/core/macros.h>
-#include "v4r/attention_segmentation/convertions.h"
+#include "v4r/attention_segmentation/conversions.h"
+
+#include "v4r/attention_segmentation/math.h"
 
 namespace v4r {
-
-float dotProduct(Eigen::Vector3f v1, Eigen::Vector3f v2);
-float dotProduct(Eigen::Vector3f v1, Eigen::Vector3f v2) {
+float dotProduct(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
   return (v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]);
 }
 
-float dotProduct(cv::Point3f v1, cv::Point3f v2);
-float dotProduct(cv::Point3f v1, cv::Point3f v2) {
+float dotProduct(const cv::Point3f &v1, const cv::Point3f &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
   v1_[2] = v1.z;
   v2_[0] = v2.x;
-  v1_[2] = v2.y;
+  v2_[1] = v2.y;
   v2_[2] = v2.z;
   return (dotProduct(v1_, v2_));
 }
 
-float vectorLength(Eigen::Vector3f v);
-float vectorLength(Eigen::Vector3f v) {
+float vectorLength(const Eigen::Vector3f &v) {
   return (sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
 }
 
-float vectorLength(cv::Point3d v);
-float vectorLength(cv::Point3d v) {
+float vectorLength(const cv::Point3d &v) {
   Eigen::Vector3f v_;
   v_[0] = v.x;
   v_[1] = v.y;
@@ -74,8 +71,7 @@ float vectorLength(cv::Point3d v) {
   return (vectorLength(v_));
 }
 
-float calculateCosine(Eigen::Vector3f v1, Eigen::Vector3f v2);
-float calculateCosine(Eigen::Vector3f v1, Eigen::Vector3f v2) {
+float calculateCosine(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
   float v1len = vectorLength(v1);
   float v2len = vectorLength(v2);
 
@@ -87,7 +83,7 @@ float calculateCosine(Eigen::Vector3f v1, Eigen::Vector3f v2) {
   return (cosine);
 }
 
-float calculateCosine(cv::Point3d v1, cv::Point3d v2) {
+float calculateCosine(const cv::Point3d &v1, const cv::Point3d &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
@@ -124,7 +120,7 @@ cv::Point3d normalize(cv::Point3d v) {
   return (v);
 }
 
-Eigen::Vector3f crossProduct(Eigen::Vector3f v1, Eigen::Vector3f v2) {
+Eigen::Vector3f crossProduct(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
   Eigen::Vector3f v;
   v[0] = v1[1] * v2[2] - v1[2] * v2[1];
   v[1] = v1[2] * v2[0] - v1[0] * v2[2];
@@ -133,7 +129,7 @@ Eigen::Vector3f crossProduct(Eigen::Vector3f v1, Eigen::Vector3f v2) {
   return (v);
 }
 
-cv::Point3d crossProduct(cv::Point3d v1, cv::Point3d v2) {
+cv::Point3d crossProduct(const cv::Point3d &v1, const cv::Point3d &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
@@ -149,7 +145,7 @@ cv::Point3d crossProduct(cv::Point3d v1, cv::Point3d v2) {
   return (v);
 }
 
-Eigen::Vector3f crossProduct(Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f p3) {
+Eigen::Vector3f crossProduct(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2, const Eigen::Vector3f &p3) {
   Eigen::Vector3f v1, v2;
   v1[0] = p1[0] - p2[0];
   v1[1] = p1[1] - p2[1];
@@ -160,7 +156,7 @@ Eigen::Vector3f crossProduct(Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vect
   return (crossProduct(v1, v2));
 }
 
-cv::Point3d crossProduct(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3) {
+cv::Point3d crossProduct(const cv::Point3d &p1, const cv::Point3d &p2, const cv::Point3d &p3) {
   Eigen::Vector3f v1, v2;
   v1[0] = p1.x - p2.x;
   v1[1] = p1.y - p2.y;
@@ -176,25 +172,25 @@ cv::Point3d crossProduct(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3) {
   return (v);
 }
 
-Eigen::Vector3f calculatePlaneNormal(Eigen::Vector3f v1, Eigen::Vector3f v2) {
+Eigen::Vector3f calculatePlaneNormal(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
   Eigen::Vector3f v = crossProduct(v1, v2);
   v = normalize(v);
   return (v);
 }
 
-Eigen::Vector3f calculatePlaneNormal(Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f p3) {
+Eigen::Vector3f calculatePlaneNormal(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2, const Eigen::Vector3f &p3) {
   Eigen::Vector3f v = crossProduct(p1, p2, p3);
   v = normalize(v);
   return (v);
 }
 
-cv::Point3d calculatePlaneNormal(cv::Point3d v1, cv::Point3d v2) {
+cv::Point3d calculatePlaneNormal(const cv::Point3d &v1, const cv::Point3d &v2) {
   cv::Point3d v = crossProduct(v1, v2);
   v = normalize(v);
   return (v);
 }
 
-cv::Point3d calculatePlaneNormal(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3) {
+cv::Point3d calculatePlaneNormal(const cv::Point3d &p1, const cv::Point3d &p2, const cv::Point3d &p3) {
   cv::Point3d v = crossProduct(p1, p2, p3);
   v = normalize(v);
   return (v);
@@ -202,7 +198,7 @@ cv::Point3d calculatePlaneNormal(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3)
 
 #ifndef NOT_USE_PCL
 
-float dotProduct(pcl::Normal v1, pcl::Normal v2) {
+float dotProduct(const pcl::Normal &v1, const pcl::Normal &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.normal[0];
   v1_[1] = v1.normal[1];
@@ -213,7 +209,7 @@ float dotProduct(pcl::Normal v1, pcl::Normal v2) {
   return (dotProduct(v1_, v2_));
 }
 
-float dotProduct(pcl::PointXYZ v1, pcl::PointXYZ v2) {
+float dotProduct(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
@@ -224,7 +220,7 @@ float dotProduct(pcl::PointXYZ v1, pcl::PointXYZ v2) {
   return (dotProduct(v1_, v2_));
 }
 
-float vectorLength(pcl::Normal v) {
+float vectorLength(const pcl::Normal &v) {
   Eigen::Vector3f v_;
   v_[0] = v.normal[0];
   v_[1] = v.normal[1];
@@ -232,7 +228,7 @@ float vectorLength(pcl::Normal v) {
   return (vectorLength(v_));
 }
 
-float vectorLength(pcl::PointXYZ v) {
+float vectorLength(const pcl::PointXYZ &v) {
   Eigen::Vector3f v_;
   v_[0] = v.x;
   v_[1] = v.y;
@@ -240,7 +236,7 @@ float vectorLength(pcl::PointXYZ v) {
   return (vectorLength(v_));
 }
 
-V4R_EXPORTS float calculateCosine(pcl::Normal v1, pcl::Normal v2) {
+V4R_EXPORTS float calculateCosine(const pcl::Normal &v1, const pcl::Normal &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.normal[0];
   v1_[1] = v1.normal[1];
@@ -251,7 +247,7 @@ V4R_EXPORTS float calculateCosine(pcl::Normal v1, pcl::Normal v2) {
   return (calculateCosine(v1_, v2_));
 }
 
-float calculateCosine(pcl::PointXYZ v1, pcl::PointXYZ v2) {
+float calculateCosine(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
@@ -286,7 +282,7 @@ pcl::PointXYZ normalize(pcl::PointXYZ v) {
   return (v);
 }
 
-pcl::Normal crossProduct(pcl::Normal v1, pcl::Normal v2) {
+pcl::Normal crossProduct(const pcl::Normal &v1, const pcl::Normal &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.normal[0];
   v1_[1] = v1.normal[1];
@@ -302,7 +298,7 @@ pcl::Normal crossProduct(pcl::Normal v1, pcl::Normal v2) {
   return (v);
 }
 
-pcl::PointXYZ crossProduct(pcl::PointXYZ v1, pcl::PointXYZ v2) {
+pcl::PointXYZ crossProduct(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2) {
   Eigen::Vector3f v1_, v2_;
   v1_[0] = v1.x;
   v1_[1] = v1.y;
@@ -318,7 +314,7 @@ pcl::PointXYZ crossProduct(pcl::PointXYZ v1, pcl::PointXYZ v2) {
   return (v);
 }
 
-pcl::Normal crossProduct(pcl::Normal p1, pcl::Normal p2, pcl::Normal p3) {
+pcl::Normal crossProduct(const pcl::Normal &p1, const pcl::Normal &p2, const pcl::Normal &p3) {
   Eigen::Vector3f v1, v2;
   v1[0] = p1.normal[0] - p2.normal[0];
   v1[1] = p1.normal[1] - p2.normal[1];
@@ -334,7 +330,7 @@ pcl::Normal crossProduct(pcl::Normal p1, pcl::Normal p2, pcl::Normal p3) {
   return (v);
 }
 
-pcl::PointXYZ crossProduct(pcl::PointXYZ p1, pcl::PointXYZ p2, pcl::PointXYZ p3) {
+pcl::PointXYZ crossProduct(const pcl::PointXYZ &p1, const pcl::PointXYZ &p2, const pcl::PointXYZ &p3) {
   Eigen::Vector3f v1, v2;
   v1[0] = p1.x - p2.x;
   v1[1] = p1.y - p2.y;
@@ -350,25 +346,25 @@ pcl::PointXYZ crossProduct(pcl::PointXYZ p1, pcl::PointXYZ p2, pcl::PointXYZ p3)
   return (v);
 }
 
-V4R_EXPORTS pcl::Normal calculatePlaneNormal(pcl::Normal v1, pcl::Normal v2) {
+V4R_EXPORTS pcl::Normal calculatePlaneNormal(const pcl::Normal &v1, const pcl::Normal &v2) {
   pcl::Normal v = crossProduct(v1, v2);
   v = normalize(v);
   return (v);
 }
 
-pcl::Normal calculatePlaneNormal(pcl::Normal p1, pcl::Normal p2, pcl::Normal p3) {
+pcl::Normal calculatePlaneNormal(const pcl::Normal &p1, const pcl::Normal &p2, const pcl::Normal &p3) {
   pcl::Normal v = crossProduct(p1, p2, p3);
   v = normalize(v);
   return (v);
 }
 
-pcl::PointXYZ calculatePlaneNormal(pcl::PointXYZ v1, pcl::PointXYZ v2) {
+pcl::PointXYZ calculatePlaneNormal(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2) {
   pcl::PointXYZ v = crossProduct(v1, v2);
   v = normalize(v);
   return (v);
 }
 
-pcl::PointXYZ calculatePlaneNormal(pcl::PointXYZ p1, pcl::PointXYZ p2, pcl::PointXYZ p3) {
+pcl::PointXYZ calculatePlaneNormal(const pcl::PointXYZ &p1, const pcl::PointXYZ &p2, const pcl::PointXYZ &p3) {
   pcl::PointXYZ v = crossProduct(p1, p2, p3);
   v = normalize(v);
   return (v);
@@ -380,7 +376,7 @@ V4R_EXPORTS void ProjectPointsOnThePlane(pcl::ModelCoefficients::ConstPtr coeffi
                                          pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
                                          pcl::PointCloud<pcl::PointXYZRGB>::Ptr points_projected,
                                          std::vector<float> &distances, pcl::PointIndices::Ptr indices,
-                                         bool normalize = true) {
+                                         bool normalize) {
   if ((indices->indices.size()) == 0) {
     indices->indices.resize(cloud->size());
     for (unsigned int i = 0; i < cloud->size(); ++i) {

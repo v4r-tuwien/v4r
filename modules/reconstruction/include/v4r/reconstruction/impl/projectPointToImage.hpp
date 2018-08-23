@@ -65,6 +65,6 @@ inline void projectPointToImage(const T1 p[3], const T2 C[9], const T3 D[8], T4 
   i[1] = yd * C[4] + C[5];
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

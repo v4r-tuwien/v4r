@@ -50,9 +50,9 @@
 
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -107,8 +107,8 @@ class V4R_EXPORTS RigidTransformationRANSAC {
   int compute(const std::vector<Eigen::Vector3f> &srcPts, const std::vector<Eigen::Vector3f> &tgtPts,
               Eigen::Matrix4f &transform, std::vector<int> &inliers);
 
-  typedef SmartPtr<::v4r::RigidTransformationRANSAC> Ptr;
-  typedef SmartPtr<::v4r::RigidTransformationRANSAC const> ConstPtr;
+  typedef std::shared_ptr<::v4r::RigidTransformationRANSAC> Ptr;
+  typedef std::shared_ptr<::v4r::RigidTransformationRANSAC const> ConstPtr;
 };
 
 /*********************** INLINE METHODES **************************/
@@ -124,6 +124,6 @@ inline void RigidTransformationRANSAC::InvPose(const Eigen::Matrix4f &pose, Eige
   invPose_.block<3, 3>(0, 0) = pose.block<3, 3>(0, 0).transpose();
   invPose_.block<3, 1>(0, 3) = -1 * (invPose_.block<3, 3>(0, 0) * pose.block<3, 1>(0, 3));
 }
-}
+}  // namespace v4r
 
 #endif

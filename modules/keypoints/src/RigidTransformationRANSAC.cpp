@@ -258,9 +258,9 @@ int RigidTransformationRANSAC::compute(const std::vector<Eigen::Vector3f> &srcPt
                                        const std::vector<Eigen::Vector3f> &tgtPts, Eigen::Matrix4f &transform,
                                        std::vector<int> &inliers) {
   if (srcPts.size() < 4 || srcPts.size() != tgtPts.size())
-    throw std::runtime_error("[RigidTransformationRANSAC::estimateRigidTransformationSVD] Invalide points!");
+    throw std::runtime_error("[RigidTransformationRANSAC::estimateRigidTransformationSVD] Invalid points!");
 
   return Ransac(srcPts, tgtPts, transform, inliers);
 }
 
-}  //-- THE END --
+}  // namespace v4r

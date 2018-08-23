@@ -62,7 +62,7 @@ namespace v4r {
 template <typename PointT>
 class V4R_EXPORTS LocalObjectHypothesis {
  private:
-  mutable boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_;
+  mutable pcl::visualization::PCLVisualizer::Ptr vis_;
 
  public:
   std::string model_id_;  ///< object model identifier
@@ -90,9 +90,9 @@ class V4R_EXPORTS LocalObjectHypothesis {
     return i.distance < j.distance;
   }
 
-  typedef boost::shared_ptr<LocalObjectHypothesis<PointT>> Ptr;
-  typedef boost::shared_ptr<const LocalObjectHypothesis<PointT>> ConstPtr;
+  typedef std::shared_ptr<LocalObjectHypothesis<PointT>> Ptr;
+  typedef std::shared_ptr<const LocalObjectHypothesis<PointT>> ConstPtr;
 };
-}
+}  // namespace v4r
 
 #endif

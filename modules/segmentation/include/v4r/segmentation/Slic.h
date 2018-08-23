@@ -62,6 +62,6 @@ class V4R_EXPORTS Slic {
   static void convertRGBtoLAB(const cv::Mat_<cv::Vec3b> &im_rgb, cv::Mat_<cv::Vec3d> &im_lab);
   static void convertRGBtoLAB(const double r, const double g, const double b, double &labL, double &labA, double &labB);
 };
-}
+}  // namespace v4r
 
 #endif  // -- THE END --

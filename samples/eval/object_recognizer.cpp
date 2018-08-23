@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
       "test_dir,t", po::value<std::string>(&test_dir)->required(),
       "Directory with test scenes stored as point clouds (.pcd). The camera pose is taken directly from the pcd header "
       "fields \"sensor_orientation_\" and \"sensor_origin_\" (if the test directory contains subdirectories, each "
-      "subdirectory is considered as seperate sequence for multiview recognition)")(
+      "subdirectory is considered as separate sequence for multiview recognition)")(
       "visualize,v", po::bool_switch(&visualize), "visualize recognition results")(
       "chop_z,z", po::value<double>(&chop_z)->default_value(chop_z, boost::str(boost::format("%.2e") % chop_z)),
       "points with z-component higher than chop_z_ will be ignored (low chop_z reduces computation time and false "

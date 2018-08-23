@@ -48,7 +48,7 @@
 #pragma once
 
 #include <pcl/common/io.h>
-#include <v4r/common/camera.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/keypoints/keypoint_extractor.h>
 #include <boost/program_options.hpp>
 
@@ -58,7 +58,7 @@ namespace v4r {
 
 class V4R_EXPORTS NarfKeypointExtractorParameter {
  public:
-  v4r::Camera::ConstPtr cam_;
+  Intrinsics cam_;
   float noise_level_;
   float minimum_range_;
   float support_size_;
@@ -68,12 +68,10 @@ class V4R_EXPORTS NarfKeypointExtractorParameter {
   float min_surface_change_score_;
   int optimal_range_image_patch_size_;
 
-  NarfKeypointExtractorParameter()
-  : noise_level_(0.f), minimum_range_(0.f), support_size_(0.2f), min_distance_between_interest_points_(0.25f),
-    optimal_distance_to_high_surface_change_(0.25f), min_interest_value_(0.45), min_surface_change_score_(0.2f),
-    optimal_range_image_patch_size_(10) {
-    cam_.reset(new v4r::Camera());
-  }
+  NarfKeypointExtractorParameter(const Intrinsics &cam = Intrinsics::PrimeSense())
+  : cam_(cam), noise_level_(0.f), minimum_range_(0.f), support_size_(0.2f),
+    min_distance_between_interest_points_(0.25f), optimal_distance_to_high_surface_change_(0.25f),
+    min_interest_value_(0.45), min_surface_change_score_(0.2f), optimal_range_image_patch_size_(10) {}
 
   /**
    * @brief init parameters
@@ -137,7 +135,7 @@ class V4R_EXPORTS NarfKeypointExtractorParameter {
   /// \brief setCamera
   /// \param cam camera parameters (used for re-projection if point cloud is not organized)
   ///
-  void setCamera(const Camera::ConstPtr cam) {
+  void setCameraIntrinsics(const Intrinsics &cam) {
     cam_ = cam;
   }
 };
@@ -171,7 +169,7 @@ class V4R_EXPORTS NarfKeypointExtractor : public KeypointExtractor<PointT> {
     return keypoints_;
   }
 
-  typedef boost::shared_ptr<NarfKeypointExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<NarfKeypointExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<NarfKeypointExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<NarfKeypointExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

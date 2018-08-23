@@ -429,9 +429,6 @@ Changelog for package v4r
   Arrange them in lexicographical order
 * Contributors: Georg, Johann Prankl, Markus 'Bajo' Bajones, Markus Bajones, Sergey Alexandrov, Simon Schreiberhuber, Thomas Faeulhammer, Thomas Fäulhammer, Unknown, V4R Release Manager
 
-2.0.6 (2018-03-06)
-------------------
-
 2.0.5 (2018-01-19)
 ------------------
   Make sure the same OpenCV version is used to build both radical and V4R
@@ -452,7 +449,7 @@ Changelog for package v4r
 * fix some warnings
 * remove dead code
 * remove pcl serialization from header files
-  avoids potential mutiple definitions when linking to external libraries
+  avoids potential multiple definitions when linking to external libraries
   remove unused files
   improve readability for boost program options
   optimize includes
@@ -754,6 +751,1082 @@ Changelog for package v4r
   Arrange them in lexicographical order
 * Contributors: Georg, Johann Prankl, Markus 'Bajo' Bajones, Markus Bajones, Sergey Alexandrov, Simon Schreiberhuber, Thomas Faeulhammer, Thomas Fäulhammer, Unknown, V4R Release Manager
 
+2.0.8 (2018-08-23)
+------------------
+  some updates
+  use V4R namespace for intrinsics >> operator
+  fix bug in HV when smooth clustering is disabled
+* use V4R namespace for intrinsics >> operator
+* use struct instead of public class members
+* remove unneeded EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+* use template name PointT
+* use default destructor
+* use glog
+* fix bug in HV when smooth clustering is disabled
+* fix doc
+* :lipstick:
+* remove redundant code
+* fix clang compilation errors
+  remove redundant camera class
+  some updates
+* :lipstick:
+* fix Feature based view registration
+  fix clang errors
+* fix fast_icp compilation errors
+* remove redundant camera class
+* fix clang errors
+  :lipstick:
+* :lipstick:
+  Fix eigen alignment issues
+  Use new ceres version
+  fix object reco tutorial
+  add feature type stream operator
+  remove dead metrics file
+  fix spelling
+* use new ceres version 1.14
+  use git lfs for SIFTGPU source files
+* fix spelling
+* add feature type stream operator
+* fix object reco tutorial
+* remove dead metrics file
+* fix eigen alignment issues
+* use git lfs for SIFTGPU source files
+  Add libvtk-qt and freenect and sort package.xml entries
+* Add libvtk-qt and freenect and sort package.xml entries
+  fix spell checking errors
+* fix spell checking errors
+* Contributors: Markus Bajones, Sergey Alexandrov, Thomas Faeulhammer, Thomas Fäulhammer
+
+2.0.7 (2018-06-21)
+------------------
+  Introduce CI_ORIGIN_NAMESPACE variable in CI config
+* Introduce CI_ORIGIN_NAMESPACE variable in CI config
+  hv: remove dead params, fix bug for disabled smooth clustering
+* hv: remove dead params, fix bug for disabled smooth clustering
+  add camera parameter defaults to boost program options
+* add camera parameter defaults to boost program options
+  Thomasf/update object gt annotator
+* update Object Ground Truth Annotator
+  fix bug when depth_registration_mask  is empty
+* fix bug when depth_registration_mask  is empty
+  add V4R updates
+  use ${OPENGL_LIBRARIES}  instead of GL for cmake OpenGL library
+* use ${OPENGL_LIBRARIES}  instead of GL for cmake OpenGL library
+* add V4R updates
+  - removes METSLIB dependency
+  - implements own conditional clustering
+  - updates z-buffering
+  - some more HV updates
+  add const and override expressions
+  fixed cv::Mat segfault
+* add const and override expressions
+* fixed cv::Mat segfault
+  Master
+* bug fixes: alignment
+  Master
+  Remove repo.acin.tuwien.ac.at from v4r
+  fix bug when scene_explained_weights vector is uninitialized
+* fix bug when scene_explained_weights vector is uninitialized
+  <PointT> ereased to fix the color layer in the visualization
+  Enhance hv visualization
+* <PointT> ereased to fix the color layer in the visualization
+* fix bug in hv visualization due to using auto for Eigen bool vectors
+* some hv visualization improvement for smooth clusters
+* Finally remove last references to repo.acin.tuwien.ac.at
+* add missing variable
+* Fix download links
+* Remove old links from nyu preparation scripts.
+  Update gitlab-ci config
+* add missing name change
+* Update gitlab-ci config
+  Enable V4R_WARNINGS_ARE_ERRORS on bionic
+  Rename build script to emphasize that xenial needs to be treated in a special manner and bionic (and later releases hopefully) need not.
+* formatting...
+* 17.10 eigen stuff (memcpy instead of = operator)
+* style ...
+* on 17.10 eigen crashes. changed setIdentity to identity constructor and = operator to memcpy
+  remove unused parameter init functions
+* remove unused parameter init functions
+  fix bug in RTMT2
+  remove supervoxel code that generates warnings for newer PCL versions
+  Closes #62
+* remove unused variables in semantic segmenation which also fix warnings
+* remove supervoxel code that generates warnings for newer PCL versions
+  code was only used for visualization of supervoxels
+* fix bug in RTMT2
+  remove dead code (updated file already exists in samples/tools)
+* remove dead code (updated file already exists in samples/tools)
+  remove dead code
+* remove dead multiview object reco app code
+  remove deprecated typename for ObjectHypothesis object
+* remove deprecated typename for ObjectHypothesis object
+  Require at least PCL 1.7.2
+* Require at least PCL 1.7.2 and remove fallback code for earlier versions
+  Enable release builds using the new docker CI infrastructure
+* move to Dockerfile to reducetime spent in release builds
+* fix type
+  More constant conversions
+  update lsh parameters
+* Follow-up to !425, forgot to commit most of the changes.
+  Rename CV\_* color conversion constants to cv::COLOR\_*
+  enable checking for NaN values in extracted feature descriptors
+* update lsh parameters
+  speeds up matching
+* enable checking for NaN values in extracted feature descriptors
+  this can now handle both float and bool signature types
+* Rename CV\_* color conversion constants to cv::COLOR\_*
+  CV\_* style of constants is deprecated and will be removed from OpenCV 4.
+  The new style is supported by OpenCV 2.4, so not breaking anything with
+  this change.
+  fix wrong resize of indices vector
+* fix wrong resize of indices vector
+* Install debhelper for release builds
+* fix variable name
+  remove packages that we already installed during container creation
+* Reuse docker containers for release builds
+  Reduce warnings on Ubuntu 18.04
+* Fix some warnings with pcl 1.8 and gcc 7
+  use constructor depending on pcl version
+  do not create iterator if we don't use it
+  allow v4r object recognition to be tested on specific files also (rather than
+* allow v4r object recognition to be tested on specific files also (rather than
+* Set download file name for siftgpu
+* 3DEF new server url
+* move siftgpu to new server
+* Update 3d-net scripts.
+* We moved all data away from repo.acin.tuwien.ac.at. First step to do so in the code as well.
+  Make v4r compile on Ubuntu 18.04
+* switch back to v4r/mvs-texturing
+* Add Ubuntu 18.04 and ROS Melodic support to CI
+  add pointer typedef for depthmap renderer class
+* add pointer typedef for depthmap renderer class
+  fix bug in reading parameter for textured mesh tool
+* fix bug in reading parameter for textured mesh tool
+  Reorganize test data
+  Closes #60
+  Apply calibration
+* Minor Changes.
+  Remove hack, remove pcl 1.8 from CMakeLists.txt and add comments
+* Code Cleanup
+* Apply Calibration, Initial Commit
+* Reorganize test data directory
+  * Move data files under their respective module directory;
+  * Track data files with Git LFS.
+* Warn the user if test data file is not available
+  Fix compute recognition rate
+* output warning instead of error if input is empty for pcd2image convert
+* fix save images to disk when visualization is off
+* quit program if parameter input is not okay
+* move load models to avoid bug when externally setting object properties
+  :lipstick:
+* :lipstick:
+* update parameter initialization
+  simplify visualization for object reco
+* use correct view port
+* use correct point type for V4R models
+* fix eigen alignment issues
+* simplify visualization for object reco
+  add FREAK
+  :lipstick:
+* :lipstick:
+* update config so it runs for default libopencv-dev package
+* add FREAK
+  Motion Blur Detection.
+* Minor Changes and Updates
+  Doxygen
+  Minor fixes
+* Merge definition and declaration of MiddlePoint ctor to avoid multiple definition error
+* Fix a typo and remove trailing spaces in the style guide
+  add sample for mesh2pointcloud
+  Remove unneeded glog initialization
+* Remove unneeded glog initialization
+  This will be called inside ProgramOptions constructor.
+* Update v4r_style_guide.md
+* add sample for mesh2pointcloud
+  remove storing elapsed time from stopwatch destructor to fix seg fault
+* avoid redundant start time init
+* :lipstick:
+* use default argument for ScopeTime title
+* move StopWatch/ScopeTime to common
+* remove storing elapsed time from stopwatch destructor to fix seg fault
+* Motion Blur Detection.
+  Motion Blur Detection using the Variance of Laplacian (VL) and the Variance of a Modified Laplacian (VML)
+  use bf::path for filepaths in object model
+  Refactor feature stuff
+  remove deprecated image_local_estimator header
+* use bf::path for filepaths in object model
+* remove deprecated image_local_estimator header
+* fix compilation error for OpenCV 2.4
+* add SIFT GPU to object reco pipeline
+* set descriptor name by the combination of keypoint detector and feat est
+* make gray image a class member variable again
+* add boost options for ORB
+* group feature parameters into separate struct
+* use detectAndCompute for same keypoint detector and feat estimator
+* add ORB to object reco pipeline
+* use relative paths for class pointer typedefs
+* update names in error message
+* reduce scope of variable
+* make gray image a local variable as it is not used otherwise
+* add BRISK as iostream
+* fix bug in object local reco pipeline setup (confused feat detector and extractor)
+* add object mask to harris
+* add some featDet to object local reco pipeline setup and fix sift compilation error
+* use enum class for feature detectors
+* fix brisk compilation for opencv 2.4
+* use enum class for feature detectors
+* use right includes for opencv features
+* return by const reference
+* include sift only if xfeatures opencv module exists
+* add some modularity
+* clang format
+* make recognition pipeline setup easier by allowing only a single local 2D feature estimator
+* add brisk and mser to reco params
+* use relative namespace
+* add MSER
+* allow to split feature detection and description
+* return descriptor name
+* add const expression
+* return descriptor name
+* add brisk
+* fix FeatureDetector init in AKAZE and SURF
+* rename surf and akaze
+* convert AKAZE and SURF to FeautureDetector API
+* replace sift_local_estimator with FeatureDetector_KD_SIFTGPU
+* use FeatureDetector SIFT implementation for Feature Based registration
+* add static siftgpu matching function
+* use structs instead of classes for sift parameters
+  Add brute force matching possibility
+* add brute force matching possibility
+* fix compile error on OpenCV 2.4 with knnmatch
+* use flann-based matcher
+  Img loader
+* Minor Changes, remove opencv.hpp
+  make models dir required and some :lipstick:
+* ImgLoader
+  Adding Class to load all images from given folder
+  Refactor feature stuff
+* add include for cv::keypoint
+  Update v4r_style_guide
+* Update v4r_style_guide
+  Adding Required CLANG version (5.0), and  Update QtCreator's Beautifier Setup to be compliant with our coding style.
+* use American English for meters
+* :lipstick:
+* use CV_MAJOR_VERSION macro directly
+* add field for descriptor name
+* rename feature detector functions to match opencv names
+* add computation of keypoint indices
+* :lipstick:
+* add object mask as optional parameter
+* add override final specifiers
+* remove unused include
+* clang-format
+* include cv sift from hannes to cmakelists
+* allow to use OpenCV 3.x for SIFT
+* tidy up
+* add brief description
+* add brief description
+* merge autors
+* use pragma once
+* make models dir required and some :lipstick:
+  Master
+* formatting
+* missing include (Ubuntu 17.10)
+* added iostream.h (Ubuntu 17.10)
+* added type specification to std::min (Ubuntu 17.10, gcc 7.2.0 compatibility)
+  Filter out non-existent include directories when creating imported library
+* Filter out non-existent include directories when creating imported library
+  Remove code that detects compiler version
+* Remove code that detects compiler version
+  * It is not used anyway;
+  * It does not work with GCC 7.
+  Add StructureCore grabber
+* Add --overlay option to tool-grab
+* Support saving unprojected point clouds to disk in tool-grab
+* Add StructureCoreGrabber
+* Add StructureCore as a third-party dependency
+  Support auto-loading of calibrated intrinsics in OpenNI2 grabber
+* Update OpenNI2 grabber to auto-load intrinsics
+* Add Grabber::tryLoadIntrinsics()
+  This function attempts to load intrinsics from standard locations.
+* Add getDataDir/getConfigDir functions to filesystem.h
+* Initialize Glog in ProgramOptionsBase helper class
+* Log debug information in createGrabber() function
+* Add clear_cache_variables debug command
+  Update OpenNI2 finder script to search in OpenNI2_DIR first
+* Update OpenNI2 finder script to search in OpenNI2_DIR first
+  Builsystem updates
+* Move disabled warnings under "Noise warnings" section and enable
+* Minor cleanup in CMakeLists.txt
+* Rename V4RGenConfig -> V4RGenerateConfig
+* V4R does not support MSVC, no need to condition on GNUCXX
+* Fix no omit frame pointer option for clang
+* Update V4R_CPU_ARCH_NATIVE option
+  Now accepts ON/OFF/AUTO values. ON means force -march=native, OFF means
+  force no -march=native, and AUTO means use the same setting as PCL
+  (default).
+* Update v4r_option() macro
+  Remove support for "IF <condition>", added support for constrained value
+  list.
+* Set CMake policy 22 to NEW and 71 to OLD
+* Not necessary to append -DNDEBUG because CMake already adds it
+* Add v4r_prepend utility CMake function
+  Add MVSTexturing and remove ODM
+  Closes #32
+* Rename module surface_texturing into surface
+  This matches PCL naming.
+* Remove ODM texturing
+* Replace ODMTexturing with MVSTexturing in camera_tracking_and_mapping example
+* Replace ODMTexturing with MVSTexturing in RTMT2
+* Add a CLI tool to texture meshes
+* Add MVSTexturing class
+* Add MVSTexturing third-party dependency
+* Initialize Glog in RTMT2 to avoid logs spilling to console
+* Small clean-up in RTMT2 CMakeLists
+* Update tools/program_options.h
+  Rename addOptions() -> addGeneral(), add addOther().
+  RTMT2 refactorings and fixes
+* Fix a bug in RTMT2::Sensor
+  A local variable was passed over update_boundingbox() signal by
+  reference. By the time receiving thread processes the signal, the
+  variable goes out of scope, causing segfaults.
+  The approach taken in this fix is to store current bounding box
+  transform in a member field.
+* Use memcpy instead of operator= to avoid sporadical segfaults
+* Add EIGEN_MAKE_ALIGNED_OPERATOR_NEW to some classes
+  This is absolutely needed when a class contains fixed-size vectorizable
+  Eigen members (Matrix4f in this case) and is allocated on the heap
+  (which is the case for these classes).
+* Pass camera parameters using v4r::Intrinsics
+  In near future, in order to perform texturing, ObjectSegmentation needs
+  to know image dimensions. This information is contained in
+  v4r::Intrinsics structure. Therefore, it is more convenient to exchange
+  camera parameters through this struct rather than a combination of
+  cv::Mat and width/height.
+* Add const qualifiers to several methods
+* Add Intrinsics::fromCameraMatrixAndResolution() factory constructor
+* Rename Intrinsics::Kinect() into Intrinsics::PrimeSense()
+* Refactor triple into a struct to improve code readability
+  Additionally fixes Eigen alignment issues (a list containing Matrix4f
+  objects should use aligned allocator).
+  Modernize and tidy code in IO module
+* Modernize and tidy code in IO module
+  Add a new CI stage with spelling check
+* Add a new CI stage with spelling check
+  Fix spelling mistakes in code, comments, and filenames
+* Rename files with spelling mistakes
+* Get rid of local variables with names suspicious for codespell
+* Rename local object such that codespell does not complain
+* Fix spelling mistakes in code and comments
+  Fix a bug when a 3p dependency can appear multiple times
+* Fix a bug when a 3p dependency can appear multiple times
+  add surf and akaze
+* add some parameter
+* remove unused/redundant includes
+* make AKAZE and SURF compile conditionally on installed OpenCV library
+* add surf and akaze
+  Fix submodule enabled/disabled macro
+* Fix submodule enabled/disabled macro
+  Add information about submodule state to config.h
+* Add information about submodule state to config.h
+* Remove obsolete v4r_config.h.in template
+  Add support of version requirement specification for dependencies
+* Add support of version requirement specification for dependencies
+  With this patch it is possible to request a particular version of dependency, e.g. opencv>=3.2.
+  tidy up after updating parameter IO
+* tidy up after updating parameter IO
+  update parameter IO
+  Fix log message in local feature matching
+* Fix log message in local feature matching
+  Do not allow clang-format job to fail
+* clang format
+* Do not allow clang-format job to fail
+  allow to set KeypointType via String
+* allow multiview object reco params to be set via boost program options
+* use new parameter IO
+* :lipstick:
+* change multiview param max_views name
+* allow to set KeypointType via String
+* allow to set KeypointType via String
+* allow shot params to be set via boost program options
+* fix doxy comment
+* allow global recognizer params to be set via boost program options
+* allow gcg params to be set via boost program options
+* allow local feat match params to be set via boost program options
+* allow local recognition pipel params to be set via boost program options
+* allow pcl visualization params to be set via boost program options
+* allow camera params to be set via boost program options
+* allow rendering params to be set via boost program options
+* allow HV params to be set via boost program options
+  Use std pointers
+  Implement new docker-based CI infrastructure
+* Implement new docker-based CI infrastructure
+* fix comments
+* serialize object instead of pointer to fix compile error
+* replace boost with std shared_ptr
+  Drop support for Ubuntu 14.04
+* Drop support for Ubuntu 14.04
+  * remove CI jobs
+  * update README
+  * update setup.sh
+  Also cleans up a bit package.xml file.
+  fix_typo
+* fix_typo
+  Only use CMAKE_CXX_FLAGS when CMAKE_BUILD_TYPE is None
+  Do not run check/build stages on tags
+* Only add V4R extra flags for not None build types
+* Abolish all C flags related CMake variables
+  V4R does not have C code.
+* Do not run check/build stages on tags
+  remove comments and unused code
+  save SIFT keypoint ange and -size same as Hannes
+  Add a CMake option to enable "-march=native"
+* Replace ENABLE_xxx options with a single switch for -march=native
+* In the configuration summary only report active C++ and Linker flags
+* save SIFT keypoint ange and -size same as Hannes
+* remove comments and unused code
+  optimize by using SSE instruction and accessing elements with []
+  add eigen aligned allocator
+* use const auto references instead of Eigen::Vector4f
+  :lipstick:
+* add eigen aligned allocator
+* :lipstick:
+  fix bug of kept coordinate axis in object reco visualization
+  remove deprecated files
+* fix bug of kept coordinate axis in object reco visualization
+* optimize by using SSE instruction and accessing elements with []
+* remove deprecated files
+  Lipstick
+* remove redundant cast
+* remove dead includes
+* use nullptr
+  save all point clouds in a binary compressed format
+* save all point clouds in a binary compressed format
+  Fix a bug introduced by !353
+* Fix a bug introduced by !353
+  Export only public third-party dependencies
+* Export only public third-party dependencies
+  Third-party dependencies that are private for V4R or are not used
+  (because modules that need them are disabled) should not be exported to
+  V4RDependencies.cmake.
+  Change order of paths in RPATH
+* Change order of paths in RPATH
+  Without this change the V4R library installation path is the first in
+  RPATH of the installed binaries. Therefore, if V4R is installed to a
+  standard system location "/usr/local/lib", other custom installed
+  libraries may be picked up from there, overriding 3rdparty libraries
+  provided by V4R.
+  Example: there is a Ceres installed in "/usr/local/lib", but V4R is
+  configured to build it's own version of Ceres. This own version is
+  installed to "/usr/local/share/V4R/3rdparty/lib" and has lower priority
+  than the one in "/usr/local/lib".
+  Remove flann class
+* update checks\_ variable description
+* include distance check
+* use different parameters for knn test
+* fix warning in knn test for unimplented distance metrics
+* add test for nearest neighbor classifier
+* fix bug
+* add virtual destructor for classifier
+* remove flann
+* :lipstick:
+* move distance metric to own cpp file
+  add kdtrees check param as explicit parameter
+* add kdtrees check param as explicit parameter
+  also increases default value to get better matching accuracy
+  Add RealSense2 grabber
+  Add unit testing framework
+  Closes #18
+* Run tests in the end of CI build tasks
+* Add example test for v4r::Intrinsics
+* Add simple unit testing framework
+* Remove explicit installation of some dependencies in Xenial CI task
+  These dependencies are istalled through rosdep.
+* Add librealsense2 to the Xenial CI task
+* Add io::RealSense2 grabber
+* Add RealSense2 third-party dependency
+  Attention segmentation refactor (2)
+* attention segmentation refactor:
+  Refactoring attention segmentation related code parts. Main refactorings done in the list below:
+  - substitute exit() and return statements with exception
+  - adapted SVM training code to use random parameter search
+  - handle negative curvatures in surface modeling
+  - clang-format new version
+  - remove orphaned files
+  - added pretrained svm models for applications
+  - adapted install for apps
+  - include google logging and deleting printf statements
+  Minor updates for the grabber framework
+* Output metric depth maps from Grabber::grabFrame()
+  Different grabbers may have different depth units, thus 16-bit integer maps are not a good format.
+* Use cv::cvtColor() in OpenNI2Grabber for conversion between RGB and BGR
+* Remove unused member fields in OpenNI2Grabber
+  Update RTMT2 to use v4r::Intrinsics
+* Use Intrinsics::getCameraMatrix() in RTMT2 where appropriate
+* Add Intrinsics::getCameraMatrix()
+* Replace custom RGBDCameraParameter with Intrinsics from v4r_common
+* Change the source of RGBDCameraParameter
+  Formerly the camera parameters came from the Preferences dialog. If changed by the user, the parameters propagated to GLViewer and Sensor via slots/signals.
+  This commit removes camare parameters section from the dialog. The source of the camera intrinsics is now io::Grabber. The retrieved parameters are stored in the Sensor object and signaled to the other parts of RTMT.
+  Make sure that EDT is built with the same PCL as the rest of V4R
+* Improve feature information printing in Grabber
+* Refactor mode selection in OpenNI2 grabber
+* Add a helper function selectStreamMode()
+* Add initializers and constructors to Grabber::StreamMode
+  replace V4R smartPtr with boost::shared_ptr
+  Closes #50
+* Make sure that EDT is built with the same PCL as the rest of V4R
+* replace V4R smartPtr with boost::shared_ptr
+  Make CI jobs fail on compiler warnings
+  Closes #44
+* Make CI jobs fail on compiler warnings
+  remove unused (copyrighted) SLICO
+  Closes #42
+* remove unused (copyrighted) SLICO
+  fix warnings
+* fix warnings
+  remove duplicated friend entry
+  use cv mat signatures instead of float vectors and use opencv flann
+* remove duplicated friend entry
+  RTMT2 refactoring
+* Use modern style of `Qt::connect` without `SIGNAL/SLOT` macros
+* Abolish "Apply" button in preferences dialog
+* Remove unused includes
+* Rename a number of member fields
+* Remove unused member fields
+  * cos_min_delta_angle
+  * sqr_min_cam_distance
+  * log_clouds
+  * cameras
+  * prev_voxel_size
+  * prev_filter_z
+  * indices
+  * pass
+* Rename members related to camera tracking
+* Remove inv_pose member field and rename pose into camera_pose\_
+* Rename camera matrix and normal/plane estimation member fields
+* Rename member fields pertaining to bounding box filtering
+* Remove unused functions and typedefs
+  * sqr()
+  * AlignedPointXYZRGBVector
+  * cam_id
+  * conf
+  * cloud_mutex
+* Use pcl::isFinite() instead of custom isNaN()
+* Remove empty documentation comments
+* use cv mat signatures instead of float vectors and use opencv flann
+  allow to select subset of object models to be detected
+  add tool for computing image registration mask
+  use enum classes
+* allow to select subset of object models to be detected
+* use enum classes
+  :lipstick:
+* add tool for computing image registration mask
+* :lipstick:
+  Update RTMT to use io::Grabber
+* Add "stream uri" parameter to RTMT
+  Stream URI can be chosen in the "Preferences" dialog.
+* Update RTMT to use io::Grabber
+  This removes cloud callback, queue, and mutexes.
+  Add unproject() function
+  Update createGrabber() to automatically work with whichever grabbers are built
+* Add --3d visualization option to tool-grab
+* Add v4r::unproject()
+* Update createGrabber() to automatically work with whichever grabbers are built
+  Implement submodule concept in CMake
+  Master
+  Closes #51
+* clang stuff
+* bug fix: wrong index in TSFilterCloudsXYZRGB::getCameraParameter
+* Remove large number of unused CMake functions/macros
+* Reimplement module system
+  * Single "right" way to create a module (v4r_add_module)
+  * Support private dependencies
+  * Submodules for optional components with dependencies
+  on.cpp
+* Replace v4r_target_link_libraries with plain target_link_libraries
+  They are the same.
+* Remove unused v4r_add_perf_tests()
+* Remove unused v4r_add_accuracy_test()
+* Make v4r_add_dependencies internal macro and rename
+* Remove v4r_include_modules/recurse functions
+  Nowadays target_link_libraries takes care of includes automatically.
+* Remove Windows-specific branches in CMake scripts
+* Abolish V4R_MODULE_xxx_LINK_DEPS variable (not used anymore)
+  First part of grabber framework
+* Add a tool to grab and visualize RGB-D stream from a camera or a file
+* Add an utility class ProgramOptionsBase to simplify writing CLI tool apps
+* Add io::createGrabber() function
+  Empty so far
+* Add io::PCDGrabber
+* Add io::OpenNI2Grabber
+  remove vedaldi
+* remove unused vedaldi SIFT implementation
+* Add abstract base class io::Grabber
+* Add simple Intrinsics struct to v4r_common
+  remove deprecated multi-view object recognition files
+  Closes #49
+* Enable JAVADOC_AUTOBRIEF option in Doxygen config
+* remove deprecated multi-view object recognition files
+  Cmake simplifications
+  Use awk to avoid grep -P (not available in alpine image)
+* Use awk to avoid grep -P (not available in alpine image)
+  List misformatted files when clang-format check fails on CI
+  Reduce debconf dialog warnings on fresh docker image
+* Fix "debconf: delaying package configuration, since apt-utils is not installed" warnings
+* List misformatted files when clang-format check fails on CI
+  fix ACIN repo server download error
+  some minor fixes
+* Remove some commented out lines
+* Remove remaining variables pertaining to CUDA in module scripts
+* Better docstring for v4r_glob_modules
+* Remove unused function v4r_module_disable()
+  Also removed associated variable V4R_MODULES_DISABLED_FORCE.
+* Abolish the concept of module class (PUBLIC/INTERNAL)
+  There is no need in internal modules in V4R.
+* :lipstick:
+* fix ACIN repo server download error
+  Rework module listing in the CMake summary
+* Rework module listing in the CMake summary
+  add doc
+  Improve configuration header files
+* add doc
+* Reduce debconf dialog warnings on fresh docker image
+* Upgrade v4r/config.h
+  * A macro for every module and third-party dependency (even disabled) is
+  now defined.
+  * A consexpr function is provided to check module/dependency state at
+  runtime
+  See cmake/templates/config.h.in for complete instructions on how to use.
+* Update generated config/modules header files
+  * Merge v4r_config.h and v4r_modules.h
+  * Rename and move v4r_config.h to v4r/config.h
+* Introduce V4R_MODULES_ALL list in CMake scripts
+  Add OpenNI2 as optional third-party dependency
+  Module v4r_common should not depend on v4r_io
+  Improve formatting tools
+* Add OpenNI2 as optional dependency
+* Small tidy-up in CMakeLists
+  * Remove unused options
+  * Remove commented out code
+  * Sort policies
+  * Enable compile commands exporting
+* Module v4r_common should not depend on v4r_io
+* Improve pre-commit hook
+  Gracefully handle situation when some of the files to be committed is
+  only partially staged.
+* Make sure clang-format 5.0 is used in clang-format-all
+  Silence last v4r warnings in xenial build
+  put debian build into deploy stage
+* put debian build into deploy stage
+* Silence warnings in xenial build
+  Fix formatting after the last MR
+* Fix formatting after the last MR
+  master
+  Check coding style on CI server
+* removed PSiftGPU and directly added SiftGPU to FeatureDetector_KD_SIFTGPU
+* Add pre-commit hook that runs code through clang-format
+  To activate the hook, run from the repository root:
+  $ rm -rf .git/hooks && ln -s ../scripts/dev/hooks/ .git
+* Create a CI job that checks style
+* Add a script that applies clang-format to a directory
+  Reformat V4R using clang-format-5.0
+* Reformat V4R using clang-format-5.0
+  fix warnings
+* fix warnings
+  Cleaning up attention segmentation.
+* Cleaning up attention segmentation.
+  Cleanup Attention Segmentation review changes
+  - use namespace for function in standalone programs
+  - remove some unnecessary comments
+  Attention segmentation cleanup:  changed copies to const reference pointers
+  Formatting source code files.
+  Reordering of includes
+  Fix a bug in ON_Curve::EvaluatePoint
+* Fix a bug in ON_Curve::EvaluatePoint
+  Backported from upstream PCL (https://github.com/PointCloudLibrary/pcl/pull/2185)
+  Add libusb to the build dependencies
+  Closes #43
+* Add libusb-1.0-dev as a build requirement
+  This is needed to avoid endless
+  <command-line>:0:15: warning: ISO C++11 requires whitespace after the macro name
+  warnings in the CI server output.
+* Remove unused CMake code/variables inherited from OpenCV
+  Explicitly set build type to Release for all 3rd-party libraries
+* Explicitly set build type to Release for all 3rd-party libraries
+* 2.0.5
+* update changelog and version.h before releasing V4R
+  Make sure the same OpenCV version is used to build both radical and V4R
+  Clang format
+* Make sure the same OpenCV version is used to build both radical and V4R
+* clang-format
+* allow to set a subset of object models to load
+  avoid overwrite of existing rendered files
+* avoid overwrite of existing rendered files
+* Update v4r_style_guide.md
+* Update v4r_style_guide.md
+  remove pcl serialization from header files
+  remove glog includes from header files
+* remove glog includes from header files
+  this solves potential conflicts with multiple LOG definitions
+  fix some warnings
+  remove dead code
+* fix some warnings
+* remove dead code
+* remove pcl serialization from header files
+  avoids potential multiple definitions when linking to external libraries
+  remove unused files
+  improve readability for boost program options
+  optimize includes
+  fix seg fault
+* remove unused files
+* improve readability for boost program options
+* optimize includes
+* fix seg fault
+  make HV single templated
+  add bound for generated hypotheses per object
+* Update ObjectRecognizer.cpp
+  # Conflicts:
+  #   modules/recognition/include/v4r/recognition/local_recognition_pipeline.h
+  # Conflicts:
+  #   modules/recognition/src/hypotheses_verification.cpp
+  allow to change visualization layout by parameter
+  Use bf path and glog more extensively
+* Update local_pipeline.xml
+* Update hv_config.xml
+* Update hv_config.xml
+* fix typo
+  remove outlier variable
+  add xml parameters for local recognition pipeline
+  update xml to fix warnings output and improve readability
+* update xml to fix warnings output and improve readability
+* make HV single templated
+* add bound for generated hypotheses per object
+* use bf_path and glog more extensively
+* remove outlier variable
+* add xml parameters for local recognition pipeline
+  fix bug when color is ignored in HV
+  fix confidence bug
+* fix bug when color is ignored in HV
+* fix confidence bug
+* Use enum class
+* use enums
+* allow to change visualization layout by parameter
+* bug fix: changed cmake to new style
+  remove dead code
+* bug fix dbg viz
+  zoom param gl viewer
+  Code simplification
+* temporal filter demo
+* Update organized_edge_detection.h
+  Turn third-party dependencies into proper CMake targets
+  Closes #40
+* remove unused files
+* :lipstick:
+* simplify stuff
+* fix conflicts
+  Fix some warnings
+* fix some warnings
+* Switch to NEW behavior on CMP0025 policy
+* Improve the code responsible for extracting imported library location
+  Move to a separate function in V4RUtils.cmake.
+* Add protection from multiple inclusion of V4R config
+* Use built-in CMAKE_CXX_STANDARD instead of directly manipulating flags
+  Also set CMAKE_CXX_STANDARD in exported V4R config
+* Upgrade CMake debugging facilities
+  * Add ability to print target properties
+  * Clear debug flags after each CMake run
+  * Move debugging functions to a separate file
+* Generate a config file for third-party dependencies
+* Remove convoluted external linker dependency handling code
+  Not necessary anymore since all third-party dependencies are proper imported targets.
+* Update SiftGPU finder script to create an imported library
+* Do not define unnecessary variables in Radical finder script
+* Update Qt finder script to create an imported library
+* Update PCL_1_8 finder to not define unnecessary variables
+* Update PCL finder script to create an imported library
+* Update OpenNURBS finder script to create an imported library
+* Do not define unnecessary variables in OpenMP finder script
+* Fix dependencies of visualize_hypothesis tool
+* Update OpenGL finder script to create an imported library
+* Update OpenCV finder script to create an imported library
+* Update GLM finder script to create an imported library
+* Update Eigen finder script to create an imported library
+* Update METSlib finder script to create an imported library
+* Update LibSVM finder script to create an imported library
+* Update Gtest finder script to not define unnecessary variables
+* Update Glog finder script to create an imported library
+* Update GLEW finder script to create an imported library
+* Update EDT finder script to create an imported library
+* Update Ceres finder script to not define unnecessary variables
+* Caffe finder script already creates imported target, don't define unnecessary variables
+* Update boost finder script to create an imported library
+* Update Assimp finder script to create an imported library
+* Remove BINDINGS module class support (inherited from OpenCV)
+* Remove "wrapper" modules (inherited from OpenCV and not used)
+* Temporary fixup on v4r_get_all_libs
+* Setup include directories on V4R module targets
+* Fix resolving of external dependencies (priority for targets)
+* Always make link libraries public to ensure dependency propagation
+* Update v4r_dependency_status function to handle target-only dependencies
+* Add v4r_add_imported_library utility function
+* Fix condition in v4r_install_dependencies macro
+* Abolish V4RMinDepVersions.cmake and embed version information into finder scripts
+  Force cmake 3.10 (hackish) and fix parallel debian package build
+* Update .gitlab-ci.yml
+* fix parallel build, force newer cmake version
+  make change detection optional in Object Reco
+* fix typo
+* Update ObjectClassification.md
+  fix some warnings
+* fix some warnings
+  Fix compatibility with OpenCV 3.3.1
+* Fix compatibility with OpenCV 3.3.1
+  Avoid argument type ambiguity in cv::goodFeaturesToTrack() calls.
+  Lift minimum CMake required version to 3.5.1
+* Add CMake to the list of required dependencies in README
+* Raise minimum required CMake version to 3.5.1
+* Install CMake 3.10.0 on Trusty in setup.sh
+  On Xenial default apt-get package is used. This makes sure that on both
+  supported systems we have at least CMake 3.5.1.
+  EuclideanClusterComparator does not actually use normals
+* EuclideanClusterComparator does not actually use normals
+  Associated template parameters and functions have been deprecated in
+  current PCL master. This conditional compilation is to avoid warnings
+  and prepare for future complete removal of these functions.
+  Master
+* make change detection optional in Object Reco
+* changed order of qt/ pcl includes
+* changed params: dist thr. for colour opti. (to avoid zero correspondences)
+* bug fix 14.04: removed pcl::TextureMesh
+* support radical for RTMT2
+  add pcl texturing structure to odm (compatibility to old pcl)
+  Fix installation of headers
+  Closes #39
+* Fix installation of headers
+  Was introduced by c8511da6
+* 2.0.4
+* update changelog and version.h before releasing V4R
+  Use Ninja on CI server
+* 2.0.3
+* update changelog and version.h before releasing V4R
+* Automatically set 30 second download timeout for all external projects
+* Use CMAKE_GENERATOR when configuring external projects
+* Use Ninja generator in CMake
+* Strip trailing spaces in GitLab CI config
+  Cmake updates
+* Remove unused submodules in `_CHILDREN` variables
+* Backport various updates for utils from OpenCV master
+* Remove unused functions/macros
+* Remove Windows-only branch in CMake scripts
+  Fix install rules for third-party dependencies
+  Fix error ‘boost::Q_FOREACH’ has not been declared
+* Do not clear variables after debug cache print
+* Fix install rules for third-party dependencies
+  Install only if enabled and built.
+* Fix error ‘boost::Q_FOREACH’ has not been declared
+  Solution from: https://stackoverflow.com/a/17610731/1525865
+  use our own server, as people reported issues with the keyservers
+  use nullptr instead of NULL
+* use nullptr instead of NULL
+  Add radical
+* Add radical 3rd-party dependency
+* Improve dependency status printing
+  Detect targets and print their location
+* use our own server, as people reported issues with the keyservers
+  Rendering of Normals
+  Fix warnings
+* Fixed one stupid blank space.
+* fix some more warnings
+* fix warnings
+* Reduced the amount of violation of our Coding Style Guideline.
+  Master
+* add glog dependency to io
+* use more bf paths
+* conditionally render based on v4r_rendering available
+* add view rendering to object recognizer
+* allow prefix names of model database input to be changed
+* use bf::path instead of std::string for filepaths
+  Ceres 1.13 clean
+  Remove unneeded CMakeLists.txt files
+  Closes #36
+* Merge remote-tracking branch 'origin/master'
+* Added a normal rendering, in case no normal is provided by the mesh it has a fallback to a per triangle estimation of normals.
+* Updating Readme with Ceres 1.13
+* Delete 3rdpartie's cmakelists
+* Moving 2 Ceres 1.13
+  Update cmake/3rdparty/BuildCeres.cmake
+* add glog dependency to io
+* Remove unneeded CMakeLists.txt files
+* Merge remote-tracking branch 'v4r_origin/master'
+* use more bf paths
+* remove unused stuff
+* conditionally render based on v4r_rendering available
+* add view rendering to object recognizer
+* allow prefix names of model database input to be changed
+* use bf::path instead of std::string for filepaths
+  Fix warnings
+* remove comments
+* fix some warnings
+* fix typos
+  use bf::path instead of std::string for filepaths
+* use bf::path instead of std::string for filepaths
+  Format style
+* fix errors
+  remove redundant if
+* update style guide documentation
+  fix warnings
+* fix remaining style in modules, apps and samples
+* reformat core
+* reformat change_detection, recognition, segmentation and ml
+* reformat features
+* reformat keypoints
+* reformat 'io'
+* add clang-format file
+* remove redundant if
+* remove unused normal estimation with pre-processing
+* fix another bunch of warnings
+* fix warnings
+  Textured rendering
+  Disable Gtest by default and add a download timeout
+  Set universal imported location for source built dependencies
+* Disable Gtest by default and add a download timeout
+  At the moment V4R has no tests, so Gtest is not needed.
+* Set universal imported location for source built dependencies
+  Remove support for using git-apply for patching
+* small fixes in depth map renderer
+* Loading and NOT SCALING the model is default option now. Added option to only render NORTH HEMISPHERE views.
+* Loading and NOT SCALING the model is default option now. Added option to only render NORTH HEMISPHERE views.
+* Remove support for using git-apply for patching
+  Revamp third-party dependency system
+* Disable -Wshadow which floods the logs
+* Remove unused CMake functions/macros
+* Better SYSTEM/PRIVATE include handling
+* Disable annoying debug print in CMake
+* New framework for managing 3rd-party dependencies
+* fix yet another typo in CONTRIBUTING.md
+* fix typo in CONTRIBUTING.md
+* Update CONTRIBUTING.md
+* 2.0.2
+* update changelog and version.h before releasing V4R
+  add ODM and indicate existing libraries inside V4R
+* add brief description on Readme and some styling
+* update readme
+* fix typo
+* add ODM and indicate existing libraries inside V4R
+  revert readme overwrite
+* revert readme overwrite
+  Remove all mentions of Qt4 and always use Qt5
+* Remove all mentions of Qt4 and always use Qt5
+  update author list
+  update contribution page
+  Update readme
+  Remove explicit VTK dependency
+* remove VTK and OpenNI
+* fix style
+* Remove explicit VTK dependency
+* update license URL
+* split issue tracker URL
+* fix URL
+* fix URLs
+  Remove all references to OpenCL
+* update contribution page
+  Textured rendering
+* update author list
+* update Readme
+  fix license
+* Remove all references to OpenCL
+  Was inherited from OpenCV build system, but not used in V4R.
+* fix license
+* update deps
+* fix conflicts
+  Strands to v4r in readme
+* update dependencies description
+* As we build ceres within v4r this is not needed anymore
+* Update readme to get rid of Strands links
+  OpenNURBS does not need to depend on PCL
+* OpenNURBS does not need to depend on PCL
+  The only usage of PCL in the code is PCL_EXPORTS macro, which anyway evaluates to nothing on Unix platform.
+  Build deb packages on all repos when tagged
+  Do not process some RTMT headers with Qt MOC
+  # Conflicts:
+  #   .gitlab-ci.yml
+  cleanup gitlab_CI and build fixes
+* Build deb packages on all repos when tagged
+* Merge remote-tracking branch 'v4r_origin/master'
+* Added rendering of textured meshes.
+* Do not process some RTMT headers with Qt MOC
+  This is to avoid classical Qt MOC/Boost error:
+  usr/include/boost/type_traits/detail/has_binary_operator.hp:50: Parse error at "BOOST_JOIN"
+  apps/RTMT2/CMakeFiles/RTMT2.dir/build.make:87: recipe for target 'apps/RTMT2/moc_OctreeVoxelCentroidContainerXYZRGB.cxx' failed
+* Remove "-dev" string from version
+* Remove duplicate job entry
+* Merge remote-tracking branch 'upstream/master'
+  Merge back the released state from v4r
+* 2.0.1
+* update changelog before releasing V4R
+* Merge remote-tracking branch 'upstream/master'
+  update version in package.xml
+* update version in package.xml
+* Merge remote-tracking branch 'upstream/master'
+  Master
+* bug fix: removed cam.center_x ... it's not available in pcl-stable
+* bug work-fix: removed OdmTexturing::loadMesh (not available in pcl)
+* New RTMT2 version including a modified version of OpenDroneMap texture mapping
+  Master
+* remove remnants from Hannes' commit
+* Test commit
+* test odm texturing
+  Master
+* stop threads
+* GNUv3 license header for the attention-module
+  replace license
+* update license info
+* bug fix: removed TextureMesh tex_mesh
+* bug fix: pcl-stable has no texturing -> removed it
+* changed license to GNUv3
+* Merge remote-tracking branch 'v4r-internal/license'
+* bug fix: store inv pose, test pcl-texturing
+* continue license update
+* replace license
+  update gitignore file to ignore clion stuff and cmake-build-* folders
+* update gitignore file to ignore clion stuff and cmake-build-* folders
+  Split focal length
+* bug fix: outlier detection in mapping
+* bug fix activate/ deactivate optimization of cam params
+* default config (no upsampling)
+* changed license header to MIT
+* rtmt2 with Nguyen noise model, part of the license headers changed to mit
+* split focal length into x and y components
+  add license and update readme
+* add license and update readme
+* Allow to set camera from outside
+  add camera getter function
+* add camera getter function
+  define config folder rather than individual files
+* change back to system wide config install
+* install config files into v4r home directory
+* install config files
+* define config folder rather than individual files
+  Fix semantic segmentation opencv bug
+  Closes #27
+* fix semantic segmentation compile error due to opencv bug
+  Remove def/undef of PCL_NO_PRECOMPILE
+* batch keyframe optimization: added bilin. colour transfere to keyframe
+* rtmt2 (not tested, missig ui for parameter settings)
+* do not compile multiview recognizer
+* fixed: we did not compile on xenial
+* Add missing headers an source files.
+  Arrange them in lexicographical order
+* Remove def/undef of PCL_NO_PRECOMPILE
+* create and store object model for recognition (RTMT2)
+* rtmt create cloud and mesh model (ui)
+* removed warning (shadow event)
+* bilin col (no thr as for depth), upscaling option
+* rtmt2 with TSFVisualSLAM
+* changed to batch version for TSFVisualSLAM
+* Contributors: Georg, Johann Prankl, Marcin Bodych, Markus 'Bajo' Bajones, Markus Bajones, Markus Suchi, Sergey Alexandrov, Simon Schreiberhuber, Thomas Faeulhammer, Thomas Fäulhammer, Unknown, V4R Release Manager, adam_chudas
+
 1.4.9 (2017-07-28)
 ------------------
 * merge master into release
@@ -808,10 +1881,10 @@ Changelog for package v4r
 * bug fix:
   - TSFGlobalCloudFilteringSimple: set width of the point cloud (if not ec-filtered)
   - example: parameter setting: do not ec-filter
-* added modul: camera tracking and mapping (using s temporal smoothing flter - TSF)
+* added modul: camera tracking and mapping (using s temporal smoothing filter - TSF)
 * add multiview keypoint correspondence visualization
   Pcl mesh renderer
-* removed loading of pcl files with pcl::io::loadPLYFile. This method 1. tends to fail and 2. does not exist on the continous integration system.
+* removed loading of pcl files with pcl::io::loadPLYFile. This method 1. tends to fail and 2. does not exist on the continuous integration system.
 * Cleanup of the changes. Finally got rid of the flipped coordinate system bug.
 * Added a lot of debug code but principially found the bugs causing the projection to be inverted. TODO: remove debug code!!
 * no idea (must be minor)
@@ -876,7 +1949,7 @@ Changelog for package v4r
 * set rendering default background-color to white
 * add missing pieces for remove non-upright objects
 * serialize hypotheses
-* add option to remove hypotheses not standing upright on a suppport plane
+* add option to remove hypotheses not standing upright on a support plane
 * do not output confusion matrix twice
 * allow subsampling during rendering
 * remove unused normal computation for model
@@ -941,9 +2014,9 @@ Changelog for package v4r
 * :lipstick:
 * remove empty appearance module
 * adapt L channel
-* make fitness threshold dependend on visibility
+* make fitness threshold dependent on visibility
 * :lipstick:
-* put params in seperate file
+* put params in separate file
 * :lipstick:
 * Merge remote-tracking branch 'root/master' into add_change_detection
 * :lipstick:
@@ -957,7 +2030,7 @@ Changelog for package v4r
 * add copyrights
 * integrate change detection again
 * add param for mutliview hv
-* use seperate parameter class for noise model based registration + fix remaining const madness
+* use separate parameter class for noise model based registration + fix remaining const madness
 * add noise model based cloud integration
   not quite working yet
 * :lipstick:
@@ -1046,7 +2119,7 @@ Changelog for package v4r
 * add ourcvfh as an option for global concat estimator
 * use normal estimator from outside
 * make camera a class variable
-* remove virtual where not neccessary
+* remove virtual where not necessary
 * add ourcvfh estimator
 * update global pose estimation and add visualization
   TODO: check if everything works correctly
@@ -1091,7 +2164,7 @@ Changelog for package v4r
 * make global rec visualization a parameter
 * fix coordinate system vis issue
 * fix global recognizers plane alignment
-* allow to reurn normals from segmentation
+* allow to return normals from segmentation
 * update opencv sift
 * use l1 norm
 * output recognition rate
@@ -1122,14 +2195,14 @@ Changelog for package v4r
 * visualize normals in processed cloud
 * add rops as features
   not tested yet
-* make shot support radius a boost paramater
+* make shot support radius a boost parameter
 * remove nan points before  shot computation
 * remove keypoint indices if the normals are not finite and estimator needs normals
 * use omp
 * fix segfault
 * change default params
 * allow setting boundary type
-* avoid keypoint cloud copy if not neccessary
+* avoid keypoint cloud copy if not necessary
 * add narf parameters
 * fix bug
 * remove config files as they are copied all the time anyway
@@ -1254,7 +2327,7 @@ Changelog for package v4r
 * fix opening multiple pcl visualization windows
   define visualizer static
 * enable plane removal by default
-* use seperate cloud for processing input
+* use separate cloud for processing input
 * fix opening multiple pcl visualization windows
   define visualizer static
 * extract plane indices and increase performance
@@ -1272,7 +2345,7 @@ Changelog for package v4r
 * use random search for hyperparameter
 * prepare for local search
 * fix performance bug
-* put changes in seperate file and automatically add pairwise changes
+* put changes in separate file and automatically add pairwise changes
 * add functionality to set output dir
 * add eval in cmake
 * do not visualize by default
@@ -1314,7 +2387,7 @@ Changelog for package v4r
 * fix missing init
 * update segmentation
   - use vector<int> instead of pcl::pointindices
-  - seperate plane extraction and segmentation
+  - separate plane extraction and segmentation
   - rename files
   - move some definitions into .cpp
 * tmp commit
@@ -1339,7 +2412,7 @@ Changelog for package v4r
   boost random generator is not thread safe, do not access it from within openmp parallel section
 * update segmentation
   - use vector<int> instead of pcl::pointindices
-  - seperate plane extraction and segmentation
+  - separate plane extraction and segmentation
   - rename files
   - move some definitions into .cpp
 * tmp commit
@@ -1410,7 +2483,7 @@ Changelog for package v4r
 * fix some warnings
 * do smooth cluster check in global optimization, move visualization option away from param, cleanup
 * fix visualization
-* move hv visualization in seperate file/class, update hv evaluation
+* move hv visualization in separate file/class, update hv evaluation
   + cleanup
 * add is_outlier visualization
   + :lipstick:
@@ -1489,7 +2562,7 @@ Changelog for package v4r
 * Update ObjectDetection.md
 * make svm class better encapsulated
   put files into utility file, add const
-  put pcl files only availble in PCL 1.8 into 3rdparty PCL folder
+  put pcl files only available in PCL 1.8 into 3rdparty PCL folder
   remove docs from blacklist
   Closes #16
   fix some warnings
@@ -1499,7 +2572,7 @@ Changelog for package v4r
 * remove unused pcl trunk files
   fix compile error on OpenCV3
 * Fix compile error
-* remove commment
+* remove comment
 * fix some warnings
 * fix some more missing pcl_1_8 bits
 * up
@@ -1512,17 +2585,17 @@ Changelog for package v4r
 * some more dashes
 * fix some namespace problems
 * c++ does not seem to like dashes too much
-* put pcl files only availble in PCL 1.8 into 3rdparty PCL folder
+* put pcl files only available in PCL 1.8 into 3rdparty PCL folder
 * keypoint based monocular object recognizer
   add fov to camera
-* remove redundant vertical fiel of view member variable
+* remove redundant vertical field of view member variable
   create debian packages if commit was tagged.
 * add fov to camera
   Doxy and some minor beauty
   use constptr where appropriate
   make uniform sampling work on PCL versions 1.8+
 * some doxygen fixes and :lipstick:
-* use constptr when neccessary
+* use constptr when necessary
 * make uniform sampling work on PCL versions 1.8+
   Some minor fixes
   fix ceres version issue with renamed parameter
@@ -1649,8 +2722,8 @@ Changelog for package v4r
   namespaces, V4R_EXPORTS, etc.
 * small changes to bring attention_segmentation into the new v4r structure
 * small changes to bring eputils into the new v4r structure
-* Inital copy of attention_segmentation from v4r svn
-* Inital copy of eputils from v4r svn
+* Initial copy of attention_segmentation from v4r svn
+* Initial copy of eputils from v4r svn
   v4r now compiles with OpenCV 2.x and 3.1 on Ubuntu 14.04 and 16.04
 * v4r now compiles with OpenCV 2.x and 3.1 on Ubuntu 14.04 and 16.04
   temporal filter (tracks pose and integrates several rgb-d frames)
@@ -1666,7 +2739,7 @@ Changelog for package v4r
 * Update CONTRIBUTING.md
 * Update CONTRIBUTING.md Update description v4r exports
 * Update CONTRIBUTING.md minor changes
-* Update CONTRIBUTING.md: Formating
+* Update CONTRIBUTING.md: Formatting
 * Update CONTRIBUTING.md: added sections: "Structure", "Documentation", and "How to Build V4R?".
 * Manually set PCL_APPS_LIBRARY
 * Merged branch ubuntu16.04+opencv3 into ubuntu16.04+opencv3
@@ -1705,9 +2778,9 @@ Changelog for package v4r
   fix libsvm dependency in package.xml
 * fix libsvm dependency in package.xml
 * Update AUTHORS
-  Update hypotheses_verification.cpp (wtf? I just commited this change)
+  Update hypotheses_verification.cpp (wtf? I just committed this change)
 * Update hypotheses_verification.cpp
-* Update hypotheses_verification.cpp (wtf? I just commited this change)
+* Update hypotheses_verification.cpp (wtf? I just committed this change)
   Master
   add missing boost dependency
 * add missing boost dependency
@@ -1734,7 +2807,7 @@ Changelog for package v4r
 * Update .gitlab-ci.yml
   yet again. ;-)
 * Update .gitlab-ci.yml
-* put some header defintions into cpp files and remove .hpp files
+* put some header definitions into cpp files and remove .hpp files
 * Update .gitlab-ci.yml
 * put miscellaneous functions into more specific files
 * Update v4r_style_guide.md
@@ -1749,7 +2822,7 @@ Changelog for package v4r
 * fixed typo
 * fixed typo
 * clean up .gitlab-ci.yml
-* add depdendencies description
+* add dependencies description
 * Update .gitlab-ci.yml
 * add contributing and style_format doc files
 * Update package.xml
@@ -1777,7 +2850,7 @@ Changelog for package v4r
 * add pcl time header
 * Merge remote-tracking branch 'v4r-master/master'
 * add bounding box function
-* seperate definitions from some header files to reduce compile time
+* separate definitions from some header files to reduce compile time
 * fix some warnings
 * Merge pull request #66 from strands-project/sync_from_gitlab
   Sync from gitlab
@@ -1802,7 +2875,7 @@ Changelog for package v4r
 * add script for downloading 3dnet test data
 * add doc for RTMT
 * include scripts to obtain training data from TUW and 3dNet
-* include missing mean substraction in alexnet feature estimation
+* include missing mean subtraction in alexnet feature estimation
 * update for shape cnn classifier to work
 * fix wrong model assembly resolution
 * fix compilation errors for eval and app pieces
@@ -1816,7 +2889,7 @@ Changelog for package v4r
 * remove EDT stuff
 * check if all views are trained during initialization (not just if directory exist)
 * put boost program options directly into parameter classes, merge ghv with hypotheses verification class
-* make seperate table class
+* make separate table class
 * minor fixes for save pose into pcd
 * update some visualization functions in recognition
 * remove sift based alignment in incremental object learning class
@@ -1827,7 +2900,7 @@ Changelog for package v4r
 * add esf classifier again
 * fix typo in openmp call
 * fix some warnings
-* fix bug in optional dependening on caffe and rendering
+* fix bug in optional depending on caffe and rendering
 * change default params and do not instantiate harris and iss keypoint extractor on PCL versions < 1.7.2 (as keypoint indices is not available for these versions)
 * make recognition library dependency to rendering and Caffe optional
 * move some hpps into cpps
@@ -1847,7 +2920,7 @@ Changelog for package v4r
 * add parameter options for smooth clustering
 * add dense SIFT option (not tested yet and only available for SIFTGPU)
 * add smooth clustering and linear thresholding of model fitness threshold (with visibliity)
-* use multi-plane segmentation for local recognizer to find *heighest* table plane
+* use multi-plane segmentation for local recognizer to find *highest* table plane
 * fix visualization for recognition rate computation when cloud sensor header is changed
 * temporary remove parallel call of recognizer
   QH6205 qhull error (qh_initqhull_start): qh_qh already defined.  Call qh_save_qhull() first
@@ -2029,8 +3102,8 @@ Changelog for package v4r
   namespaces, V4R_EXPORTS, etc.
 * small changes to bring attention_segmentation into the new v4r structure
 * small changes to bring eputils into the new v4r structure
-* Inital copy of attention_segmentation from v4r svn
-* Inital copy of eputils from v4r svn
+* Initial copy of attention_segmentation from v4r svn
+* Initial copy of eputils from v4r svn
   v4r now compiles with OpenCV 2.x and 3.1 on Ubuntu 14.04 and 16.04
 * v4r now compiles with OpenCV 2.x and 3.1 on Ubuntu 14.04 and 16.04
   temporal filter (tracks pose and integrates several rgb-d frames)
@@ -2046,7 +3119,7 @@ Changelog for package v4r
 * Update CONTRIBUTING.md
 * Update CONTRIBUTING.md Update description v4r exports
 * Update CONTRIBUTING.md minor changes
-* Update CONTRIBUTING.md: Formating
+* Update CONTRIBUTING.md: Formatting
 * Update CONTRIBUTING.md: added sections: "Structure", "Documentation", and "How to Build V4R?".
 * Manually set PCL_APPS_LIBRARY
 * Merged branch ubuntu16.04+opencv3 into ubuntu16.04+opencv3
@@ -2085,9 +3158,9 @@ Changelog for package v4r
   fix libsvm dependency in package.xml
 * fix libsvm dependency in package.xml
 * Update AUTHORS
-  Update hypotheses_verification.cpp (wtf? I just commited this change)
+  Update hypotheses_verification.cpp (wtf? I just committed this change)
 * Update hypotheses_verification.cpp
-* Update hypotheses_verification.cpp (wtf? I just commited this change)
+* Update hypotheses_verification.cpp (wtf? I just committed this change)
   Master
   add missing boost dependency
 * add missing boost dependency
@@ -2114,7 +3187,7 @@ Changelog for package v4r
 * Update .gitlab-ci.yml
   yet again. ;-)
 * Update .gitlab-ci.yml
-* put some header defintions into cpp files and remove .hpp files
+* put some header definitions into cpp files and remove .hpp files
 * Update .gitlab-ci.yml
 * put miscellaneous functions into more specific files
 * Update v4r_style_guide.md
@@ -2129,7 +3202,7 @@ Changelog for package v4r
 * fixed typo
 * fixed typo
 * clean up .gitlab-ci.yml
-* add depdendencies description
+* add dependencies description
 * Update .gitlab-ci.yml
 * add contributing and style_format doc files
 * Update package.xml
@@ -2157,7 +3230,7 @@ Changelog for package v4r
 * add pcl time header
 * Merge remote-tracking branch 'v4r-master/master'
 * add bounding box function
-* seperate definitions from some header files to reduce compile time
+* separate definitions from some header files to reduce compile time
 * fix some warnings
 * Merge pull request #66 from strands-project/sync_from_gitlab
   Sync from gitlab
@@ -2182,7 +3255,7 @@ Changelog for package v4r
 * add script for downloading 3dnet test data
 * add doc for RTMT
 * include scripts to obtain training data from TUW and 3dNet
-* include missing mean substraction in alexnet feature estimation
+* include missing mean subtraction in alexnet feature estimation
 * update for shape cnn classifier to work
 * fix wrong model assembly resolution
 * fix compilation errors for eval and app pieces
@@ -2196,7 +3269,7 @@ Changelog for package v4r
 * remove EDT stuff
 * check if all views are trained during initialization (not just if directory exist)
 * put boost program options directly into parameter classes, merge ghv with hypotheses verification class
-* make seperate table class
+* make separate table class
 * minor fixes for save pose into pcd
 * update some visualization functions in recognition
 * remove sift based alignment in incremental object learning class
@@ -2207,7 +3280,7 @@ Changelog for package v4r
 * add esf classifier again
 * fix typo in openmp call
 * fix some warnings
-* fix bug in optional dependening on caffe and rendering
+* fix bug in optional depending on caffe and rendering
 * change default params and do not instantiate harris and iss keypoint extractor on PCL versions < 1.7.2 (as keypoint indices is not available for these versions)
 * make recognition library dependency to rendering and Caffe optional
 * move some hpps into cpps
@@ -2227,7 +3300,7 @@ Changelog for package v4r
 * add parameter options for smooth clustering
 * add dense SIFT option (not tested yet and only available for SIFTGPU)
 * add smooth clustering and linear thresholding of model fitness threshold (with visibliity)
-* use multi-plane segmentation for local recognizer to find *heighest* table plane
+* use multi-plane segmentation for local recognizer to find *highest* table plane
 * fix visualization for recognition rate computation when cloud sensor header is changed
 * temporary remove parallel call of recognizer
   QH6205 qhull error (qh_initqhull_start): qh_qh already defined.  Call qh_save_qhull() first
@@ -2395,7 +3468,7 @@ Changelog for package v4r
 * parallelize add models function in go3d
 * some beauty
 * normalize all components of LAB colors in range -1 to 1
-* put color transform into seperate class
+* put color transform into separate class
 * remove a few pointers and add parallel block
   refactor code for merging feature correspondences in multiview recognizer
 * fix conditional compilation with -DWITH_SIFTGPU=OFF
@@ -2473,18 +3546,18 @@ Changelog for package v4r
 * adapt code to make rebase compile
 * rebase commit
 * added noise level evaluation for initial mask ICRA16
-* added eval for inital mask evaluation
+* added eval for initial mask evaluation
   added for icra16 singleview
 * fixed sv eval when test_dir is not present
 * fixed bug in icra sv eval, when csv file has only 2 columns
 * eval almost ready
 * added icra vis
-* seperate post-processing and save to disk in object learning
+* separate post-processing and save to disk in object learning
 * fixed wrong output file if name of mask is mask.txt only
 * removed overhead computation when sift based camera pose estimation is disabled
 * fixed ground truth labelling
 * fixed color in add text
-* just addded a const
+* just added a const
 * removing nan points in initial mask - otherwise seg fault when after erosion not enough points
 * included plane merge
   moved logical stuff to common module
@@ -2508,18 +3581,18 @@ Changelog for package v4r
 * adapt code to make rebase compile
 * rebase commit
 * added noise level evaluation for initial mask ICRA16
-* added eval for inital mask evaluation
+* added eval for initial mask evaluation
   added for icra16 singleview
 * fixed sv eval when test_dir is not present
 * fixed bug in icra sv eval, when csv file has only 2 columns
 * eval almost ready
 * added icra vis
-* seperate post-processing and save to disk in object learning
+* separate post-processing and save to disk in object learning
 * fixed wrong output file if name of mask is mask.txt only
 * removed overhead computation when sift based camera pose estimation is disabled
 * fixed ground truth labelling
 * fixed color in add text
-* just addded a const
+* just added a const
 * removing nan points in initial mask - otherwise seg fault when after erosion not enough points
 * included plane merge
   moved logical stuff to common module
@@ -2580,7 +3653,7 @@ Changelog for package v4r
 * use openni instead of openni2
 * rename object tracker
 * updated object tracker and RTMT saves tracking model correctly
-* seperated normal computation methods into new file
+* separated normal computation methods into new file
   using using namespace v4r in samples for (i) brevity, (ii) conformity with ROS wrappers
   changed some deprecated interfaces
   split header files into impl (.hpp) files mainly to avoid c++11 neccessity when including with ROS
@@ -2661,8 +3734,8 @@ Changelog for package v4r
   added glew, glfw find package
 * updated some more parameter descriptions
 * renamed occlusion reasoning into zbuffering and removed second layer namespace
-  seperated classes into seperate files
-  renamed boost graph extenstion into multi-view representation
+  separated classes into separate files
+  renamed boost graph extension into multi-view representation
   fixed shot recognizer (removed indices), parameters are now written to file
 * added GLOG dependency
   using boost program option for object recognizer examples and Ground-truth annotator
@@ -2677,7 +3750,7 @@ Changelog for package v4r
 * removed visualization reminiscent in single-view recognizer
 * fixed wrong index computation in 3D occupancy grid
   removed siftgpu library from necessary dependency in reconstruction app
-* fixed wrong angle difference calculation when clustering object hypotheses [TODO: make parameter accesible from outside]
+* fixed wrong angle difference calculation when clustering object hypotheses [TODO: make parameter accessible from outside]
 * (hopefully) fixes crash when no valid recognition model is found
   merging close hypotheses is now possible (generate less hypotheses, refines pose by these larger correspondence set)
 * using mask instead of indices in go3d addModels function
@@ -2690,7 +3763,7 @@ Changelog for package v4r
   TODO: fix multiplane segmentation method
 * install metslib header files
   fixed go3d
-  createVoxelGridAndDistanceTransforms is now called inside generate (for registered views source) TODO: Check influence of resolution paramter!
+  createVoxelGridAndDistanceTransforms is now called inside generate (for registered views source) TODO: Check influence of resolution parameter!
   added some description and licenses
 * temporary commit with GO3D visualization
 * fixed wrong transformation of keypoints when using -transfer_feature_matches 1
@@ -2720,7 +3793,7 @@ Changelog for package v4r
 * correspondences in recognizer are now stored as indexes to original cloud
   this should reduce memory requirement
   New parameter class for Hypotheses Verification methods (different results to before - TODO: double check default parameters!)
-* only training dir parameter neccessary any more
+* only training dir parameter necessary any more
   improved code readability
 * temporary commit (signatures not initialized) otherwise it seems to work
 * overall update of training procedure
@@ -2776,7 +3849,7 @@ Changelog for package v4r
   enabled by setting BUILD_LIBSVM option (which is now off by default).
 * rename multiview_object_recognizer
   silence unused variable warning
-  removed unneccessary point cloud copy
+  removed unnecessary point cloud copy
   normal method now a parameter
   Master
   Master
@@ -3086,7 +4159,7 @@ Changelog for package v4r
 * fixed dependencies to the correct rosdep keys
 * added a first package.xml
 * MST is now a parameter
-  plane indices are stored as a vector of a vector now - (otherwise high cost occured in callgrind profiler)
+  plane indices are stored as a vector of a vector now - (otherwise high cost occurred in callgrind profiler)
   updated clear function
 * createDirIfNotExist function is now in common
 * fixed problem with nan values (recursive absolute pose computation based on spanning tree implementation was not correct)

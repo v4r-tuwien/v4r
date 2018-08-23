@@ -96,4 +96,4 @@ PCL_INSTANTIATE(visualizeClusters, PCL_XYZ_POINT_TYPES)
   template V4R_EXPORTS void visualizeCluster<T>(const pcl::PointCloud<T>::ConstPtr &, const std::vector<int> &, \
                                                 const std::string &);
 PCL_INSTANTIATE(visualizeCluster, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

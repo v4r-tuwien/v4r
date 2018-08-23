@@ -47,38 +47,47 @@ int main(int argc, const char *argv[]) {
 
   typename v4r::NormalEstimator<PointT>::Ptr normal_estimator_;
 
-  int normal_method = 2;
+  NormalEstimatorType normal_method = NormalEstimatorType::PCL_INTEGRAL_NORMAL;
 
   po::options_description desc(
       "Noise model based cloud integration\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message")("input_dir,i", po::value<bf::path>(&test_dir)->required(),
-                                                       "directory containing point clouds")(
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("input_dir,i", po::value<bf::path>(&test_dir)->required(), "directory containing point clouds");
+  desc.add_options()(
       "out_dir,o", po::value<bf::path>(&out_dir),
-      "output directory where the registered cloud will be stored. If not set, nothing will be written to distk")(
-      "view_prefix", po::value<std::string>(&view_prefix)->default_value(view_prefix),
-      "view filename prefix for each point cloud (used when using object mask)")(
-      "obj_indices_prefix", po::value<std::string>(&obj_indices_prefix)->default_value(obj_indices_prefix),
-      "filename prefix for each object mask file(used when using object mask)")(
-      "pose_prefix", po::value<std::string>(&pose_prefix)->default_value(pose_prefix),
-      "filename prefix for each camera pose (used when using use_pose_file)")(
-      "resolution,r",
-      po::value<float>(&nm_int_param.octree_resolution_)->default_value(nm_int_param.octree_resolution_),
-      "")("min_points_per_voxel",
-          po::value<size_t>(&nm_int_param.min_points_per_voxel_)->default_value(nm_int_param.min_points_per_voxel_), "")
+      "output directory where the registered cloud will be stored. If not set, nothing will be written to disk");
+  desc.add_options()("view_prefix", po::value<std::string>(&view_prefix)->default_value(view_prefix),
+                     "view filename prefix for each point cloud (used when using object mask)");
+  desc.add_options()("obj_indices_prefix",
+                     po::value<std::string>(&obj_indices_prefix)->default_value(obj_indices_prefix),
+                     "filename prefix for each object mask file(used when using object mask)");
+  desc.add_options()("pose_prefix", po::value<std::string>(&pose_prefix)->default_value(pose_prefix),
+                     "filename prefix for each camera pose (used when using use_pose_file)");
+  desc.add_options()("resolution,r",
+                     po::value<float>(&nm_int_param.octree_resolution_)->default_value(nm_int_param.octree_resolution_),
+                     "");
+  desc.add_options()(
+      "min_points_per_voxel",
+      po::value<size_t>(&nm_int_param.min_points_per_voxel_)->default_value(nm_int_param.min_points_per_voxel_), "")
       //            ("threshold_explained",
       //            po::value<float>(&nm_int_param.threshold_explained_)->default_value(nm_int_param.threshold_explained_),
       //            "")
-      ("use_depth_edges", po::value<bool>(&nm_param.use_depth_edges_)->default_value(nm_param.use_depth_edges_), "")(
-          "focal_length,f", po::value<float>(&nm_param.focal_length_)->default_value(nm_param.focal_length_), "")(
-          "normal_method,n", po::value<int>(&normal_method)->default_value(normal_method),
-          "method used for normal computation")("chop_z,z", po::value<float>(&chop_z)->default_value(chop_z),
-                                                "cut of distance in m ")("visualize,v", po::bool_switch(&visualize),
-                                                                         "turn visualization on")(
-          "use_object_mask,m", po::bool_switch(&use_object_mask),
-          "reads mask file and only extracts those indices (only if file exists)")(
-          "use_pose_file,p", po::bool_switch(&use_pose_file),
-          "reads pose from seperate pose file instead of extracting it directly from .pcd file (only if file exists)")(
-          "debug,d", po::bool_switch(&debug), "saves debug information (e.g. point properties) if output dir is set");
+      ;
+  desc.add_options()("use_depth_edges",
+                     po::value<bool>(&nm_param.use_depth_edges_)->default_value(nm_param.use_depth_edges_), "");
+  desc.add_options()("focal_length,f", po::value<float>(&nm_param.focal_length_)->default_value(nm_param.focal_length_),
+                     "");
+  desc.add_options()("normal_method,n", po::value<NormalEstimatorType>(&normal_method)->default_value(normal_method),
+                     "method used for normal computation");
+  desc.add_options()("chop_z,z", po::value<float>(&chop_z)->default_value(chop_z), "cut of distance in m ");
+  desc.add_options()("visualize,v", po::bool_switch(&visualize), "turn visualization on");
+  desc.add_options()("use_object_mask,m", po::bool_switch(&use_object_mask),
+                     "reads mask file and only extracts those indices (only if file exists)");
+  desc.add_options()(
+      "use_pose_file,p", po::bool_switch(&use_pose_file),
+      "reads pose from separate pose file instead of extracting it directly from .pcd file (only if file exists)");
+  desc.add_options()("debug,d", po::bool_switch(&debug),
+                     "saves debug information (e.g. point properties) if output dir is set");
   po::variables_map vm;
   po::parsed_options parsed = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
   std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
@@ -101,7 +110,7 @@ int main(int argc, const char *argv[]) {
     folder_names.push_back("");
 
   int vp1, vp2;
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> vis;
+  pcl::visualization::PCLVisualizer::Ptr vis;
 
   for (const std::string &sub_folder : folder_names) {
     const bf::path test_seq = test_dir / sub_folder;
@@ -206,14 +215,15 @@ int main(int argc, const char *argv[]) {
     if (vm.count("out_dir")) {
       const bf::path out_path = out_dir / sub_folder;
       io::createDirIfNotExist(out_path);
-      pcl::io::savePCDFileBinary((out_path / "/registered_cloud_filtered.pcd").string(), *octree_cloud);
-      pcl::io::savePCDFileBinary((out_path / "/registered_cloud_unfiltered.pcd").string(), *big_cloud_unfiltered);
+      pcl::io::savePCDFileBinaryCompressed((out_path / "/registered_cloud_filtered.pcd").string(), *octree_cloud);
+      pcl::io::savePCDFileBinaryCompressed((out_path / "/registered_cloud_unfiltered.pcd").string(),
+                                           *big_cloud_unfiltered);
 
       for (size_t v_id = 0; v_id < clouds_used.size(); v_id++) {
         if (debug) {
           std::stringstream fn;
           fn << out_path.string() << "/filtered_input_" << setfill('0') << setw(5) << v_id << ".pcd";
-          pcl::io::savePCDFileBinary(fn.str(), *clouds_used[v_id]);
+          pcl::io::savePCDFileBinaryCompressed(fn.str(), *clouds_used[v_id]);
 
           fn.str("");
           fn << out_path.string() << "/distance_to_edge_px_" << setfill('0') << setw(5) << v_id << ".txt";

@@ -43,7 +43,6 @@
 #include <math.h>
 #include <omp.h>
 #include <pcl/common/eigen.h>
-#include <pcl/common/eigen.h>
 #include <pcl/common/time.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -238,7 +237,7 @@ void ZAdaptiveNormals<T>::setParameter(Parameter p) {
 /************************** PRIVATE ************************/
 
 /**
- * GetIndices of the neigbourhood of the point depending on the kernel size
+ * GetIndices of the neighbourhood of the point depending on the kernel size
  */
 template <typename T>
 void ZAdaptiveNormals<T>::getIndices(int u, int v, int kernel, std::vector<int> &indices) const {
@@ -283,6 +282,7 @@ float ZAdaptiveNormals<T>::computeNormal(const std::vector<int> &indices, Eigen:
     return NaN;
 
   Eigen::Vector3f mean;
+  mean.setZero();
   v4r::computeMean<T>(*cloud, mean, indices);
 
   Eigen::Matrix3f cov;

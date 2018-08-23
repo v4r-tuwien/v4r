@@ -56,6 +56,6 @@ struct Edge {
   float w2;  /// optional second weightning factor
   int a, b;  /// node numbers
 };
-}
+}  // namespace gc
 
 #endif

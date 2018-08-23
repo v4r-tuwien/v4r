@@ -45,8 +45,7 @@
  *
  */
 
-#ifndef __V4R_DEPTHMAP_RENDERER__
-#define __V4R_DEPTHMAP_RENDERER__
+#pragma once
 
 #include <GL/glew.h>
 
@@ -65,7 +64,7 @@ const size_t maxMeshSize = 1000000;  // this will lead to a big ssbo^^ (16mb)
                                      /**
                                       * @brief The Renderer class
                                       * renders a depth map from a model (every model you can load via assimp)
-                                      * Altough technically not part of the same problem this class can give points
+                                      * Although technically not part of the same problem this class can give points
                                       * along a sphere. (Good for generating views to an object)
                                       */
 class V4R_EXPORTS DepthmapRenderer {
@@ -127,6 +126,8 @@ class V4R_EXPORTS DepthmapRenderer {
                  std::vector<int> &faces);
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   /**
    * @brief DepthmapRenderer
    * @param resx the resolution has to be fixed at the beginning of the program
@@ -214,7 +215,8 @@ class V4R_EXPORTS DepthmapRenderer {
   pcl::PointCloud<pcl::PointXYZRGB> renderPointcloudColor(float &visibleSurfaceArea) const;
 
   pcl::PointCloud<pcl::PointXYZRGBNormal> renderPointcloudColorNormal(float &visibleSurfaceArea) const;
-};
-}
 
-#endif /* defined(__DEPTHMAP_RENDERER__) */
+  typedef std::shared_ptr<DepthmapRenderer> Ptr;
+  typedef std::shared_ptr<DepthmapRenderer const> ConstPtr;
+};
+}  // namespace v4r

@@ -49,6 +49,7 @@
 
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include <boost/program_options.hpp>
 #include <boost/serialization/serialization.hpp>
 
 #include <pcl/common/centroid.h>
@@ -67,72 +68,45 @@
 
 namespace v4r {
 
-class V4R_EXPORTS GlobalRecognizerParameter {
- public:
-  bool check_elongations_;      ///< if true, checks if the elongation of the segmented cluster fits approximately the
-                                /// elongation of the matched object hypothesis
-  float max_elongation_ratio_;  ///< if the elongation of the segment w.r.t. to the matched hypotheses is above this
-                                /// threshold, it will be rejected (used only if check_elongations_ is true.
-  float min_elongation_ratio_;  ///< if the elongation of the segment w.r.t. to the matched hypotheses is below this
-                                /// threshold, it will be rejected (used only if check_elongations_ is true).
-  bool use_table_plane_for_alignment_;  ///< if true, aligns the matched object model such that the centroid corresponds
-                                        /// to the centroid of the segmented cluster downprojected onto the found table
+struct V4R_EXPORTS GlobalRecognizerParameter {
+  bool check_elongations_ =
+      true;  ///< if true, checks if the elongation of the segmented cluster fits approximately the
+             /// elongation of the matched object hypothesis
+  float max_elongation_ratio_ =
+      1.2f;  ///< if the elongation of the segment w.r.t. to the matched hypotheses is above this
+             /// threshold, it will be rejected (used only if check_elongations_ is true.
+  float min_elongation_ratio_ =
+      0.5f;  ///< if the elongation of the segment w.r.t. to the matched hypotheses is below this
+             /// threshold, it will be rejected (used only if check_elongations_ is true).
+  bool use_table_plane_for_alignment_ =
+      false;  ///< if true, aligns the matched object model such that the centroid corresponds
+              /// to the centroid of the segmented cluster downprojected onto the found table
   /// plane. The z-axis corresponds to the normal axis of the table plane and the
   /// remaining axis build a orthornmal system. Rotation is then sampled in
   /// equidistant angles around the z-axis. ATTENTION: This assumes the models are
   /// in a coordinate system with the z-axis alinging with the typical upright
   /// position of the object.
-  float z_angle_sampling_density_degree_;  ///< if use_table_plane_for_alignment_, this value will generate object
-                                           /// hypotheses at each multiple of this value.
-  float required_viewpoint_change_deg_;  ///< required viewpoint change in degree for a new training view to be used for
-                                         /// feature extraction. Training views will be sorted incrementally by their
+  float z_angle_sampling_density_degree_ =
+      60.f;  ///< if use_table_plane_for_alignment_, this value will generate object
+             /// hypotheses at each multiple of this value.
+  float required_viewpoint_change_deg_ =
+      0.f;  ///< required viewpoint change in degree for a new training view to be used for
+            /// feature extraction. Training views will be sorted incrementally by their
   /// filename and if the camera pose of a training view is close to the camera
   /// pose of an already existing training view, it will be discarded for
   /// training.
-  bool estimate_pose_;  ///< if true, tries to estimate a coarse pose of the object based on the other parameters
-  bool
-      classify_instances_;  ///< if true, classifier learns to distinguish between model instances instead of categories
+  bool estimate_pose_ =
+      false;  ///< if true, tries to estimate a coarse pose of the object based on the other parameters
+  bool classify_instances_ =
+      false;  ///< if true, classifier learns to distinguish between model instances instead of categories
 
-  GlobalRecognizerParameter(bool check_elongations = true, float max_elongation_ratio = 1.2f,
-                            float min_elongation_ratio = 0.5f,  // lower because of possible occlusion
-                            bool use_table_plane_for_alignment = false, float z_angle_sampling_density_degree = 60.f,
-                            float required_viewpoint_change_deg = 0.f, bool estimate_pose = false,
-                            bool classify_instances = false)
-  : check_elongations_(check_elongations), max_elongation_ratio_(max_elongation_ratio),
-    min_elongation_ratio_(min_elongation_ratio), use_table_plane_for_alignment_(use_table_plane_for_alignment),
-    z_angle_sampling_density_degree_(z_angle_sampling_density_degree),
-    required_viewpoint_change_deg_(required_viewpoint_change_deg), estimate_pose_(estimate_pose),
-    classify_instances_(classify_instances) {}
-
-  friend class boost::serialization::access;
-  template <class Archive>
-  V4R_EXPORTS void serialize(Archive &ar, const unsigned int version) {
-    ar &BOOST_SERIALIZATION_NVP(check_elongations_) & BOOST_SERIALIZATION_NVP(max_elongation_ratio_) &
-        BOOST_SERIALIZATION_NVP(min_elongation_ratio_) & BOOST_SERIALIZATION_NVP(use_table_plane_for_alignment_) &
-        BOOST_SERIALIZATION_NVP(z_angle_sampling_density_degree_) &
-        BOOST_SERIALIZATION_NVP(required_viewpoint_change_deg_) & BOOST_SERIALIZATION_NVP(estimate_pose_) &
-        BOOST_SERIALIZATION_NVP(classify_instances_);
-    (void)version;
-  }
-
-  void save(const std::string &filename) const {
-    std::ofstream ofs(filename);
-    boost::archive::xml_oarchive oa(ofs);
-    oa << boost::serialization::make_nvp("GlobalRecognizerParameter", *this);
-    ofs.close();
-  }
-
-  GlobalRecognizerParameter(const bf::path &filename) {
-    if (!v4r::io::existsFile(filename))
-      throw std::runtime_error("Given config file " + filename.string() +
-                               " does not exist! Current working directory is " +
-                               boost::filesystem::current_path().string() + ".");
-
-    std::ifstream ifs(filename.string());
-    boost::archive::xml_iarchive ia(ifs);
-    ia >> boost::serialization::make_nvp("GlobalRecognizerParameter", *this);
-    ifs.close();
-  }
+  /**
+   * @brief init parameters
+   * @param command_line_arguments (according to Boost program options library)
+   * @param section_name section name of program options
+   * @return unused parameters (given parameters that were not used in this initialization call)
+   */
+  void init(boost::program_options::options_description &desc, const std::string &section_name = "global_rec");
 };
 
 /**
@@ -141,6 +115,7 @@ class V4R_EXPORTS GlobalRecognizerParameter {
  */
 class V4R_EXPORTS GlobalObjectModel {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Eigen::MatrixXf model_signatures_;    ///< signatures (from all views) of the object model
   Eigen::MatrixX3f model_elongations_;  ///< spatial elongations in X,Y and Z direction (from all views)
   Eigen::MatrixX4f model_centroids_;    ///< model centroids (from all views)
@@ -152,7 +127,7 @@ class V4R_EXPORTS GlobalObjectModel {
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> eigen_based_pose_;  ///< poses (from all
                                                                                               /// views) that transform
   /// view such that
-  /// principial axis
+  /// principal axis
   /// correspond to x,y and z
   /// axis
 
@@ -169,14 +144,14 @@ class V4R_EXPORTS GlobalObjectModel {
     (void)version;
   }
 
-  typedef boost::shared_ptr<GlobalObjectModel> Ptr;
-  typedef boost::shared_ptr<GlobalObjectModel const> ConstPtr;
+  typedef std::shared_ptr<GlobalObjectModel> Ptr;
+  typedef std::shared_ptr<GlobalObjectModel const> ConstPtr;
 };
 
 class V4R_EXPORTS GlobalObjectModelDatabase {
  public:
-  typedef boost::shared_ptr<GlobalObjectModelDatabase> Ptr;
-  typedef boost::shared_ptr<GlobalObjectModelDatabase const> ConstPtr;
+  typedef std::shared_ptr<GlobalObjectModelDatabase> Ptr;
+  typedef std::shared_ptr<GlobalObjectModelDatabase const> ConstPtr;
 
   Eigen::MatrixXf all_model_signatures_;
   Eigen::VectorXi all_trained_model_label_;
@@ -184,7 +159,7 @@ class V4R_EXPORTS GlobalObjectModelDatabase {
   std::map<std::string, GlobalObjectModel::ConstPtr> global_models_;
 
   /**
-   * @brief The flann_model struct is neccessary to know which signature id belongs to which view
+   * @brief The flann_model struct is necessary to know which signature id belongs to which view
    */
   struct flann_model {
     std::string instance_name_;
@@ -304,13 +279,11 @@ class V4R_EXPORTS GlobalRecognizer {
       return table_plane_set_;
     }
 
-    typedef boost::shared_ptr<Cluster> Ptr;
-    typedef boost::shared_ptr<Cluster const> ConstPtr;
+    typedef std::shared_ptr<Cluster> Ptr;
+    typedef std::shared_ptr<Cluster const> ConstPtr;
   };
 
  private:
-  typedef Model<PointT> ModelT;
-
   typename pcl::PointCloud<PointT>::ConstPtr scene_;      ///< Point cloud to be classified
   pcl::PointCloud<pcl::Normal>::ConstPtr scene_normals_;  ///< Point cloud to be classified
   typename Source<PointT>::ConstPtr m_db_;                ///< model data base
@@ -325,16 +298,16 @@ class V4R_EXPORTS GlobalRecognizer {
   std::vector<std::string> id_to_model_name_;  ///< which target label (target id = vector element id) of the classifier
                                                /// corresponds to which object model
 
-  std::vector<typename ObjectHypothesis::Ptr>
+  std::vector<ObjectHypothesis::Ptr>
       obj_hyps_filtered_;  ///<  extracted object hypotheses after running through (potential) filter
-  std::vector<typename ObjectHypothesis::Ptr> all_obj_hyps_;  ///< all extracted object hypotheses
+  std::vector<ObjectHypothesis::Ptr> all_obj_hyps_;  ///< all extracted object hypotheses
 
   std::vector<std::string> categories_;  ///< classification results
   std::vector<float> confidences_;       ///< confidences associated to the classification results (normalized to 0...1)
   typename GlobalEstimator<PointT>::Ptr estimator_;  ///< estimator used for describing the object
   Classifier::Ptr classifier_;                       ///< classifier object
 
-  void featureEncodingAndMatching();
+  void featureEncodingAndMatching(const std::vector<std::string> &model_ids_to_search);
 
   bool keep_all_hypotheses_;
 
@@ -377,7 +350,7 @@ class V4R_EXPORTS GlobalRecognizer {
    * @brief getHypotheses
    * @return generated object hypotheses
    */
-  std::vector<typename ObjectHypothesis::Ptr> getHypotheses() {
+  std::vector<ObjectHypothesis::Ptr> getHypotheses() {
     return obj_hyps_filtered_;
   }
 
@@ -387,8 +360,8 @@ class V4R_EXPORTS GlobalRecognizer {
    * computed features will be stored on disk (in each
    * object model folder, a feature folder is created with data)
    * @param[in] retrain if set, will re-compute features and store to disk, no matter if they already exist or not
-   * @param[in] object_instances_to_load vector of object models to load from model_database_path. If emtpy, all objects
-  * in directory will be loaded.
+   * @param[in] object_instances_to_load vector of object models to load from model_database_path. If empty, all objects
+   * in directory will be loaded.
    */
   void initialize(const bf::path &trained_dir = "", bool retrain = false,
                   const std::vector<std::string> &object_instances_to_load = {}) {
@@ -422,7 +395,7 @@ class V4R_EXPORTS GlobalRecognizer {
    * @brief getObjectHypothesis
    * @return generated (potentiallly filtered) object hypothesis
    */
-  std::vector<typename ObjectHypothesis::Ptr> getFilteredHypotheses() const {
+  std::vector<ObjectHypothesis::Ptr> getFilteredHypotheses() const {
     return obj_hyps_filtered_;
   }
 
@@ -430,7 +403,7 @@ class V4R_EXPORTS GlobalRecognizer {
    * @brief getObjectHypothesis
    * @return generated object hypothesis
    */
-  std::vector<typename ObjectHypothesis::Ptr> getAllHypotheses() const {
+  std::vector<ObjectHypothesis::Ptr> getAllHypotheses() const {
     return all_obj_hyps_;
   }
 
@@ -459,9 +432,11 @@ class V4R_EXPORTS GlobalRecognizer {
   }
 
   /**
-   * @brief recognize
+   * @brief recognize objects
+   * @param model_ids_to_search object model identities to search. If empty, all object models in loaded object model
+   * database will be searched for
    */
-  void recognize();
+  void recognize(const std::vector<std::string> &model_ids_to_search = std::vector<std::string>());
 
   /**
    * @brief setVisualizationParameter
@@ -480,7 +455,7 @@ class V4R_EXPORTS GlobalRecognizer {
     normal_estimator_ = normal_estimator;
   }
 
-  typedef boost::shared_ptr<GlobalRecognizer<PointT>> Ptr;
-  typedef boost::shared_ptr<GlobalRecognizer<PointT> const> ConstPtr;
+  typedef std::shared_ptr<GlobalRecognizer<PointT>> Ptr;
+  typedef std::shared_ptr<GlobalRecognizer<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

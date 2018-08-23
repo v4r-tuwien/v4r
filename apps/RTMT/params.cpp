@@ -51,9 +51,6 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <fstream>
-#include <vector>
-
 #include <QFileDialog>
 #endif
 

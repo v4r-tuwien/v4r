@@ -99,6 +99,6 @@ class V4R_EXPORTS Tree {
 inline Node* Tree::GetRootNode() {
   return &nodes[rootNodeIdx];
 }
-}
-}
+}  // namespace RandomForest
+}  // namespace v4r
 #endif  // TREE_H

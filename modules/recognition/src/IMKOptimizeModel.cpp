@@ -233,7 +233,7 @@ void IMKOptimizeModel::loadObject(const unsigned &idx) {
     cv::cvtColor(image, im_lab, CV_BGR2Lab);
     cv::split(im_lab, im_channels);
 
-    object_views[idx].push_back(boost::shared_ptr<View>(new View()));
+    object_views[idx].push_back(std::shared_ptr<View>(new View()));
     View &view = *object_views[idx].back();
     view.idx_part = idx;
     view.idx_view = i;
@@ -241,7 +241,7 @@ void IMKOptimizeModel::loadObject(const unsigned &idx) {
     view.pose = pose;
     detector->detect(im_channels[0], keys);
     addPoints3d(keys, *cloud, mask, view);
-    descEstimator->extract(im_channels[0], view.keys, view.descs);
+    descEstimator->compute(im_channels[0], view.keys, view.descs);
 
     cout << "Load " << (name + std::string("/") + cloud_files[i]) << ": detected " << view.keys.size() << " keys"
          << endl;
@@ -397,7 +397,7 @@ void IMKOptimizeModel::setDataDirectory(const std::string &_base_dir) {
  */
 void IMKOptimizeModel::addObject(const std::string &_object_name) {
   object_names.push_back(_object_name);
-  object_views.push_back(std::vector<boost::shared_ptr<View>>());
+  object_views.push_back(std::vector<std::shared_ptr<View>>());
 }
 
 /**
@@ -433,4 +433,4 @@ void IMKOptimizeModel::setCameraParameter(const cv::Mat &_intrinsic, const cv::M
 
   pnp.setCameraParameter(intrinsic, dist_coeffs);
 }
-}
+}  // namespace v4r

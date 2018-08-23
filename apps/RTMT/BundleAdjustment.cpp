@@ -105,9 +105,9 @@ void BundleAdjustment::cam_tracker_params_changed(const CamaraTrackerParameter &
  * @param _model
  */
 void BundleAdjustment::optimizeCamStructProj(
-    v4r::Object::Ptr &_model, boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory,
-    boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_log_clouds,
-    boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud) {
+    v4r::Object::Ptr &_model, std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory,
+    std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_log_clouds,
+    std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud) {
   model = _model;
   cam_trajectory = _cam_trajectory;
   log_clouds = _log_clouds;

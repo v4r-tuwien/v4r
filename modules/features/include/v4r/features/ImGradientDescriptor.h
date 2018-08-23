@@ -48,16 +48,10 @@
 #ifndef V4R_IM_GRADIENT_DESCRIPTOR_HH
 #define V4R_IM_GRADIENT_DESCRIPTOR_HH
 
-#include <float.h>
-#include <Eigen/Dense>
-#include <fstream>
+#include <v4r/core/macros.h>
+#include <boost/shared_ptr.hpp>
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <set>
-#include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
-#include <vector>
 
 namespace v4r {
 
@@ -102,8 +96,8 @@ class V4R_EXPORTS ImGradientDescriptor {
   void compute(const cv::Mat_<unsigned char> &im, std::vector<float> &desc);
   void compute(const cv::Mat_<unsigned char> &im, const cv::Mat_<float> &weight, std::vector<float> &desc);
 
-  typedef SmartPtr<::v4r::ImGradientDescriptor> Ptr;
-  typedef SmartPtr<::v4r::ImGradientDescriptor const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ImGradientDescriptor> Ptr;
+  typedef std::shared_ptr<::v4r::ImGradientDescriptor const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -114,6 +108,6 @@ inline int ImGradientDescriptor::sign(const float &v) {
   return +1;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

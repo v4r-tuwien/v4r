@@ -37,58 +37,50 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #ifndef KP_OPTIMIZE_BUNDLE_COLOUR_HH
 #define KP_OPTIMIZE_BUNDLE_COLOUR_HH
 
-#include <Eigen/Dense>
-#include <opencv2/core/core.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
-#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
-#include <v4r/core/macros.h>
 #include <radical/radiometric_response.h>
+#include <v4r/core/macros.h>
+#include <Eigen/Dense>
+#include <opencv2/core/core.hpp>
+#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
+#include "opencv2/imgproc/imgproc.hpp"
 
-
-
-namespace v4r
-{
+namespace v4r {
 
 /**
  * @brief The TukeyLoss class
  */
 class TukeyLoss : public ceres::LossFunction {
  public:
-  explicit TukeyLoss(double a) : a_squared_(a * a) { }
-  virtual void Evaluate(double, double*) const;
+  explicit TukeyLoss(double a) : a_squared_(a * a) {}
+  virtual void Evaluate(double, double *) const;
 
  private:
   const double a_squared_;
 };
 
-
 /**
  * OptimizeBundleColours
  */
-class V4R_EXPORTS OptimizeBundleColours 
-{
-public:
-
+class V4R_EXPORTS OptimizeBundleColours {
+ public:
   /**
    * Parameter
    */
-  class Parameter
-  {
-  public:
+  class Parameter {
+   public:
     bool use_robust_loss;
     double loss_scale;
     int nb_col_samples_per_linked_frame;
@@ -98,13 +90,14 @@ public:
     int grad_threshold;
     double inv_inl_dist;
     Parameter()
-      : use_robust_loss(true), loss_scale(0.1), nb_col_samples_per_linked_frame(10000), max_sampling_trials(10000000),
-      use_projection_links(false), saturation_offs_low(5),  saturation_offs_high(250), grad_threshold(50), inv_inl_dist(0.1){
-      //path_to_crf_file = std::string("ps1080.1403190110-sa-cam.crf");
+    : use_robust_loss(true), loss_scale(0.1), nb_col_samples_per_linked_frame(10000), max_sampling_trials(10000000),
+      use_projection_links(false), saturation_offs_low(5), saturation_offs_high(250), grad_threshold(50),
+      inv_inl_dist(0.1) {
+      // path_to_crf_file = std::string("ps1080.1403190110-sa-cam.crf");
     }
   };
 
-private:
+ private:
   Parameter param;
 
   cv::Mat_<double> dist_coeffs;
@@ -112,42 +105,43 @@ private:
 
   cv::Mat_<unsigned char> mask;
 
-  std::vector< double > colour_scales_data;
-  std::vector< std::vector< v4r::triple<cv::Vec3f, int, cv::Vec3f> > > rgb_correspondences; /// size of map: <rgb_current_frame, frame_idx, rgb_frame_idx>
+  std::vector<double> colour_scales_data;
+  std::vector<std::vector<v4r::triple<cv::Vec3f, int, cv::Vec3f>>>
+      rgb_correspondences;  /// size of map: <rgb_current_frame, frame_idx, rgb_frame_idx>
 
   std::vector<cv::Mat> lin_images;
-  std::vector< cv::Mat_<unsigned char> > edges;
+  std::vector<cv::Mat_<unsigned char>> edges;
 
   std::string path_to_crf_file;
 
   void sampleCorrespondences(const std::vector<TSFFrame::Ptr> &map, const std::vector<cv::Mat> &_lin_images);
-  void getLinkedFrames(const unsigned &idx, const std::vector< std::vector< v4r::triple<int, cv::Point2f, Eigen::Vector3f > > >  &projections, std::set<int> &links);
-  void sampelColourCorrespondences(const std::vector<TSFFrame::Ptr> &map, const std::vector<cv::Mat> &_lin_images, int idx0, int idx1, std::vector< v4r::triple<cv::Vec3f, int, cv::Vec3f> > &corrs);
+  void getLinkedFrames(const unsigned &idx,
+                       const std::vector<std::vector<v4r::triple<int, cv::Point2f, Eigen::Vector3f>>> &projections,
+                       std::set<int> &links);
+  void sampelColourCorrespondences(const std::vector<TSFFrame::Ptr> &map, const std::vector<cv::Mat> &_lin_images,
+                                   int idx0, int idx1, std::vector<v4r::triple<cv::Vec3f, int, cv::Vec3f>> &corrs);
   void optimizeColourScales(int idx);
 
-  bool pickCol(const Eigen::Vector3f &pt, const Eigen::Matrix4f &delta_pose, const cv::Mat &im_lin, cv::Point2f &_im_pt, cv::Vec3f &col);
-  bool pickCol(const Eigen::Vector3f &pt, const Eigen::Matrix4f &delta_pose, const v4r::DataMatrix2D<Surfel> &sf_cloud, const cv::Mat &im_lin, cv::Point2f &_im_pt, cv::Vec3f &col);
+  bool pickCol(const Eigen::Vector3f &pt, const Eigen::Matrix4f &delta_pose, const cv::Mat &im_lin, cv::Point2f &_im_pt,
+               cv::Vec3f &col);
+  bool pickCol(const Eigen::Vector3f &pt, const Eigen::Matrix4f &delta_pose, const v4r::DataMatrix2D<Surfel> &sf_cloud,
+               const cv::Mat &im_lin, cv::Point2f &_im_pt, cv::Vec3f &col);
 
-
-
-public:
-  OptimizeBundleColours( const Parameter &p=Parameter());
+ public:
+  OptimizeBundleColours(const Parameter &p = Parameter());
   ~OptimizeBundleColours();
 
   void optimize(const std::vector<TSFFrame::Ptr> &map);
 
   void setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat &_dist_coeffs);
-  void setParameter(const Parameter &p=Parameter());
-  void setCRFfile(const std::string &file) { path_to_crf_file = file; }
+  void setParameter(const Parameter &p = Parameter());
+  void setCRFfile(const std::string &file) {
+    path_to_crf_file = file;
+  }
 };
-
-
 
 /*************************** INLINE METHODES **************************/
 
-
-
-} //--END--
+}  // namespace v4r
 
 #endif
-

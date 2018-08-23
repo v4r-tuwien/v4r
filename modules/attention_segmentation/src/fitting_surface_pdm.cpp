@@ -37,27 +37,14 @@
 **
 ****************************************************************************/
 
-#include "v4r/attention_segmentation/fitting_surface_pdm.h"
+#include <glog/logging.h>
 #include <stdexcept>
+
+#include "v4r/attention_segmentation/fitting_surface_pdm.h"
 
 using namespace pcl;
 using namespace on_nurbs;
 using namespace Eigen;
-
-// FittingSurface::FittingSurface(int order, NurbsDataSurface *m_data, ON_3dPoint ll, ON_3dPoint lr,
-//    ON_3dPoint ur, ON_3dPoint ul)
-//{
-//  if (order < 2)
-//    throw std::runtime_error("[FittingSurface::FittingSurface] Error order to low (order<2).");
-//
-//  ON::Begin();
-//
-//  this->m_data = m_data;
-//
-//  m_nurbs = initNurbs4Corners(order, ll, lr, ur, ul);
-//
-//  this->init();
-//}
 
 FittingSurface::FittingSurface(int order, NurbsDataSurface *m_data, Eigen::Vector3d z) {
   if (order < 2)
@@ -148,7 +135,7 @@ void FittingSurface::assemble(Parameter param) {
   // minimal curvature on surface
   if (nCurInt > 0) {
     if (m_nurbs.Order(0) < 3 || m_nurbs.Order(1) < 3)
-      printf("[FittingSurface::assemble] Error insufficient NURBS order to add curvature regularisation.\n");
+      LOG(ERROR) << "insufficient NURBS order to add curvature regularisation.";
     else
       addInteriorRegularisation(2, param.regularisation_resU, param.regularisation_resV,
                                 param.interior_regularisation / param.regularisation_resU, row);
@@ -157,7 +144,7 @@ void FittingSurface::assemble(Parameter param) {
   // minimal curvature on boundary
   if (nCurBnd > 0) {
     if (m_nurbs.Order(0) < 3 || m_nurbs.Order(1) < 3)
-      printf("[FittingSurface::assemble] Error insufficient NURBS order to add curvature regularisation.\n");
+      LOG(ERROR) << "insufficient NURBS order to add curvature regularisation.";
     else
       addBoundaryRegularisation(2, param.regularisation_resU, param.regularisation_resV,
                                 param.boundary_regularisation / param.regularisation_resU, row);
@@ -234,7 +221,6 @@ std::vector<double> FittingSurface::getElementVector(const ON_NurbsSurface &nurb
 
   result.push_back(knots[idx_min]);
 
-  // for(int E=(m_nurbs.Order(0)-2); E<(m_nurbs.KnotCount(0)-m_nurbs.Order(0)+2); E++) {
   for (int E = idx_min + 1; E <= idx_max; E++) {
     if (knots[E] != knots[E - 1])  // do not count double knots
       result.push_back(knots[E]);
@@ -497,51 +483,6 @@ void FittingSurface::addPointConstraint(const Eigen::Vector2d &params, const Eig
   delete[] N0;
 }
 
-// void FittingSurface::addBoundaryPointConstraint(double paramU, double paramV, double weight, unsigned &row)
-//{
-//  // edges on surface
-//  NurbsTools ntools(&m_nurbs);
-//
-//  double N0[m_nurbs.Order(0) * m_nurbs.Order(0)];
-//  double N1[m_nurbs.Order(1) * m_nurbs.Order(1)];
-//
-//  double points[3];
-//  int E, F;
-//  ON_3dPoint closest;
-//  int closest_idx;
-//
-//  m_nurbs.Evaluate(paramU, paramV, 0, 3, points);
-//  closest.x = points[0];
-//  closest.y = points[1];
-//  closest.z = points[2];
-//  m_data->boundary.GetClosestPoint(closest, &closest_idx);
-//
-//  E = ntools.E(paramU);
-//  F = ntools.F(paramV);
-//  ON_EvaluateNurbsBasis(m_nurbs.Order(0), m_nurbs.m_knot[0] + E, paramU, N0);
-//  ON_EvaluateNurbsBasis(m_nurbs.Order(1), m_nurbs.m_knot[1] + F, paramV, N1);
-//
-//  m_feig(row, 0) = m_data->boundary[closest_idx].x * weight;
-//  m_feig(row, 1) = m_data->boundary[closest_idx].y * weight;
-//  m_feig(row, 2) = m_data->boundary[closest_idx].z * weight;
-//
-//  for (int i = 0; i < m_nurbs.Order(0); i++) {
-//
-//    for (int j = 0; j < m_nurbs.Order(1); j++) {
-//#ifdef USE_UMFPACK
-//      m_solver.K(row, lrc2gl(E, F, i, j), N0[i] * N1[j] * weight);
-//#else
-//      m_Keig(row, lrc2gl(E, F, i, j)) = N0[i] * N1[j] * weight;
-//#endif
-//
-//    } // j
-//
-//  } // i
-//
-//  row++;
-//
-//}
-
 void FittingSurface::addCageInteriorRegularisation(double weight, unsigned &row) {
   for (int i = 1; i < (m_nurbs.m_cv_count[0] - 1); i++) {
     for (int j = 1; j < (m_nurbs.m_cv_count[1] - 1); j++) {
@@ -567,7 +508,9 @@ void FittingSurface::addCageBoundaryRegularisation(double weight, int side, unsi
   switch (side) {
     case SOUTH:
       j = m_nurbs.m_cv_count[1] - 1;
+      break;
     case NORTH:
+      j = m_nurbs.m_cv_count[1] - 1;
       for (i = 1; i < (m_nurbs.m_cv_count[0] - 1); i++) {
         m_solver.f(row, 0, 0.0);
         m_solver.f(row, 1, 0.0);
@@ -583,7 +526,9 @@ void FittingSurface::addCageBoundaryRegularisation(double weight, int side, unsi
 
     case EAST:
       i = m_nurbs.m_cv_count[0] - 1;
+      break;
     case WEST:
+      i = m_nurbs.m_cv_count[0] - 1;
       for (j = 1; j < (m_nurbs.m_cv_count[1] - 1); j++) {
         m_solver.f(row, 0, 0.0);
         m_solver.f(row, 1, 0.0);

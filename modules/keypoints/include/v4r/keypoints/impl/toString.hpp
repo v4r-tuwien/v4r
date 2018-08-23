@@ -41,9 +41,9 @@ namespace v4r {
 template <class T>
 inline std::string toString(const T& t, unsigned precision = 2) {
   std::stringstream ss;
-  ss << std::setprecision(precision) << t;
+  ss << std::fixed << std::setprecision(precision) << t;
   return ss.str();
 }
-}
+}  // namespace v4r
 
 #endif

@@ -432,4 +432,4 @@ int IKNSaliencyMap::createFeatureMapsRG(IttiPyramid::Ptr pyramidR, IttiPyramid::
   return (AM_OK);
 }
 
-}  // v4r
+}  // namespace v4r

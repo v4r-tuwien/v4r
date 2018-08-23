@@ -76,7 +76,7 @@ double LKPoseTrackerRT::detectIncremental(const cv::Mat &image, const DataMatrix
     throw std::runtime_error("[LKPoseTrackerRT::detect] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -164,7 +164,7 @@ double LKPoseTrackerRT::detectIncremental(const cv::Mat &image, const DataMatrix
  */
 void LKPoseTrackerRT::setLastFrame(const cv::Mat &image, const Eigen::Matrix4f &pose) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_last, CV_RGB2GRAY);
+    cv::cvtColor(image, im_last, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(im_last);
 
@@ -214,4 +214,4 @@ void LKPoseTrackerRT::setCameraParameter(const cv::Mat &_intrinsic, const cv::Ma
       dist_coeffs(0, i) = _dist_coeffs.at<double>(0, i);
   }
 }
-}
+}  // namespace v4r

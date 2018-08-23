@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include <v4r/segmentation/all_headers.h>
 #include <v4r/segmentation/plane_extractor_organized_multiplane.h>
 #include <v4r/segmentation/plane_extractor_sac.h>
@@ -13,75 +14,76 @@
 namespace v4r {
 
 template <typename PointT>
-typename Segmenter<PointT>::Ptr initSegmenter(int method, std::vector<std::string> &params) {
+typename Segmenter<PointT>::Ptr initSegmenter(SegmentationType method, std::vector<std::string> &params) {
   typename Segmenter<PointT>::Ptr cast_segmenter;
 
-  if (method == SegmentationType::EuclideanSegmentation) {
+  if (method == SegmentationType::EUCLIDEAN_SEGMENTATION) {
     EuclideanSegmenterParameter param;
     params = param.init(params);
     typename EuclideanSegmenter<PointT>::Ptr seg(new EuclideanSegmenter<PointT>(param));
-    cast_segmenter = boost::dynamic_pointer_cast<Segmenter<PointT>>(seg);
+    cast_segmenter = std::dynamic_pointer_cast<Segmenter<PointT>>(seg);
   }
-  //    else if(method == SegmentationType::SmoothEuclideanClustering)
+  //    else if(method == SegmentationType::SMOOTH_EUCLIDEAN_CLUSTERING)
   //    {
   //        SmoothEuclideanSegmenterParameter param;
   //        params = param.init(params);
   //        typename SmoothEuclideanSegmenter<PointT>::Ptr seg (new SmoothEuclideanSegmenter<PointT> (param));
-  //        cast_segmenter = boost::dynamic_pointer_cast<Segmenter<PointT> > (seg);
+  //        cast_segmenter = std::dynamic_pointer_cast<Segmenter<PointT> > (seg);
   //    }
-  else if (method == SegmentationType::OrganizedConnectedComponents) {
+  else if (method == SegmentationType::ORGANIZED_CONNECTED_COMPONENTS) {
     OrganizedConnectedComponentSegmenterParameter param;
     params = param.init(params);
     typename OrganizedConnectedComponentSegmenter<PointT>::Ptr seg(
         new OrganizedConnectedComponentSegmenter<PointT>(param));
-    cast_segmenter = boost::dynamic_pointer_cast<Segmenter<PointT>>(seg);
-  } else if (method == SegmentationType::ConnectedComponents2D) {
+    cast_segmenter = std::dynamic_pointer_cast<Segmenter<PointT>>(seg);
+  } else if (method == SegmentationType::CONNECTED_COMPONENTS_2D) {
     ConnectedComponentsSegmenterParameter param;
     params = param.init(params);
     typename ConnectedComponentsSegmenter<PointT>::Ptr seg(new ConnectedComponentsSegmenter<PointT>(param));
-    cast_segmenter = boost::dynamic_pointer_cast<Segmenter<PointT>>(seg);
+    cast_segmenter = std::dynamic_pointer_cast<Segmenter<PointT>>(seg);
   } else {
-    std::cerr << "Segmentation method " << method << " not implemented!" << std::endl;
+    LOG(ERROR) << "Segmentation method " << method << " not implemented!" << std::endl;
   }
 
   return cast_segmenter;
 }
 
 template <typename PointT>
-typename PlaneExtractor<PointT>::Ptr initPlaneExtractor(int method, std::vector<std::string> &params) {
+typename PlaneExtractor<PointT>::Ptr initPlaneExtractor(PlaneExtractionType method, std::vector<std::string> &params) {
   typename PlaneExtractor<PointT>::Ptr cast_plane_extractor;
-  if (method == PlaneExtractionType::OrganizedMultiplane) {
+  if (method == PlaneExtractionType::ORGANIZED_MULTIPLANE) {
     PlaneExtractorParameter param;
     params = param.init(params);
     typename OrganizedMultiPlaneExtractor<PointT>::Ptr pe(new OrganizedMultiPlaneExtractor<PointT>(param));
-    cast_plane_extractor = boost::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
+    cast_plane_extractor = std::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
   } else if (method == PlaneExtractionType::SAC) {
     PlaneExtractorParameter param;
     params = param.init(params);
     typename SACPlaneExtractor<PointT>::Ptr pe(new SACPlaneExtractor<PointT>(param));
-    cast_plane_extractor = boost::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
-  } else if (method == PlaneExtractionType::SACNormals) {
+    cast_plane_extractor = std::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
+  } else if (method == PlaneExtractionType::SAC_NORMALS) {
     PlaneExtractorParameter param;
     params = param.init(params);
     typename SACNormalsPlaneExtractor<PointT>::Ptr pe(new SACNormalsPlaneExtractor<PointT>(param));
-    cast_plane_extractor = boost::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
-  } else if (method == PlaneExtractionType::Tile) {
+    cast_plane_extractor = std::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
+  } else if (method == PlaneExtractionType::TILE) {
     PlaneExtractorTileParameter param;
     params = param.init(params);
     typename PlaneExtractorTile<PointT>::Ptr pe(new PlaneExtractorTile<PointT>(param));
-    cast_plane_extractor = boost::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
+    cast_plane_extractor = std::dynamic_pointer_cast<PlaneExtractor<PointT>>(pe);
   } else {
-    std::cerr << "Plane extraction method " << method << " not implemented!" << std::endl;
+    LOG(ERROR) << "Plane extraction method " << method << " not implemented!" << std::endl;
   }
 
   return cast_plane_extractor;
 }
 
-#define PCL_INSTANTIATE_initPlaneExtractor(T) \
-  template V4R_EXPORTS typename PlaneExtractor<T>::Ptr initPlaneExtractor<T>(int, std::vector<std::string> &);
+#define PCL_INSTANTIATE_initPlaneExtractor(T)                                                     \
+  template V4R_EXPORTS typename PlaneExtractor<T>::Ptr initPlaneExtractor<T>(PlaneExtractionType, \
+                                                                             std::vector<std::string> &);
 PCL_INSTANTIATE(initPlaneExtractor, PCL_XYZ_POINT_TYPES)
 
 #define PCL_INSTANTIATE_initSegmenter(T) \
-  template V4R_EXPORTS typename Segmenter<T>::Ptr initSegmenter<T>(int, std::vector<std::string> &);
+  template V4R_EXPORTS typename Segmenter<T>::Ptr initSegmenter<T>(SegmentationType, std::vector<std::string> &);
 PCL_INSTANTIATE(initSegmenter, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

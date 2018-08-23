@@ -127,7 +127,7 @@ class NurbsTools {
    *  \param[in] size The desired size of the resulting set of points.       */
   static void downsample_random(vector_vec3d &data1, unsigned size);
 };
-}
-}
+}  // namespace on_nurbs
+}  // namespace pcl
 
 #endif /* NTOOLS_H_ */

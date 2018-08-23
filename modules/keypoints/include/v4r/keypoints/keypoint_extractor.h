@@ -50,7 +50,6 @@
 #include <pcl/common/common.h>
 #include <v4r/core/macros.h>
 #include <v4r/keypoints/types.h>
-
 namespace v4r {
 
 template <typename PointT>
@@ -64,7 +63,7 @@ class V4R_EXPORTS KeypointExtractor {
       indices_;  ///< indices of the segmented object (extracted keypoints outside of this will be neglected)
 
  public:
-  virtual ~KeypointExtractor() = 0;
+  virtual ~KeypointExtractor() = default;
 
   /**
    * @brief setInputCloud
@@ -120,7 +119,7 @@ class V4R_EXPORTS KeypointExtractor {
     return keypoints_;
   }
 
-  typedef boost::shared_ptr<KeypointExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<KeypointExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<KeypointExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<KeypointExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

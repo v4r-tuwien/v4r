@@ -51,6 +51,7 @@
 #include <pcl/common/common.h>
 #include <v4r/core/macros.h>
 #include <boost/dynamic_bitset.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace v4r {
 
@@ -60,13 +61,6 @@ V4R_EXPORTS void transformNormals(const pcl::PointCloud<pcl::Normal> &normals_cl
 V4R_EXPORTS void transformNormals(const pcl::PointCloud<pcl::Normal> &normals_cloud,
                                   pcl::PointCloud<pcl::Normal> &normals_aligned, const std::vector<int> &indices,
                                   const Eigen::Matrix4f &transform);
-
-V4R_EXPORTS inline void transformNormal(const Eigen::Vector3f &nt, Eigen::Vector3f &normal_out,
-                                        const Eigen::Matrix4f &transform) {
-  normal_out[0] = static_cast<float>(transform(0, 0) * nt[0] + transform(0, 1) * nt[1] + transform(0, 2) * nt[2]);
-  normal_out[1] = static_cast<float>(transform(1, 0) * nt[0] + transform(1, 1) * nt[1] + transform(1, 2) * nt[2]);
-  normal_out[2] = static_cast<float>(transform(2, 0) * nt[0] + transform(2, 1) * nt[1] + transform(2, 2) * nt[2]);
-}
 
 /**
  * @brief Returns homogenous 4x4 transformation matrix for given rotation (quaternion) and translation components
@@ -183,25 +177,40 @@ V4R_EXPORTS std::vector<T> createIndicesFromMask(const boost::dynamic_bitset<> &
 V4R_EXPORTS boost::dynamic_bitset<> computeMaskFromIndexMap(const Eigen::MatrixXi &image_map, size_t nr_points);
 
 /**
-  * @brief: Increments a boolean vector by 1 (LSB at the end)
-  * @param v Input vector
-  * @param inc_v Incremented output vector
-  * @return overflow (true if overflow)
-  */
+ * @brief: Increments a boolean vector by 1 (LSB at the end)
+ * @param v Input vector
+ * @param inc_v Incremented output vector
+ * @return overflow (true if overflow)
+ */
 V4R_EXPORTS bool incrementVector(const std::vector<bool> &v, std::vector<bool> &inc_v);
 
 /**
-  * @brief: extracts elements from a vector indicated by some indices
-  * @param[in] Input vector
-  * @param[in] indices to extract
-  * @return extracted elements
-  */
+ * @brief: extracts elements from a vector indicated by some indices
+ * @param[in] Input vector
+ * @param[in] indices to extract
+ * @return extracted elements
+ */
 template <typename T>
 inline V4R_EXPORTS typename std::vector<T> filterVector(const std::vector<T> &in, const std::vector<int> &indices) {
   std::vector<T> out;
   out.reserve(indices.size());
   for (int idx : indices)
     out.push_back(in[idx]);
+  return out;
+}
+
+/**
+ * @brief: copies masked matrix
+ * @param[in] Input input matrix
+ * @param[in] indices row indices to copy to output matrix
+ * @param[out] output output matrix
+ */
+inline V4R_EXPORTS cv::Mat filterCvMat(const cv::Mat &in, const std::vector<int> &indices) {
+  cv::Mat out;
+  out.reserve(indices.size());
+  for (int idx : indices)
+    out.push_back(in.row(idx));
+
   return out;
 }
 
@@ -312,4 +321,4 @@ inline Eigen::VectorXf V4R_EXPORTS runningAverage(const Eigen::VectorXf &old_ave
  */
 Eigen::Matrix3f V4R_EXPORTS computeRotationMatrixToAlignVectors(const Eigen::Vector3f &src,
                                                                 const Eigen::Vector3f &target);
-}
+}  // namespace v4r

@@ -71,19 +71,20 @@ class V4R_EXPORTS MultiRecognitionPipeline : public RecognitionPipeline<PointT> 
   /**
    * @brief recognize
    */
-  void do_recognize();
+  void do_recognize(const std::vector<std::string> &model_ids_to_search) override;
 
   /**
-     * @brief initialize the recognizer (extract features, create FLANN,...)
-     * @param[in] path to model database. If training directory exists, will load trained model from disk; if not,
- * computed features will be stored on disk (in each
-     * object model folder, a feature folder is created with data)
-     * @param[in] retrain if set, will re-compute features and store to disk, no matter if they already exist or not
-    * @param[in] object_instances_to_load vector of object models to load from model_database_path. If emtpy, all
- * objects
-  * in directory will be loaded.
-     */
-  void doInit(const bf::path &trained_dir, bool retrain, const std::vector<std::string> &object_instances_to_load);
+   * @brief initialize the recognizer (extract features, create FLANN,...)
+   * @param[in] path to model database. If training directory exists, will load trained model from disk; if not,
+   * computed features will be stored on disk (in each
+   * object model folder, a feature folder is created with data)
+   * @param[in] retrain if set, will re-compute features and store to disk, no matter if they already exist or not
+   * @param[in] object_instances_to_load vector of object models to load from model_database_path. If empty, all
+   * objects
+   * in directory will be loaded.
+   */
+  void doInit(const bf::path &trained_dir, bool retrain,
+              const std::vector<std::string> &object_instances_to_load) override;
 
  public:
   MultiRecognitionPipeline() {}
@@ -97,10 +98,10 @@ class V4R_EXPORTS MultiRecognitionPipeline : public RecognitionPipeline<PointT> 
   }
 
   /**
-       * @brief needNormals
-       * @return true if normals are needed, false otherwise
-       */
-  bool needNormals() const {
+   * @brief needNormals
+   * @return true if normals are needed, false otherwise
+   */
+  bool needNormals() const override {
     for (size_t r_id = 0; r_id < recognition_pipelines_.size(); r_id++) {
       if (recognition_pipelines_[r_id]->needNormals())
         return true;
@@ -112,7 +113,7 @@ class V4R_EXPORTS MultiRecognitionPipeline : public RecognitionPipeline<PointT> 
    * @brief getFeatureType
    * @return
    */
-  size_t getFeatureType() const {
+  size_t getFeatureType() const override {
     size_t feat_type = 0;
     for (size_t r_id = 0; r_id < recognition_pipelines_.size(); r_id++)
       feat_type += recognition_pipelines_[r_id]->getFeatureType();
@@ -124,7 +125,7 @@ class V4R_EXPORTS MultiRecognitionPipeline : public RecognitionPipeline<PointT> 
    * @brief requiresSegmentation
    * @return
    */
-  bool requiresSegmentation() const {
+  bool requiresSegmentation() const override {
     bool ret_value = false;
     for (size_t i = 0; (i < recognition_pipelines_.size()) && !ret_value; i++)
       ret_value = recognition_pipelines_[i]->requiresSegmentation();
@@ -136,7 +137,7 @@ class V4R_EXPORTS MultiRecognitionPipeline : public RecognitionPipeline<PointT> 
     return recognition_pipelines_;
   }
 
-  typedef boost::shared_ptr<MultiRecognitionPipeline<PointT>> Ptr;
-  typedef boost::shared_ptr<MultiRecognitionPipeline<PointT> const> ConstPtr;
+  typedef std::shared_ptr<MultiRecognitionPipeline<PointT>> Ptr;
+  typedef std::shared_ptr<MultiRecognitionPipeline<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

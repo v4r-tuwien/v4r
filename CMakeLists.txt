@@ -8,24 +8,26 @@
 
 cmake_minimum_required(VERSION 3.5.1 FATAL_ERROR)
 
-# it _must_ go before project(V4R) in order to work
-set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation Directory")
-
-if(POLICY CMP0048)
-    cmake_policy(SET CMP0048 NEW)
-endif()
-
-if(POLICY CMP0054)
-    cmake_policy(SET CMP0054 NEW)
-endif()
-
 if(POLICY CMP0022)
-  cmake_policy(SET CMP0022 OLD)
+  cmake_policy(SET CMP0022 NEW)
 endif()
 
 if(POLICY CMP0026)
-  # Disallow use of the LOCATION property for build targets.
+  # Disallow use of the LOCATION property for build targets
   cmake_policy(SET CMP0026 NEW)
+endif()
+
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+endif()
+
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
+
+if(POLICY CMP0071)
+  # Ignore generated source files in AUTOMOC and AUTOUIC
+  cmake_policy(SET CMP0071 OLD)
 endif()
 
 project(V4R CXX C)
@@ -64,6 +66,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(cmake/V4RThirdParty.cmake)
 
@@ -90,57 +93,42 @@ v4r_add_dependency(GLEW             ON                                          
 v4r_add_dependency(Assimp           ON                                                             )
 v4r_add_dependency(SiftGPU          ON                                                             )
 v4r_add_dependency(LibSVM           ON                         NO                                  )
-v4r_add_dependency(METSlib          ON                                                             )
 v4r_add_dependency(OpenNURBS        ON                                                             )
-v4r_add_dependency(Gtest           OFF                                                             )
 v4r_add_dependency(Caffe            ON                                                             )
 v4r_add_dependency(OpenMP           ON                                                             )
 v4r_add_dependency(Radical          ON                        YES                                  )
+v4r_add_dependency(OpenNI2          ON                                                             )
+v4r_add_dependency(StructureCore    OFF                                                            )
+v4r_add_dependency(RealSense2       ON                                                             )
+v4r_add_dependency(MVSTexturing     ON                                                             )
 
 # V4R build components
 # ===================================================
-V4R_OPTION(BUILD_SHARED_LIBS        "Build shared libraries (.so) instead of static ones (.a)"           ON)
-V4R_OPTION(BUILD_v4r_apps           "Build utility applications (used for example to train classifiers)" ON)
-V4R_OPTION(BUILD_DOCS               "Create build rules for V4R Documentation"                           ON)
-V4R_OPTION(BUILD_EXAMPLES           "Build all examples"                                                 ON)
-V4R_OPTION(BUILD_EVALUATION_TOOLS   "Build all evaluation tools"                                         OFF)
-V4R_OPTION(BUILD_UTILITY_TOOLS      "Build all utility tools"                                            ON)
-V4R_OPTION(BUILD_TESTS              "Build tests"                                                        ON)
-V4R_OPTION(BUILD_WITH_DEBUG_INFO    "Include debug info into debug libs (not MSCV only)"                 ON)
+v4r_option(BUILD_SHARED_LIBS        "Build shared libraries (.so) instead of static ones (.a)"               ON)
+v4r_option(BUILD_v4r_apps           "Build utility applications (used for example to train classifiers)"     ON)
+v4r_option(BUILD_DOCS               "Create build rules for V4R Documentation"                               ON)
+v4r_option(BUILD_EXAMPLES           "Build all examples"                                                     ON)
+v4r_option(BUILD_EVALUATION_TOOLS   "Build all evaluation tools"                                            OFF)
+v4r_option(BUILD_UTILITY_TOOLS      "Build all utility tools"                                                ON)
+v4r_option(BUILD_TESTS              "Build tests"                                                           OFF)
 
 # V4R installation options
 # ===================================================
-V4R_OPTION(INSTALL_CREATE_DISTRIB   "Change install rules to build the distribution package" OFF )
-V4R_OPTION(INSTALL_C_EXAMPLES       "Install C examples"        ON )
-V4R_OPTION(INSTALL_C_UTILITY_TOOLS        "Install C utility tools"        ON )
-V4R_OPTION(INSTALL_C_EVALUATION_TOOLS       "Install C evaluation tools"        OFF )
-V4R_OPTION(INSTALL_TO_MANGLED_PATHS "Enables mangled install paths, that help with side by side installs." OFF IF (UNIX AND NOT ANDROID AND NOT IOS AND BUILD_SHARED_LIBS) )
+v4r_option(INSTALL_CREATE_DISTRIB      "Change install rules to build the distribution package"             OFF)
+v4r_option(INSTALL_C_EXAMPLES          "Install C examples"                                                  ON)
+v4r_option(INSTALL_C_UTILITY_TOOLS     "Install C utility tools"                                             ON)
+v4r_option(INSTALL_C_EVALUATION_TOOLS  "Install C evaluation tools"                                         OFF)
+v4r_option(INSTALL_TO_MANGLED_PATHS    "Enables mangled install paths (helps with side by side installs)"   OFF)
 
 # V4R build options
 # ===================================================
-V4R_OPTION(ENABLE_PROFILING           "Enable profiling in the GCC compiler (Add flags: -g -pg)" OFF)
-V4R_OPTION(ENABLE_COVERAGE            "Enable coverage collection with  GCov"                    OFF)
-V4R_OPTION(ENABLE_OMIT_FRAME_POINTER  "Enable -fomit-frame-pointer for GCC"                      ON   IF (CMAKE_COMPILER_IS_GNUCXX AND NOT CMAKE_COMPILER_IS_CLANGCXX) )
-V4R_OPTION(ENABLE_FAST_MATH           "Enable -ffast-math (not recommended for GCC 4.6.x)"       OFF)
-V4R_OPTION(ENABLE_SSE                 "Enable SSE instructions"                                  ON)
-V4R_OPTION(ENABLE_SSE2                "Enable SSE2 instructions"                                 ON)
-V4R_OPTION(ENABLE_SSE3                "Enable SSE3 instructions"                                 ON)
-V4R_OPTION(ENABLE_SSSE3               "Enable SSSE3 instructions"                                ON)
-V4R_OPTION(ENABLE_SSE41               "Enable SSE4.1 instructions"                               ON)
-V4R_OPTION(ENABLE_SSE42               "Enable SSE4.2 instructions"                               ON)
-V4R_OPTION(ENABLE_POPCNT              "Enable POPCNT instructions"                               OFF)
-V4R_OPTION(ENABLE_AVX                 "Enable AVX instructions"                                  OFF)
-V4R_OPTION(ENABLE_AVX2                "Enable AVX2 instructions"                                 OFF)
-V4R_OPTION(ENABLE_FMA3                "Enable FMA3 instructions"                                 OFF)
-V4R_OPTION(ENABLE_NOISY_WARNINGS      "Show all warnings even if they are too noisy"             OFF)
-V4R_OPTION(V4R_WARNINGS_ARE_ERRORS    "Treat warnings as errors"                                 OFF)
-V4R_OPTION(ENABLE_IMPL_COLLECTION     "Collect implementation data on function call"             OFF)
-V4R_OPTION(GENERATE_ABI_DESCRIPTOR    "Generate XML file for abi_compliance_checker tool"        OFF IF UNIX)
-
-if(ENABLE_IMPL_COLLECTION)
-  add_definitions(-DCV_COLLECT_IMPL_DATA)
-endif()
-
+v4r_option(ENABLE_PROFILING            "Enable profiling in the GCC compiler (Add flags: -g -pg)"          OFF)
+v4r_option(ENABLE_COVERAGE             "Enable coverage collection with  GCov"                             OFF)
+v4r_option(ENABLE_OMIT_FRAME_POINTER   "Enable -fomit-frame-pointer"                                        ON)
+v4r_option(ENABLE_FAST_MATH            "Enable -ffast-math"                                                OFF)
+v4r_option(ENABLE_NOISY_WARNINGS       "Show all warnings even if they are too noisy"                      OFF)
+v4r_option(V4R_WARNINGS_ARE_ERRORS     "Treat warnings as errors"                                          OFF)
+v4r_option(V4R_CPU_ARCH_NATIVE         "Enable all capabilities of system's CPU"                   AUTO ON OFF)
 
 # ----------------------------------------------------------------------------
 #  Get actual V4R version number from sources
@@ -176,7 +164,7 @@ else()
   set(V4R_CONFIG_INSTALL_PATH share/V4R)
 endif()
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${V4R_LIB_INSTALL_PATH};${CMAKE_INSTALL_PREFIX}/${V4R_3P_LIB_INSTALL_PATH}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${V4R_3P_LIB_INSTALL_PATH};${CMAKE_INSTALL_PREFIX}/${V4R_LIB_INSTALL_PATH}")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Postfix of so's:
@@ -203,8 +191,8 @@ v4r_install_dependencies()
 # ----------------------------------------------------------------------------
 #  Path for build/platform -specific headers
 # ----------------------------------------------------------------------------
-set(V4R_CONFIG_FILE_INCLUDE_DIR "${CMAKE_BINARY_DIR}/" CACHE PATH "Where to create the platform-dependant v4r_config.h")
-v4r_include_directories(${V4R_CONFIG_FILE_INCLUDE_DIR})
+set(V4R_GENERATED_HEADERS_DIR "${CMAKE_BINARY_DIR}/generated" CACHE PATH "Where to put generated header files")
+v4r_include_directories(${V4R_GENERATED_HEADERS_DIR})
 
 # ----------------------------------------------------------------------------
 #  Path for additional modules
@@ -257,12 +245,6 @@ set(V4R_LINKER_LIBS ${V4R_LINKER_LIBS} dl m pthread rt)
 
 include(cmake/V4RModule.cmake)
 
-# ----------------------------------------------------------------------------
-#  Detect endianness of build platform
-# ----------------------------------------------------------------------------
-
-include(TestBigEndian)
-test_big_endian(WORDS_BIGENDIAN)
 
 # --- Doxygen for documentation ---
 unset(DOXYGEN_FOUND CACHE)
@@ -278,20 +260,12 @@ include(cmake/V4RExtraTargets.cmake)
 # Process subdirectories
 # ----------------------------------------------------------------------------
 
-# TODO
-# v4r.hpp and legacy headers
-#add_subdirectory(include)
-
 # V4R modules
 add_subdirectory(modules)
 
 # TODO
 # Generate targets for documentation
 #add_subdirectory(doc)
-
-# TODO
-# various data that is used by cv libraries and/or demo applications.
-#add_subdirectory(data)
 
 # extra applications
 if(BUILD_v4r_apps)
@@ -304,32 +278,20 @@ if(BUILD_EXAMPLES)
   add_subdirectory(samples)
 endif()
 
-# Figure out the list of dependencies
-v4r_get_all_libs(deps_modules deps_extra deps_3rdparty)
+if(BUILD_TESTS)
+  v4r_add_dependency(Gtest)
+  add_subdirectory(test)
+endif()
 
 # ----------------------------------------------------------------------------
 # Finalization: generate configuration-based files
 # ----------------------------------------------------------------------------
 
 # Generate platform-dependent and configuration-dependent headers
-include(cmake/V4RGenHeaders.cmake)
-
-# TODO
-# Generate v4r.pc for pkg-config command
-#include(cmake/V4RGenPkgconfig.cmake)
+include(cmake/V4RGenerateHeaders.cmake)
 
 # Generate V4RСonfig.cmake and V4RConfig-version.cmake for cmake projects
-include(cmake/V4RGenConfig.cmake)
-
-# TODO
-# Generate ABI descriptor
-#include(cmake/V4RGenABI.cmake)
-
-
-if(NOT V4R_LICENSE_FILE)
-  set(V4R_LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
-endif()
-
+include(cmake/V4RGenerateConfig.cmake)
 
 include(cmake/V4RStatus.cmake)
 
@@ -366,48 +328,14 @@ else()
   set(V4R_COMPILER_STR "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}")
 endif()
 string(STRIP "${V4R_COMPILER_STR}" V4R_COMPILER_STR)
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 
 status("")
 status("  C/C++:")
 status("    Built as dynamic libs:"  BUILD_SHARED_LIBS THEN YES ELSE NO)
 status("    C++ Compiler:"           ${V4R_COMPILER_STR})
-status("    C++ flags (Release):"    ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE})
-status("    C++ flags (Debug):"      ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG})
-status("    C Compiler:"             ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
-status("    C flags (Release):"      ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE})
-status("    C flags (Debug):"        ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG})
-status("    Linker flags (Release):" ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
-status("    Linker flags (Debug):"   ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG})
-
-# ========================== Dependencies ============================
-status("    Extra dependencies:" ${deps_extra})
-
-# ========================== V4R modules ==========================
-status("")
-status("  V4R modules:")
-string(REPLACE "v4r_" "" V4R_MODULES_BUILD_ST          "${V4R_MODULES_BUILD}")
-string(REPLACE "v4r_" "" V4R_MODULES_DISABLED_USER_ST  "${V4R_MODULES_DISABLED_USER}")
-string(REPLACE "v4r_" "" V4R_MODULES_DISABLED_FORCE_ST "${V4R_MODULES_DISABLED_FORCE}")
-set(V4R_MODULES_DISABLED_AUTO_ST "")
-foreach(m ${V4R_MODULES_DISABLED_AUTO})
-  set(__mdeps "")
-  foreach(d ${V4R_MODULE_${m}_DEPS})
-    if(d MATCHES "^v4r_" AND NOT HAVE_${d})
-      list(APPEND __mdeps ${d})
-    endif()
-  endforeach()
-  if(__mdeps)
-    list(APPEND V4R_MODULES_DISABLED_AUTO_ST "${m}(deps: ${__mdeps})")
-  else()
-    list(APPEND V4R_MODULES_DISABLED_AUTO_ST "${m}")
-  endif()
-endforeach()
-string(REPLACE "v4r_" "" V4R_MODULES_DISABLED_AUTO_ST  "${V4R_MODULES_DISABLED_AUTO_ST}")
-
-status("    To be built:"            V4R_MODULES_BUILD          THEN ${V4R_MODULES_BUILD_ST}          ELSE "-")
-status("    Disabled:"               V4R_MODULES_DISABLED_USER  THEN ${V4R_MODULES_DISABLED_USER_ST}  ELSE "-")
-status("    Disabled by dependency:" V4R_MODULES_DISABLED_AUTO  THEN ${V4R_MODULES_DISABLED_AUTO_ST}  ELSE "-")
-status("    Unavailable:"            V4R_MODULES_DISABLED_FORCE THEN ${V4R_MODULES_DISABLED_FORCE_ST} ELSE "-")
+status("    C++ flags:"              ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}})
+status("    Linker flags:"           ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE}})
 
 # ========================== Third-party libraries ==========================
 v4r_status("")
@@ -425,6 +353,11 @@ foreach(_NAME ${V4R_3P_OPTIONAL})
   v4r_dependency_status(${_NAME})
 endforeach()
 v4r_status("")
+v4r_status("  V4R modules:")
+v4r_status("")
+foreach(_NAME ${V4R_MODULES})
+  v4r_module_status(${_NAME})
+endforeach()
 
 # ========================== documentation ==========================
 if(BUILD_DOCS)
@@ -436,20 +369,16 @@ endif()
 # ========================== samples and tests ==========================
 status("")
 status("  Tests and samples:")
-status("    Tests:"             BUILD_TESTS AND HAVE_v4r_ts   THEN YES ELSE NO)
+status("    Unit tests:"        BUILD_TESTS                   THEN YES ELSE NO)
 status("    C/C++ Examples:"    BUILD_EXAMPLES                THEN YES ELSE NO)
 
 # ========================== auxiliary ==========================
 status("")
 status("  Install path:" "${CMAKE_INSTALL_PREFIX}")
 status("")
-status("  v4r_config.h is in:" "${V4R_CONFIG_FILE_INCLUDE_DIR}")
+status("  v4r/config.h is in:" "${V4R_GENERATED_HEADERS_DIR}")
 status("-----------------------------------------------------------------")
 status("")
-
-foreach(_name ${V4R_3P})
-  message(STATUS "-- ${_name} : ${V4R_3P_${_name}_NAME} : ${${_name}_BUILT} : ${HAVE_${_name}}")
-endforeach()
 
 v4r_finalize_status()
 
@@ -460,12 +389,6 @@ if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
   message(WARNING "The source directory is the same as binary directory. \"make clean\" may damage the source tree")
 endif()
 
-# ----------------------------------------------------------------------------
-# CPack stuff
-# ----------------------------------------------------------------------------
-
-# TODO
-#include(cmake/V4RPackaging.cmake)
 
 #--------------------------------------------------------------------------------------------------#
 #                                              Debug                                               #
@@ -479,10 +402,15 @@ endif()
 #
 #     -DPRINT_CACHE=<STRING_TO_MATCH>
 #
+# * Clear all cache variables matching a certain string:
+#
+#     -DCLEAR_CACHE=<STRING_TO_MATCH>
+#
 # * Print all properties of a target:
 #
 #     -DPRINT_TARGET=<TARGET_NAME>
 #
 v4r_print_cache_variables("${PRINT_CACHE}")
+v4r_clear_cache_variables("${CLEAR_CACHE}")
 v4r_print_target_properties("${PRINT_TARGET}")
-v4r_clear_vars(PRINT_CACHE PRINT_TARGET PRINT_DEBUG)
+v4r_clear_vars(PRINT_DEBUG PRINT_CACHE CLEAR_CACHE PRINT_TARGET)

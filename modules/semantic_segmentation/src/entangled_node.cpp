@@ -235,4 +235,4 @@ void EntangledForestNode::UpdateLabelDistribution(std::vector<double> &labeldist
 EntangledForestNode::~EntangledForestNode() {
   delete mSplitFeature;
 }
-}
+}  // namespace v4r

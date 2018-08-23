@@ -49,6 +49,6 @@ class universe {
   uni_elt *elts;
   int num;
 };
-}
+}  // namespace gc
 
 #endif

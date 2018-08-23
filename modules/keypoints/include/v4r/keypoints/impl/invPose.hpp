@@ -66,6 +66,6 @@ inline void invPose6(const T1 r[3], const T2 t[3], T3 inv_r[3], T4 inv_t[3]) {
   inv_t[2] = T4(-1) * inv_t[2];
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

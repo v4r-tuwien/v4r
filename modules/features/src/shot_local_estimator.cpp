@@ -7,9 +7,8 @@
 namespace v4r {
 
 template <typename PointT>
-void SHOTLocalEstimation<PointT>::compute(std::vector<std::vector<float>> &signatures) {
+void SHOTLocalEstimation<PointT>::compute(cv::Mat &signatures) {
   CHECK(cloud_->points.size() == normals_->points.size());
-  signatures.clear();
 
   typename pcl::PointCloud<PointT>::Ptr cloud_wo_nan(new pcl::PointCloud<PointT>);
   pcl::PointCloud<pcl::Normal>::Ptr normals_wo_nan(new pcl::PointCloud<pcl::Normal>);
@@ -34,7 +33,6 @@ void SHOTLocalEstimation<PointT>::compute(std::vector<std::vector<float>> &signa
   normals_wo_nan->points.resize(kept);
   normals_wo_nan->width = kept;
   normals_wo_nan->height = 1;
-  originalIndices2new.resize(kept);
 
   typename pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
   tree->setInputCloud(cloud_wo_nan);
@@ -55,13 +53,13 @@ void SHOTLocalEstimation<PointT>::compute(std::vector<std::vector<float>> &signa
 
   keypoint_indices_ = indices_;
 
-  signatures = std::vector<std::vector<float>>(shots.points.size(), std::vector<float>(352));
+  signatures = cv::Mat_<float>(shots.points.size(), 352);
 
   for (size_t k = 0; k < shots.points.size(); k++)
     for (size_t i = 0; i < 352; i++)
-      signatures[k][i] = shots.points[k].descriptor[i];
+      signatures.at<float>(k, i) = shots.points[k].descriptor[i];
 }
 
 template class V4R_EXPORTS SHOTLocalEstimation<pcl::PointXYZ>;
 template class V4R_EXPORTS SHOTLocalEstimation<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

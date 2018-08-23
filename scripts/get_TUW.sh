@@ -2,7 +2,7 @@
 
 cd data
 echo "Downloading TUW model database..."
-output=$(wget -c https://repo.acin.tuwien.ac.at/tmp/permanent/data/TUW_models.tar.gz)
+output=$(wget -c -O TUW_models.tar.gz https://data.acin.tuwien.ac.at/index.php/s/63q18IDOvLYsvNO/download)
 if [ $? -ne 0 ]; then
     echo "Error downloading file"
 else
@@ -23,7 +23,7 @@ fi
 
 
 echo "Downloading TUW test set..."
-output=$(wget -c https://repo.acin.tuwien.ac.at/tmp/permanent/data/TUW_test_set.tar.gz)
+output=$(wget -c -O TUW_test_set.tar.gz https://data.acin.tuwien.ac.at/index.php/s/BRimlBAPwoyOHmJ/download)
 if [ $? -ne 0 ]; then
     echo "Error downloading file"
 else
@@ -45,7 +45,7 @@ fi
 
 
 echo "Downloading ground-truth labels..."
-output=$(wget -c https://repo.acin.tuwien.ac.at/tmp/permanent/data/TUW_annotations.tar.gz)
+output=$(wget -c -O TUW_annotations.tar.gz https://data.acin.tuwien.ac.at/index.php/s/GNzfAsEkd1kM5Uw/download)
 if [ $? -ne 0 ]; then
     echo "Error downloading file"
 else

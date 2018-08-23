@@ -258,4 +258,4 @@ void ZAdaptiveNormals::setParameter(const Parameter &p) {
   sqr_radius = p.radius * p.radius;
 }
 
-}  //-- THE END --
+}  // namespace v4r

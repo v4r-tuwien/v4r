@@ -1,5 +1,3 @@
-add_definitions(-D__V4R_BUILD=1)
-
 if(NOT V4R_MODULES_PATH)
   set(V4R_MODULES_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()

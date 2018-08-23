@@ -51,27 +51,23 @@ namespace v4r {
 
 using namespace std;
 
-/************************************************************************************
- * Constructor/Destructor
- */
-FeatureDetector_K_HARRIS::FeatureDetector_K_HARRIS(const Parameter &_p) : FeatureDetector(K_HARRIS), param(_p) {
+FeatureDetector_K_HARRIS::FeatureDetector_K_HARRIS(const Parameter &_p)
+: FeatureDetector(FeatureDetector::Type::K_HARRIS), param(_p) {
+  descr_name_ = "harris";
   imGOri.reset(new ComputeImGDescOrientations(param.goParam));
 }
 
 FeatureDetector_K_HARRIS::~FeatureDetector_K_HARRIS() {}
 
-/***************************************************************************************/
-
-/**
- * detect
- */
-void FeatureDetector_K_HARRIS::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys) {
+void FeatureDetector_K_HARRIS::detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys,
+                                      const cv::Mat &object_mask) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray_, cv::COLOR_RGB2GRAY);
   else
-    im_gray = image;
+    im_gray_ = image;
 
-  cv::goodFeaturesToTrack(im_gray, pts, param.maxCorners, param.qualityLevel, param.minDistance, cv::Mat(), 3, true,
+  std::vector<cv::Point2f> pts;
+  cv::goodFeaturesToTrack(im_gray_, pts, param.maxCorners, param.qualityLevel, param.minDistance, object_mask, 3, true,
                           0.01);
 
   keys.resize(pts.size());
@@ -79,6 +75,7 @@ void FeatureDetector_K_HARRIS::detect(const cv::Mat &image, std::vector<cv::KeyP
     keys[i] = cv::KeyPoint(pts[i], param.winSize - 2);
   }
 
-  imGOri->compute(im_gray, keys);
+  imGOri->compute(im_gray_, keys);
+  computeKeypointIndices(im_gray_, keys);
 }
-}
+}  // namespace v4r

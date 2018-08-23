@@ -56,8 +56,8 @@ using namespace std;
  * Constructor/Destructor
  */
 TSFData::TSFData()
-: need_init(false), init_points(0), lk_flags(0), timestamp(std::numeric_limits<uint64_t>::max()),
-  pose(Eigen::Matrix4f::Identity()), have_pose(false), kf_timestamp(std::numeric_limits<uint64_t>::max()),
+: need_init(false), init_points(0), lk_flags(0), timestamp(std::numeric_limits<double>::quiet_NaN()),
+  pose(Eigen::Matrix4f::Identity()), have_pose(false), kf_timestamp(std::numeric_limits<double>::quiet_NaN()),
   kf_pose(Eigen::Matrix4f::Identity()), lost_track(false) {
   last_pose_map(0, 0) = std::numeric_limits<float>::quiet_NaN();
 }
@@ -83,8 +83,8 @@ void TSFData::reset() {
   cloud.clear();
   pose = Eigen::Matrix4f::Identity();
   kf_pose = Eigen::Matrix4f::Identity();
-  timestamp = std::numeric_limits<uint64_t>::max();
-  kf_timestamp = std::numeric_limits<uint64_t>::max();
+  timestamp = std::numeric_limits<double>::quiet_NaN();
+  kf_timestamp = std::numeric_limits<double>::quiet_NaN();
   have_pose = false;
   map_frames = std::queue<TSFFrame::Ptr>();
   lost_track = false;
@@ -213,4 +213,4 @@ bool TSFData::setImage(const cv::Mat &image, v4r::DataMatrix2D<v4r::Surfel> &sf_
 
   return true;
 }
-}
+}  // namespace v4r

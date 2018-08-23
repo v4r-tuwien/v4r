@@ -154,4 +154,4 @@ void SmoothEuclideanSegmenter<PointT>::segment() {
 
 //#define PCL_INSTANTIATE_SmoothEuclideanSegmenter(T) template class V4R_EXPORTS SmoothEuclideanSegmenter<T>;
 // PCL_INSTANTIATE(SmoothEuclideanSegmenter, PCL_XYZ_POINT_TYPES )
-}
+}  // namespace v4r

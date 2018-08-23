@@ -45,11 +45,10 @@
  *
  */
 
-#ifndef V4R_OCCLUSION_REASONING_H_
-#define V4R_OCCLUSION_REASONING_H_
+#pragma once
 
 #include <pcl/point_cloud.h>
-#include <v4r/common/camera.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/core/macros.h>
 #include <boost/dynamic_bitset.hpp>
 
@@ -68,8 +67,8 @@ class V4R_EXPORTS OcclusionReasoner {
   typename pcl::PointCloud<PointTB>::ConstPtr
       cloud_to_be_filtered_;     ///< to_be_filtered point cloud to be checked for occlusion
   float occlusion_threshold_m_;  ///< occlusion threshold in meter
-  Camera::ConstPtr cam_;  ///@brief camera parameters for re-projection to image plane by depth buffering (only used if
-                          /// point clouds are not organized)
+  Intrinsics cam_;  ///@brief camera parameters for re-projection to image plane by depth buffering (only used if
+                    /// point clouds are not organized)
   boost::dynamic_bitset<> px_is_visible_;  ///< indicates if a pixel re-projected by the cloud_to_be_filtered_ is in
                                            /// front of the occlusion cloud (i.e. if the pixel belongs to the object)
 
@@ -77,11 +76,11 @@ class V4R_EXPORTS OcclusionReasoner {
   OcclusionReasoner() : occlusion_threshold_m_(0.01f) {}
 
   /**
-   * @brief setCamera
-   * @param cam
+   * @brief setCameraIntrinsics
+   * @param rgb_intrinsics intrinsics of rgb camera
    */
-  void setCamera(const Camera::ConstPtr cam) {
-    cam_ = cam;
+  void setCameraIntrinsics(const Intrinsics &rgb_intrinsics) {
+    cam_ = rgb_intrinsics;
   }
 
   /**
@@ -124,6 +123,4 @@ class V4R_EXPORTS OcclusionReasoner {
    */
   boost::dynamic_bitset<> computeVisiblePoints();
 };
-}
-
-#endif
+}  // namespace v4r

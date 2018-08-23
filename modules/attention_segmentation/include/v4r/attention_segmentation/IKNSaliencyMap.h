@@ -77,6 +77,6 @@ class V4R_EXPORTS IKNSaliencyMap : public BaseMap {
   virtual int checkParameters();  //
 };
 
-}  // v4r
+}  // namespace v4r
 
 #endif  // IKN_SALIENCYMAP

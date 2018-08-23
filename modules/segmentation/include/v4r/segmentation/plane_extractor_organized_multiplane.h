@@ -62,12 +62,12 @@ class V4R_EXPORTS OrganizedMultiPlaneExtractor : public PlaneExtractor<PointT> {
   OrganizedMultiPlaneExtractor(const PlaneExtractorParameter &p = PlaneExtractorParameter())
   : PlaneExtractor<PointT>(p) {}
 
-  virtual void compute();
-  virtual bool getRequiresNormals() const {
+  void compute() override;
+  bool getRequiresNormals() const override {
     return true;
   }
 
-  typedef boost::shared_ptr<OrganizedMultiPlaneExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<OrganizedMultiPlaneExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<OrganizedMultiPlaneExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<OrganizedMultiPlaneExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

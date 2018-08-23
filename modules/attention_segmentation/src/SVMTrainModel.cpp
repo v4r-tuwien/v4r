@@ -50,17 +50,16 @@
 
 namespace svm {
 
-static char *line = nullptr;
-static int max_line_len;
+void SVMTrainModel::print_null(const char *s) {
+  (void)s;
+}
 
-void print_null(const char *s) {}
-
-void exit_input_error(int line_num) {
+void SVMTrainModel::exit_input_error(int line_num) {
   fprintf(stderr, "Wrong input format at line %d\n", line_num);
   exit(1);
 }
 
-static char *readline(FILE *input) {
+char *SVMTrainModel::readline(FILE *input) {
   int len;
 
   if (fgets(line, max_line_len, input) == NULL)
@@ -94,6 +93,8 @@ SVMTrainModel::SVMTrainModel() {
   param.weight_label = nullptr;
   param.weight = nullptr;
   cross_validation = 0;
+
+  line = nullptr;
 
   void (*print_func)(const char *) = nullptr;  // default printing to stdout
   svm_set_print_string_function(print_func);
@@ -181,7 +182,7 @@ void SVMTrainModel::setModelFileName(std::string _model_file_name) {
 
 void SVMTrainModel::setNoPrint(bool _no_print) {
   if (_no_print) {
-    void (*print_func)(const char *) = &print_null;
+    void (*print_func)(const char *) = &SVMTrainModel::print_null;
     svm_set_print_string_function(print_func);
   } else {
     void (*print_func)(const char *) = nullptr;  // default printing to stdout

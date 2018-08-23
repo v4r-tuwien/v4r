@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary curvature and standart deviation.
+ * @brief Class to calculate boundary curvature and standard deviation.
  */
 
 #ifndef BOUNDARY_RELATIONS_MEANCURVATURE_H
@@ -58,7 +58,7 @@ class V4R_EXPORTS BoundaryRelationsMeanCurvature : public BoundaryRelationsBase 
  protected:
  private:
  public:
-  typedef boost::shared_ptr<BoundaryRelationsMeanCurvature> Ptr;
+  typedef std::shared_ptr<BoundaryRelationsMeanCurvature> Ptr;
 
   BoundaryRelationsMeanCurvature();
   ~BoundaryRelationsMeanCurvature();
@@ -66,6 +66,6 @@ class V4R_EXPORTS BoundaryRelationsMeanCurvature : public BoundaryRelationsBase 
   //@ep: not so sure that the type of the return argument is the best
   virtual v4r::meanVal compute();
 };
-}
+}  // namespace v4r
 
 #endif  // BOUNDARY_RELATIONS_MEANCURVATURE_H

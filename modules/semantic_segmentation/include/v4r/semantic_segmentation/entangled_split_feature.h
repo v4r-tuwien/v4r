@@ -130,7 +130,7 @@ class V4R_EXPORTS EntangledForestSplitFeature {
   int GetMaxParameterSamples();
   std::string GetName();
   void SetThreshold(double t);
-  void SetRandomGenerator(std::mt19937* randomGenerator);  // neccessary after load from file
+  void SetRandomGenerator(std::mt19937* randomGenerator);  // necessary after load from file
 
   // to be overridden
   virtual std::string ToString() = 0;
@@ -493,4 +493,4 @@ class V4R_EXPORTS EntangledForestNodeDescendantFeature : public EntangledForestS
     return {mMinAngle, mMaxAngle, mMinPtPlDist, mMaxPtPlDist, mMaxEDist};
   }
 };
-}
+}  // namespace v4r

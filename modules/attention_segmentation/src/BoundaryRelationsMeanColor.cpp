@@ -42,7 +42,7 @@
  * @author Potapova
  * @date August 2013
  * @version 0.1
- * @brief Class to calculate boundary color and standart deviation.
+ * @brief Class to calculate boundary color and standard deviation.
  */
 
 #include "v4r/attention_segmentation/BoundaryRelationsMeanColor.h"
@@ -68,21 +68,18 @@ void BoundaryRelationsMeanColor::getYUV(double &Y, double &U, double &V, pcl::Po
 v4r::meanVal BoundaryRelationsMeanColor::compute() {
   //@ep: TODO check preconditions -- not all of them are necessary
   if (!have_cloud) {
-    printf("[BoundaryRelationsMeanColor::compute] Error: No input cloud set.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanColor::compute] no input cloud set.");
   }
 
   if (!have_boundary) {
-    printf("[BoundaryRelationsMeanColor::compute] Error: No input border.\n");
-    exit(0);
+    throw std::invalid_argument("[BoundaryRelationsMeanColor::compute] no input border set.");
   }
 
   v4r::meanVal meanColorDistance;
 
   if (boundary.size() <= 0) {
-    printf(
-        "[BoundaryRelationsMeanColor::compute] Warning: Boundary size is 0. This means that constants are different "
-        "everywhere!\n");
+    LOG(WARNING) << "Boundary size is 0. This means that constants are "
+                    "different everywhere!";
     meanColorDistance.mean = 0;
     meanColorDistance.stddev = 0;
     return meanColorDistance;
@@ -112,11 +109,11 @@ v4r::meanVal BoundaryRelationsMeanColor::compute() {
   }
 
   // normalize curvature sum and calculate curvature variance
-  //@ep: this shoule be separate function in the utils
+  //@ep: this should be separate function in the utils
   if (boundaryLength > 0) {
     totalColorDistance /= boundaryLength;
     for (unsigned i = 0; i < valuesColorDistance.size(); i++) {
-      //@ep: BUG why is it standart deviation???
+      //@ep: BUG why is it standard deviation???
       totalColorDistanceStdDev += fabs(valuesColorDistance.at(i) - totalColorDistance);
     }
     totalColorDistanceStdDev /= boundaryLength;
@@ -135,4 +132,4 @@ v4r::meanVal BoundaryRelationsMeanColor::compute() {
   return meanColorDistance;
 }
 
-}  // end surface
+}  // namespace v4r

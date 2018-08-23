@@ -59,14 +59,14 @@ namespace v4r {
  * @return segmenter
  */
 template <typename PointT>
-typename Segmenter<PointT>::Ptr initSegmenter(int method, std::vector<std::string> &params);
+typename Segmenter<PointT>::Ptr initSegmenter(SegmentationType method, std::vector<std::string> &params);
 
 /**
  * @brief initPlaneExtractor set up a plane extraction object
  * @param method plane extraction method as stated in segmentation/types.h
- * @param params boost parameters for segmentation object
+ * @param params boost parameters for plane extraction object
  * @return plane_extractor
  */
 template <typename PointT>
-typename PlaneExtractor<PointT>::Ptr initPlaneExtractor(int method, std::vector<std::string> &params);
-}
+typename PlaneExtractor<PointT>::Ptr initPlaneExtractor(PlaneExtractionType method, std::vector<std::string> &params);
+}  // namespace v4r

@@ -51,12 +51,12 @@
 #include <float.h>
 #include <v4r/core/macros.h>
 #include <Eigen/Dense>
+#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -90,12 +90,12 @@ class V4R_EXPORTS ImGDescOrientation {
   void compute(const cv::Mat_<unsigned char> &im, float &angle);
   void compute(const cv::Mat_<unsigned char> &im, const cv::Mat_<float> &weight, float &angle);
 
-  typedef SmartPtr<::v4r::ImGDescOrientation> Ptr;
-  typedef SmartPtr<::v4r::ImGDescOrientation const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ImGDescOrientation> Ptr;
+  typedef std::shared_ptr<::v4r::ImGDescOrientation const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

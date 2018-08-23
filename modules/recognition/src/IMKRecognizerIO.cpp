@@ -160,4 +160,4 @@ bool IMKRecognizerIO::read(const std::string &dir, std::vector<std::string> &obj
   return false;
 }
 
-}  //--END--
+}  // namespace v4r

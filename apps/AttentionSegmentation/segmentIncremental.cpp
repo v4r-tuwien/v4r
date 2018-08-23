@@ -44,11 +44,7 @@
 #include "v4r/attention_segmentation/PCLUtils.h"
 #include "v4r/attention_segmentation/segmentation.h"
 
-void printUsage(char *av);
-void showSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, cv::Mat &, cv::Mat &);
-void showSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, cv::Mat &, cv::Mat &);
-void readData(std::string, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr &);
-
+namespace {
 void readData(std::string filename, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pcl_cloud,
               pcl::PointCloud<pcl::PointXYZRGBL>::Ptr &pcl_cloud_l) {
   if (!(pclAddOns::readPointCloud<pcl::PointXYZRGBL>(filename.c_str(), pcl_cloud_l))) {
@@ -147,6 +143,7 @@ void printUsage(char *av) {
             << " cloud.pcd model.txt scaling_params.txt 2 saliency.png [save_image.png times.txt evaluation.txt] "
             << std::endl;
 }
+}  // namespace
 
 int main(int argc, char *argv[]) {
   if (argc < 6) {

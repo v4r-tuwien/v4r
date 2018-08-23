@@ -56,10 +56,9 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <stdexcept>
 #include <string>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
-// A makro to get rid of the unused warning
+// A macro to get rid of the unused warning
 #ifndef UNUSED
 #define UNUSED(expr) \
   do {               \
@@ -178,10 +177,10 @@ class V4R_EXPORTS ArticulatedObject : public Object, public PartMotion6D {
   /** addCamera **/
   int addCamera(const std::vector<Eigen::VectorXd> &_part_parameter);
 
-  typedef SmartPtr<::v4r::ArticulatedObject> Ptr;
-  typedef SmartPtr<::v4r::ArticulatedObject const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ArticulatedObject> Ptr;
+  typedef std::shared_ptr<::v4r::ArticulatedObject const> ConstPtr;
 };
 
-}  //--END--
+}  // namespace v4r
 
 #endif

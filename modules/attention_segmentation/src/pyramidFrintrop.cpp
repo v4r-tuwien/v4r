@@ -159,4 +159,4 @@ void FrintropPyramid::combinePyramid(bool standard) {
 
   calculated = true;
 }
-}
+}  // namespace v4r

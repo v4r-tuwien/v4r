@@ -62,4 +62,4 @@ void universe::printAll() {
   for (int i = 0; i < num; i++)
     printf("[universe::printAll] %u: elts: rank: %u - p: %u - size: %u\n", i, elts[i].rank, elts[i].p, elts[i].size);
 }
-}
+}  // namespace gc

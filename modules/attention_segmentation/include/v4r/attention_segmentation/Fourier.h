@@ -78,7 +78,7 @@ class V4R_EXPORTS Fourier {
   int binStretch;  // Stretch factor for bins of higher order (k=1,...)
 
  public:
-  typedef boost::shared_ptr<Fourier> Ptr;
+  typedef std::shared_ptr<Fourier> Ptr;
 
   Fourier();
   ~Fourier();
@@ -112,6 +112,6 @@ class V4R_EXPORTS Fourier {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

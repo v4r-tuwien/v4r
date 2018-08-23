@@ -135,13 +135,13 @@ class Sensor : public QThread {
   v4r::Object::Ptr &getModel() {
     return camtracker->getModelPtr();
   }
-  boost::shared_ptr<std::vector<CameraLocation>> &getTrajectory() {
+  std::shared_ptr<std::vector<CameraLocation>> &getTrajectory() {
     return cam_trajectory;
   }
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &getClouds() {
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &getClouds() {
     return log_clouds;
   }
-  boost::shared_ptr<AlignedPointXYZRGBVector> &getAlignedCloud() {
+  std::shared_ptr<AlignedPointXYZRGBVector> &getAlignedCloud() {
     return oc_cloud;
   }
 
@@ -155,8 +155,8 @@ class Sensor : public QThread {
  signals:
   void new_image(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &_cloud, const cv::Mat_<cv::Vec3b> &image);
   void new_pose(const Eigen::Matrix4f &_pose);
-  void update_model_cloud(const boost::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
-  void update_cam_trajectory(const boost::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
+  void update_model_cloud(const std::shared_ptr<Sensor::AlignedPointXYZRGBVector> &_oc_cloud);
+  void update_cam_trajectory(const std::shared_ptr<std::vector<Sensor::CameraLocation>> &_cam_trajectory);
   void update_visualization();
   void printStatus(const std::string &_txt);
   void finishedOptimizeCameras(int num_cameras);
@@ -211,15 +211,15 @@ class Sensor : public QThread {
 
   // data logging
   double cos_min_delta_angle, sqr_min_cam_distance;
-  boost::shared_ptr<std::vector<CameraLocation>> cam_trajectory;
-  boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> log_clouds;
+  std::shared_ptr<std::vector<CameraLocation>> cam_trajectory;
+  std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> log_clouds;
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> cameras;
 
   // preview
   double prev_voxel_size, prev_filter_z;
   std::vector<int> indices;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud, tmp_cloud2;
-  boost::shared_ptr<AlignedPointXYZRGBVector> oc_cloud;
+  std::shared_ptr<AlignedPointXYZRGBVector> oc_cloud;
 
   pcl::PassThrough<pcl::PointXYZRGB> pass;
   pcl::octree::OctreePointCloudVoxelCentroid<
@@ -241,7 +241,7 @@ class Sensor : public QThread {
   v4r::KeypointSlamRGBD2::Parameter ct_param;
   v4r::KeypointSlamRGBD2::Ptr camtracker;
 
-  boost::shared_ptr<pcl::Grabber> interface;
+  std::shared_ptr<pcl::Grabber> interface;
 
   // bounding box filter
   double bbox_scale_xy, bbox_scale_height, seg_offs;

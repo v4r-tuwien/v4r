@@ -42,8 +42,7 @@
 namespace EPEvaluation {
 
 void printSegmentationEvaluation(std::string output_filename, std::string base_name, std::vector<long int> &tp,
-                                 std::vector<long int> &fp, std::vector<long int> &fn, std::vector<bool> &used,
-                                 std::vector<int> &objNumber) {
+                                 std::vector<long int> &fp, std::vector<long int> &fn, std::vector<int> &objNumber) {
   assert(tp.size() == fp.size());
   assert(tp.size() == fn.size());
   // assert(tp.size() == used.size());
@@ -93,7 +92,7 @@ void evaluate(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l, cv::Mat &mask
 
   evaluateSegmentation(pcl_cloud_l, mask, tp, fp, fn, used, objNumber);
 
-  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, used, objNumber);
+  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, objNumber);
 }
 
 void evaluateSegmentation(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l, cv::Mat &mask, std::vector<long int> &tp,
@@ -227,7 +226,7 @@ void evaluate(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr pcl_cloud_l, cv::Mat &mask
 
   evaluateSegmentation(pcl_cloud_l, mask, attention_point, tp, fp, fn, used, objNumber);
 
-  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, used, objNumber);
+  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, objNumber);
 }
 
 void evaluateSegmentation(const cv::Mat &ground_truth_image, cv::Mat &mask, cv::Point attention_point,
@@ -281,7 +280,7 @@ void evaluate(const cv::Mat &ground_truth_image, cv::Mat &mask, cv::Point attent
 
   evaluateSegmentation(ground_truth_image, mask, attention_point, tp, fp, fn, used, objNumber);
 
-  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, used, objNumber);
+  printSegmentationEvaluation(output_filename, base_name, tp, fp, fn, objNumber);
 }
 
 }  // namespace EPEvaluation

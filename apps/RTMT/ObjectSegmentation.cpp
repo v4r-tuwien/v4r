@@ -277,7 +277,7 @@ bool ObjectSegmentation::storePointCloudModel(const std::string &_folder) {
     cloud.points[i] = oc[i];
 
   if (cloud.points.size() > 0) {
-    pcl::io::savePCDFileBinary(_folder + "/model.pcd", cloud);
+    pcl::io::savePCDFileBinaryCompressed(_folder + "/model.pcd", cloud);
     return true;
   }
 
@@ -300,7 +300,7 @@ bool ObjectSegmentation::savePointClouds(const std::string &_folder, const std::
   boost::filesystem::create_directories(_folder + "/models/" + _modelname + "/views");
 
   // store global model
-  pcl::io::savePCDFileBinary(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
+  pcl::io::savePCDFileBinaryCompressed(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
 
   std::string cloud_names = _folder + "/models/" + _modelname + "/views/cloud_%08d.pcd";
   std::string image_names = _folder + "/models/" + _modelname + "/views/image_%08d.jpg";
@@ -321,7 +321,7 @@ bool ObjectSegmentation::savePointClouds(const std::string &_folder, const std::
 
     // store cloud
     snprintf(filename, PATH_MAX, cloud_names.c_str(), i);
-    pcl::io::savePCDFileBinary(filename, *clouds->at(i).second);
+    pcl::io::savePCDFileBinaryCompressed(filename, *clouds->at(i).second);
 
     // store image
     v4r::convertImage(*clouds->at(i).second, image);
@@ -464,7 +464,7 @@ void ObjectSegmentation::segment_image(int x, int y) {
  */
 void ObjectSegmentation::setData(
     const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-    const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds) {
+    const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds) {
   cameras = _cameras;
   clouds = _clouds;
 

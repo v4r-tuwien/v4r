@@ -127,7 +127,7 @@ class V4R_EXPORTS UniformSamplingExtractor : public KeypointExtractor<PointT> {
     return keypoints_;
   }
 
-  typedef boost::shared_ptr<UniformSamplingExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<UniformSamplingExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<UniformSamplingExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<UniformSamplingExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

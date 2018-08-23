@@ -393,6 +393,6 @@ class V4R_EXPORTS ColorOURCVFHEstimator : public OURCVFHEstimator<PointInT, Feat
     return true;
   }
 };
-}
+}  // namespace v4r
 
 #endif /* REC_FRAMEWORK_COLOR_OURCVFH_ESTIMATOR_H_ */

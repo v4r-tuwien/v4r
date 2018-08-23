@@ -230,7 +230,7 @@ double ProjLKPoseTrackerR2::detect(const cv::Mat &image, Eigen::Matrix4f &pose) 
     throw std::runtime_error("[ProjLKPoseTrackerR2::detect] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -336,4 +336,4 @@ void ProjLKPoseTrackerR2::setTargetCameraParameter(const cv::Mat &_intrinsic, co
   }
   plk->setTargetCameraParameter(tgt_intrinsic, tgt_dist_coeffs);
 }
-}
+}  // namespace v4r

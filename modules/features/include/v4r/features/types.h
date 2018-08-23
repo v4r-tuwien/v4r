@@ -45,6 +45,8 @@
  *
  */
 #pragma once
+#include <v4r/core/macros.h>
+#include <iostream>
 
 namespace v4r {
 enum FeatureType {
@@ -55,13 +57,14 @@ enum FeatureType {
   FPFH = 0x10,         // 00010000
   ESF = 0x20,          // 00100000
   SHOT_COLOR = 0x40,   // 01000000
-#if PCL_VERSION >= 100702
-  ALEXNET = 0x80,  // 10000000
-  ROPS = 0x200,    // 10000000
-#else
-  ALEXNET = 0x80,
-#endif
+  ALEXNET = 0x80,      // 10000000
+  ROPS = 0x200,        // 10000000
   SIMPLE_SHAPE = 0x400,
-  GLOBAL_COLOR = 0x800
+  GLOBAL_COLOR = 0x800,
+  AKAZE = 0x1000,
+  SURF = 0x2000
 };
-}
+
+V4R_EXPORTS std::istream &operator>>(std::istream &in, FeatureType &t);
+V4R_EXPORTS std::ostream &operator<<(std::ostream &out, const FeatureType &t);
+}  // namespace v4r

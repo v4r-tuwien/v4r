@@ -73,4 +73,4 @@ void HVRecognitionModel<ModelT>::processSilhouette(bool do_smoothing, int smooth
 
 template class V4R_EXPORTS HVRecognitionModel<pcl::PointXYZRGB>;
 template class V4R_EXPORTS HVRecognitionModel<pcl::PointXYZ>;
-}
+}  // namespace v4r

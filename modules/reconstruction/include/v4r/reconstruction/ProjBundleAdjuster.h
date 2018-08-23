@@ -110,8 +110,8 @@ class V4R_EXPORTS ProjBundleAdjuster {
 
   void optimize(Object &data);
 
-  typedef SmartPtr<::v4r::ProjBundleAdjuster> Ptr;
-  typedef SmartPtr<::v4r::ProjBundleAdjuster const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ProjBundleAdjuster> Ptr;
+  typedef std::shared_ptr<::v4r::ProjBundleAdjuster const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
@@ -156,6 +156,6 @@ inline bool ProjBundleAdjuster::isnan(const Eigen::Vector3f &pt) {
   return false;
 }
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -111,11 +111,17 @@ void CreateTrackingModel::createTrackingModel(const std::vector<v4r::TSFFrame::P
     v4r::convertImage(*cloud, image);
 
     if (image.type() != CV_8U)
-      cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+      cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
     else
       im_gray = image;
 
-    pose = map_frames[i]->pose;
+    // pose = map_frames[i]->pose;
+    // Use memcpy instead of operator= of Eigen.
+    // Reason: sporadical segfaults due to alignment issues. When V4R is compiled with AVX instruction set enabled,
+    // Eigen tries to use AVX load/store instructions to accelerate this assignment. However, the pose matrix is not
+    // always 32-byte aligned (despite properly specified EIGEN_MAKE_ALIGNED_OPERATOR_NEW in containing class), which
+    // leads to segfault.
+    memcpy(pose.data(), map_frames[i]->pose.data(), sizeof(float) * 16);
 
     v4r::convertCloud(*cloud, *kp_cloud);
     nest->compute(*kp_cloud, *kp_normals);
@@ -186,7 +192,7 @@ void CreateTrackingModel::addObjectView(const v4r::DataMatrix2D<Eigen::Vector3f>
 
   // detect keypoints
   keyDet->detect(im, keys);
-  keyDesc->extract(im, keys, descs);
+  keyDesc->compute(im, keys, descs);
 
   for (unsigned i = 0; i < keys.size(); i++) {
     cv::KeyPoint &key = keys[i];

@@ -92,13 +92,13 @@ double KeypointPoseDetectorRT::detect(const cv::Mat &image, const DataMatrix2D<E
 #endif
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
   //{ v4r::ScopeTime t("detect keypoints");
   detector->detect(im_gray, keys);
-  descEstimator->extract(im_gray, keys, descs);
+  descEstimator->compute(im_gray, keys, descs);
   //}
 
   // matcher->knnMatch( descs, model->descs, matches, 2 );
@@ -154,4 +154,4 @@ void KeypointPoseDetectorRT::setModel(const ObjectView::Ptr &_model) {
   matcher->add(std::vector<cv::Mat>(1, model->descs));
   matcher->train();
 }
-}
+}  // namespace v4r

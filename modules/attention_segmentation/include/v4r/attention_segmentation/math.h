@@ -46,54 +46,54 @@
 
 namespace v4r {
 
-float dotProduct(Eigen::Vector3f v1, Eigen::Vector3f v2);
-float dotProduct(cv::Point3f v1, cv::Point3f v2);
+float dotProduct(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+float dotProduct(const cv::Point3f &v1, const cv::Point3f &v2);
 
-float vectorLength(Eigen::Vector3f v);
-float vectorLength(cv::Point3d v);
+float vectorLength(const Eigen::Vector3f &v);
+float vectorLength(const cv::Point3d &v);
 
-V4R_EXPORTS float calculateCosine(Eigen::Vector3f v1, Eigen::Vector3f v2);
-V4R_EXPORTS float calculateCosine(cv::Point3d v1, cv::Point3d v2);
+V4R_EXPORTS float calculateCosine(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+V4R_EXPORTS float calculateCosine(const cv::Point3d &v1, const cv::Point3d &v2);
 
 V4R_EXPORTS Eigen::Vector3f normalize(Eigen::Vector3f v);
 V4R_EXPORTS cv::Point3d normalize(cv::Point3d v);
 
-Eigen::Vector3f crossProduct(Eigen::Vector3f v1, Eigen::Vector3f v2);
-cv::Point3d crossProduct(cv::Point3d v1, cv::Point3d v2);
+Eigen::Vector3f crossProduct(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+cv::Point3d crossProduct(const cv::Point3d &v1, const cv::Point3d &v2);
 
-Eigen::Vector3f crossProduct(Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f p3);
-cv::Point3d crossProduct(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3);
+Eigen::Vector3f crossProduct(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2, const Eigen::Vector3f &p3);
+cv::Point3d crossProduct(const cv::Point3d &p1, const cv::Point3d &p2, const cv::Point3d &p3);
 
-Eigen::Vector3f calculatePlaneNormal(Eigen::Vector3f v1, Eigen::Vector3f v2);
-Eigen::Vector3f calculatePlaneNormal(Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f p3);
+Eigen::Vector3f calculatePlaneNormal(const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+Eigen::Vector3f calculatePlaneNormal(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2, const Eigen::Vector3f &p3);
 
-cv::Point3d calculatePlaneNormal(cv::Point3d v1, cv::Point3d v2);
-cv::Point3d calculatePlaneNormal(cv::Point3d p1, cv::Point3d p2, cv::Point3d p3);
+cv::Point3d calculatePlaneNormal(const cv::Point3d &v1, const cv::Point3d &v2);
+cv::Point3d calculatePlaneNormal(const cv::Point3d &p1, const cv::Point3d &p2, const cv::Point3d &p3);
 
 #ifndef NOT_USE_PCL
 
-float dotProduct(pcl::Normal v1, pcl::Normal v2);
-float dotProduct(pcl::PointXYZ v1, pcl::PointXYZ v2);
+float dotProduct(const pcl::Normal &v1, const pcl::Normal &v2);
+float dotProduct(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2);
 
-float vectorLength(pcl::Normal v);
-float vectorLength(pcl::PointXYZ v);
+float vectorLength(const pcl::Normal &v);
+float vectorLength(const pcl::PointXYZ &v);
 
-V4R_EXPORTS float calculateCosine(pcl::Normal v1, pcl::Normal v2);
-V4R_EXPORTS float calculateCosine(pcl::PointXYZ v1, pcl::PointXYZ v2);
+V4R_EXPORTS float calculateCosine(const pcl::Normal &v1, const pcl::Normal &v2);
+V4R_EXPORTS float calculateCosine(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2);
 
 pcl::Normal normalize(pcl::Normal v);
 pcl::PointXYZ normalize(pcl::PointXYZ v);
 
-pcl::Normal crossProduct(pcl::Normal v1, pcl::Normal v2);
-pcl::PointXYZ crossProduct(pcl::PointXYZ v1, pcl::PointXYZ v2);
+pcl::Normal crossProduct(const pcl::Normal &v1, const pcl::Normal &v2);
+pcl::PointXYZ crossProduct(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2);
 
-pcl::Normal crossProduct(pcl::Normal p1, pcl::Normal p2, pcl::Normal p3);
-pcl::PointXYZ crossProduct(pcl::PointXYZ p1, pcl::PointXYZ p2, pcl::PointXYZ p3);
+pcl::Normal crossProduct(const pcl::Normal &p1, const pcl::Normal &p2, const pcl::Normal &p3);
+pcl::PointXYZ crossProduct(const pcl::PointXYZ &p1, const pcl::PointXYZ &p2, const pcl::PointXYZ &p3);
 
-V4R_EXPORTS pcl::Normal calculatePlaneNormal(pcl::Normal v1, pcl::Normal v2);
-pcl::Normal calculatePlaneNormal(pcl::Normal p1, pcl::Normal p2, pcl::Normal p3);
-pcl::PointXYZ calculatePlaneNormal(pcl::PointXYZ v1, pcl::PointXYZ v2);
-pcl::PointXYZ calculatePlaneNormal(pcl::PointXYZ p1, pcl::PointXYZ p2, pcl::PointXYZ p3);
+V4R_EXPORTS pcl::Normal calculatePlaneNormal(const pcl::Normal &v1, const pcl::Normal &v2);
+pcl::Normal calculatePlaneNormal(const pcl::Normal &p1, const pcl::Normal &p2, const pcl::Normal &p3);
+pcl::PointXYZ calculatePlaneNormal(const pcl::PointXYZ &v1, const pcl::PointXYZ &v2);
+pcl::PointXYZ calculatePlaneNormal(const pcl::PointXYZ &p1, const pcl::PointXYZ &p2, const pcl::PointXYZ &p3);
 
 V4R_EXPORTS void ProjectPointsOnThePlane(
     pcl::ModelCoefficients::ConstPtr coefficients, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,

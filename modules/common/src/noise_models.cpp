@@ -27,9 +27,9 @@ bool NguyenNoiseModel<PointT>::computeNoiseLevel(const PointT &pt, const pcl::No
     angle = 85.f;
 
   float sigma_lateral_px = (0.8f + 0.034f * angle / (90.f - angle)) * pt.z / focal_length;  // in pixel
-  sigma_lateral = sigma_lateral_px * pt.z * 1.f;                                            // in metres
+  sigma_lateral = sigma_lateral_px * pt.z * 1.f;                                            // in meters
   sigma_axial = 0.0012f + 0.0019f * (pt.z - 0.4f) * (pt.z - 0.4f) +
-                0.0001f * angle * angle / (sqrt(pt.z) * (90.f - angle) * (90.f - angle));  // in metres
+                0.0001f * angle * angle / (sqrt(pt.z) * (90.f - angle) * (90.f - angle));  // in meters
 
   return true;
 }
@@ -86,4 +86,4 @@ void NguyenNoiseModel<PointT>::compute() {
 
 template class V4R_EXPORTS NguyenNoiseModel<pcl::PointXYZRGB>;
 // template class V4R_EXPORTS NguyenNoiseModel<pcl::PointXYZ>;
-}
+}  // namespace v4r

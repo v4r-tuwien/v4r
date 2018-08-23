@@ -13,7 +13,7 @@ float v4r::Registration::MultiSessionModelling<PointT>::computeFSV(
     const typename pcl::PointCloud<PointT>::ConstPtr& cloud, pcl::PointCloud<pcl::Normal>::ConstPtr& normals,
     const std::vector<int>& indices, const Eigen::Matrix4f& pose,
     const typename pcl::PointCloud<PointT>::ConstPtr& range_image) {
-  v4r::VisibilityReasoning<PointT> vr(525.f, 640, 480);
+  v4r::VisibilityReasoning<PointT> vr(Intrinsics::PrimeSense());
   vr.setThresholdTSS(0.01f);
 
   typename pcl::PointCloud<PointT>::Ptr model(new pcl::PointCloud<PointT>());
@@ -135,7 +135,7 @@ void v4r::Registration::MultiSessionModelling<PointT>::compute() {
     for (size_t j = (i + 1); j < session_ranges_.size(); j++) {
       if (edges[i][j].size() > 0) {
         std::cout << "Number of edges:" << edges[i][j].size() << std::endl;
-// iterate over the edges and compute cost_ (the higher, the worse)
+        // iterate over the edges and compute cost_ (the higher, the worse)
 
 #pragma omp parallel for schedule(dynamic, 1) num_threads(4)
         for (size_t k = 0; k < edges[i][j].size(); k++) {

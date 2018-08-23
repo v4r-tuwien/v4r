@@ -1,5 +1,4 @@
-#ifndef V4R_REGISTRATION_FBR
-#define V4R_REGISTRATION_FBR
+#pragma once
 
 #include <pcl/common/common.h>
 
@@ -41,8 +40,8 @@ class V4R_EXPORTS FeatureBasedRegistration : public PartialModelRegistrationBase
 
   std::vector<typename pcl::PointCloud<PointT>::Ptr> sift_keypoints_;
   std::vector<pcl::PointCloud<pcl::Normal>::Ptr> sift_normals_;
-  std::vector<std::vector<std::vector<float>>> sift_features_;
-  std::vector<std::vector<std::vector<float>>> model_features_;
+  std::vector<cv::Mat> sift_features_;
+  std::vector<cv::Mat> model_features_;
 
   bool do_cg_;
   float inlier_threshold_;
@@ -68,10 +67,7 @@ class V4R_EXPORTS FeatureBasedRegistration : public PartialModelRegistrationBase
   static std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> estimateViewTransformationBySIFT(
       const pcl::PointCloud<PointT> &src_cloud, const pcl::PointCloud<PointT> &dst_cloud,
       const std::vector<int> &src_sift_keypoint_indices, const std::vector<int> &dst_sift_keypoint_indices,
-      const std::vector<std::vector<float>> &src_sift_signatures,
-      const std::vector<std::vector<float>> &dst_sift_signatures, bool use_gc = false);
+      const cv::Mat &src_sift_signatures, const cv::Mat &dst_sift_signatures, bool use_gc = false);
 };
-}
-}
-
-#endif
+}  // namespace Registration
+}  // namespace v4r

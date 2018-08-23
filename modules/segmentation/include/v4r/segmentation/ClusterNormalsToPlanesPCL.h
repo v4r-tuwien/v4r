@@ -128,8 +128,8 @@ class V4R_EXPORTS ClusterNormalsToPlanesPCL {
 
     Plane(bool _is_plane = false) : is_plane(_is_plane) {}
     ~Plane() {}
-    typedef boost::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>::Plane> Ptr;
-    typedef boost::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>::Plane const> ConstPtr;
+    typedef std::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>::Plane> Ptr;
+    typedef std::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>::Plane const> ConstPtr;
   };
 
  private:
@@ -140,7 +140,7 @@ class V4R_EXPORTS ClusterNormalsToPlanesPCL {
   std::vector<bool> mask_;
   std::vector<int> queue_;
 
-  boost::shared_ptr<flann::Index<DistT>> flann_index;  // for unorganized point clouds;
+  std::shared_ptr<flann::Index<DistT>> flann_index;  // for unorganized point clouds;
 
   // cluster normals
   void doClustering(const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
@@ -174,7 +174,7 @@ class V4R_EXPORTS ClusterNormalsToPlanesPCL {
   void compute(const typename pcl::PointCloud<PointT>::ConstPtr &cloud, const pcl::PointCloud<pcl::Normal> &normals,
                int x, int y, PlaneModel<PointT> &pm);
 
-  typedef boost::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>> Ptr;
-  typedef boost::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT> const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT>> Ptr;
+  typedef std::shared_ptr<::v4r::ClusterNormalsToPlanesPCL<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

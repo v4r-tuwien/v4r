@@ -351,4 +351,4 @@ void ClusterNormalsToPlanes::compute(const v4r::DataMatrix2D<Eigen::Vector3f> &c
   }
 }
 
-}  //-- THE END --
+}  // namespace v4r

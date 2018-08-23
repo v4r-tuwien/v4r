@@ -37,7 +37,6 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file OcclusionClustering.cc
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
@@ -49,30 +48,24 @@
 #include <v4r/camera_tracking_and_mapping/OcclusionClustering.hh>
 #include <v4r/common/impl/Vector.hpp>
 
-namespace v4r
-{
+namespace v4r {
 
 using namespace std;
-  
+
 /********************** OcclusionClustering ************************
  * Constructor/Destructor
  */
-OcclusionClustering::OcclusionClustering(const Parameter &_p)
- : param(_p)
-{
+OcclusionClustering::OcclusionClustering(const Parameter &_p) : param(_p) {
   nbs.resize(4);
-  nbs[0] = cv::Point(-1,0);
-  nbs[1] = cv::Point(1,0);
-  nbs[2] = cv::Point(0,-1);
-  nbs[3] = cv::Point(0,1);
+  nbs[0] = cv::Point(-1, 0);
+  nbs[1] = cv::Point(1, 0);
+  nbs[2] = cv::Point(0, -1);
+  nbs[3] = cv::Point(0, 1);
 }
 
-OcclusionClustering::~OcclusionClustering()
-{
-}
+OcclusionClustering::~OcclusionClustering() {}
 
 /************************** PRIVATE ************************/
-
 
 /**
  * @brief OcclusionClustering::clusterNaNs
@@ -80,8 +73,9 @@ OcclusionClustering::~OcclusionClustering()
  * @param _mask
  * @param _contour
  */
-void OcclusionClustering::clusterNaNs(const cv::Point &_start, const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat_<unsigned char> &_mask, std::vector<Eigen::Vector3f> &_contour, std::vector<cv::Point> &_points)
-{
+void OcclusionClustering::clusterNaNs(const cv::Point &_start, const pcl::PointCloud<pcl::PointXYZRGB> &_cloud,
+                                      cv::Mat_<unsigned char> &_mask, std::vector<Eigen::Vector3f> &_contour,
+                                      std::vector<cv::Point> &_points) {
   cv::Point pt0, pt;
   int queue_idx = 0;
   int width = _cloud.width;
@@ -89,34 +83,30 @@ void OcclusionClustering::clusterNaNs(const cv::Point &_start, const pcl::PointC
 
   _contour.clear();
   _mask(_start) = 1;
-  _points.assign(1,_start);
-  queue.assign(1,_start);
+  _points.assign(1, _start);
+  queue.assign(1, _start);
 
   // start clustering
-  while (((int)queue.size()) > queue_idx)
-  {
+  while (((int)queue.size()) > queue_idx) {
     // extract current index
     pt0 = queue.at(queue_idx);
     queue_idx++;
 
+    for (unsigned i = 0; i < nbs.size(); i++) {
+      pt = pt0 + nbs[i];
 
-    for (unsigned i=0; i<nbs.size(); i++)
-    {
-      pt = pt0+nbs[i];
-
-      if ( (pt.x < 0) || (pt.y < 0) || pt.x >= width || pt.y >= height )
+      if ((pt.x < 0) || (pt.y < 0) || pt.x >= width || pt.y >= height)
         continue;
 
-      if (_mask(pt)!=0) // used point
+      if (_mask(pt) != 0)  // used point
         continue;
 
-      if(isnan(_cloud(pt.x,pt.y)))
-      {
-        _mask(pt)=1;
+      if (isnan(_cloud(pt.x, pt.y))) {
+        _mask(pt) = 1;
         queue.push_back(pt);
         _points.push_back(pt);
-      }
-      else _contour.push_back(_cloud(pt.x,pt.y).getVector3fMap());
+      } else
+        _contour.push_back(_cloud(pt.x, pt.y).getVector3fMap());
     }
   }
 }
@@ -126,40 +116,32 @@ void OcclusionClustering::clusterNaNs(const cv::Point &_start, const pcl::PointC
  * @param _contour
  * @return
  */
-double OcclusionClustering::getDepthVariance(const std::vector<Eigen::Vector3f> &_contour)
-{
-  double var=0, mean = 0;
-  for (unsigned i=0; i<_contour.size(); i++)
+double OcclusionClustering::getDepthVariance(const std::vector<Eigen::Vector3f> &_contour) {
+  double var = 0, mean = 0;
+  for (unsigned i = 0; i < _contour.size(); i++)
     mean += _contour[i][2];
   mean /= (double)_contour.size();
-  for (unsigned i=0; i<_contour.size(); i++)
-    var += sqr((_contour[i][2]-mean));
+  for (unsigned i = 0; i < _contour.size(); i++)
+    var += sqr((_contour[i][2] - mean));
   var /= (double)_contour.size();
   return var;
 }
 
-
 /************************** PUBLIC *************************/
-
 
 /**
  * Compute
  */
-void OcclusionClustering::compute(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat_<unsigned char> &_mask)
-{
+void OcclusionClustering::compute(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat_<unsigned char> &_mask) {
   _mask = cv::Mat_<unsigned char>::zeros(_cloud.height, _cloud.width);
-  double thr_var_depth = param.thr_std_dev*param.thr_std_dev;
+  double thr_var_depth = param.thr_std_dev * param.thr_std_dev;
 
-  for (int v=0; v<(int)_cloud.height; v++)
-  {
-    for (int u=0; u<(int)_cloud.width; u++)
-    {
-      if (isnan(_cloud(u,v)) && _mask(v,u)==0)
-      {
-        clusterNaNs(cv::Point(u,v), _cloud, _mask, contour, points);
-        if (contour.size()>=3 && getDepthVariance(contour)>thr_var_depth)
-        {
-          for (unsigned i=0; i<points.size(); i++)
+  for (int v = 0; v < (int)_cloud.height; v++) {
+    for (int u = 0; u < (int)_cloud.width; u++) {
+      if (isnan(_cloud(u, v)) && _mask(v, u) == 0) {
+        clusterNaNs(cv::Point(u, v), _cloud, _mask, contour, points);
+        if (contour.size() >= 3 && getDepthVariance(contour) > thr_var_depth) {
+          for (unsigned i = 0; i < points.size(); i++)
             _mask(points[i]) = 255;
         }
       }
@@ -167,6 +149,4 @@ void OcclusionClustering::compute(const pcl::PointCloud<pcl::PointXYZRGB> &_clou
   }
 }
 
-
-} //-- THE END --
-
+}  // namespace v4r

@@ -25,25 +25,27 @@ using namespace v4r;
 
 typedef pcl::PointXYZRGB PointT;
 typedef Model<PointT> ModelT;
-typedef boost::shared_ptr<ModelT> ModelTPtr;
+typedef ModelT::Ptr ModelTPtr;
 
 int main(int argc, char **argv) {
   bf::path gt_dir;
   bf::path models_dir;
-  bf::path output_dir = "/tmp/annotated_images/";
+  bf::path output_dir = "annotated_images";
   bf::path scenes_dir;
   bool visualize = false;
 
   po::options_description desc(
       "Create annotated images from annotation files\n======================================\n**Allowed options");
-  desc.add_options()("help,h", "produce help message")("input_dir,i", po::value<bf::path>(&scenes_dir)->required(),
-                                                       "Directory containing the point clouds to be annotated")(
-      "models_dir,m", po::value<bf::path>(&models_dir)->required(), "Directory containing the 3D object models")(
-      "gt_dir,g", po::value<bf::path>(&gt_dir)->required(),
-      "directory containing ground-truth information about object pose in each point cloud")(
-      "output_dir,o", po::value<bf::path>(&output_dir)->default_value(output_dir), "output directory")
-      //            ("cloud_prefix,c", po::value<std::string>(&cloud_prefix)->default_value(cloud_prefix), "")
-      ("visualize,v", po::bool_switch(&visualize), "visualize annotations");
+  desc.add_options()("help,h", "produce help message");
+  desc.add_options()("input_dir,i", po::value<bf::path>(&scenes_dir)->required(),
+                     "Directory containing the point clouds to be annotated");
+  desc.add_options()("models_dir,m", po::value<bf::path>(&models_dir)->required(),
+                     "Directory containing the 3D object models");
+  desc.add_options()("gt_dir,g", po::value<bf::path>(&gt_dir)->required(),
+                     "directory containing ground-truth information about object pose in each point cloud");
+  desc.add_options()("output_dir,o", po::value<bf::path>(&output_dir)->default_value(output_dir), "output directory");
+  // desc.add_options()("cloud_prefix,c", po::value<std::string>(&cloud_prefix)->default_value(cloud_prefix), "");
+  desc.add_options()("visualize,v", po::bool_switch(&visualize), "visualize annotations");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);

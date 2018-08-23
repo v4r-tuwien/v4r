@@ -48,6 +48,7 @@
 #include <v4r/common/normals.h>
 #include <v4r/core/macros.h>
 #include <v4r/segmentation/all_headers.h>
+#include <boost/program_options.hpp>
 
 #pragma once
 
@@ -55,97 +56,41 @@ namespace v4r {
 
 namespace apps {
 
-class V4R_EXPORTS CloudSegmenterParameter {
- public:
-  float chop_z_;  ///< cut-off distance in meter. Points further away than this threshold will be neglected
-  float plane_inlier_threshold_;  ///< threshold in meter for a point to be counted as inlier when computing the amount
-                                  /// of inliers for a plane
-  size_t min_plane_inliers_;      ///< minimum number of inlier points for a plane to be valid
-  bool skip_segmentation_;        ///< if true, skips segmentation
-  bool skip_plane_extraction_;    ///< if true, skips plane extraction
-  bool remove_planes_;  ///< if true, removes plane from input cloud only. If false, removes plane and everything below
-                        /// it (i.e. further away from the camera)
-  bool
-      remove_selected_plane_;  ///< if true, removes the selected plane (either dominant or the one parallel and higher)
-  bool remove_points_below_selected_plane_;  ///< if true, removes any point not above selected plane (plane gets either
-                                             /// selected by dominant (=plane with most inliers) or by the highest plane
+struct V4R_EXPORTS CloudSegmenterParameter {
+  float chop_z_ = std::numeric_limits<float>::max();  ///< cut-off distance in meter. Points further away than this
+                                                      ///< threshold will be neglected
+  float plane_inlier_threshold_ =
+      0.02f;  ///< threshold in meter for a point to be counted as inlier when computing the amount
+              /// of inliers for a plane
+  size_t min_plane_inliers_ = 2000;     ///< minimum number of inlier points for a plane to be valid
+  bool skip_segmentation_ = false;      ///< if true, skips segmentation
+  bool skip_plane_extraction_ = false;  ///< if true, skips plane extraction
+  bool remove_planes_ =
+      false;  ///< if true, removes plane from input cloud only. If false, removes plane and everything below
+              /// it (i.e. further away from the camera)
+  bool remove_selected_plane_ =
+      true;  ///< if true, removes the selected plane (either dominant or the one parallel and higher)
+  bool remove_points_below_selected_plane_ =
+      true;  ///< if true, removes any point not above selected plane (plane gets either
+             /// selected by dominant (=plane with most inliers) or by the highest plane
   /// parallel to this dominant one)
-  bool use_highest_plane_;  ///< if true, selects the highest plane parallel to the dominant plane
-  float cosinus_angle_for_planes_to_be_parallel_;  ///< the minimum cosinus angle of the surface normals of two planes
-                                                   /// such that the two planes are considered parallel (only used if
+  bool use_highest_plane_ = false;  ///< if true, selects the highest plane parallel to the dominant plane
+  float cosinus_angle_for_planes_to_be_parallel_ =
+      0.95f;  ///< the minimum cosinus angle of the surface normals of two planes
+              /// such that the two planes are considered parallel (only used if
   /// check for higher plane is enabled)
-  float min_distance_to_plane_;  ///< minimum distance in meter a point needs to have to be considered above
+  float min_distance_to_plane_ = 0.f;  ///< minimum distance in meter a point needs to have to be considered above
 
- public:
-  CloudSegmenterParameter()
-  : chop_z_(std::numeric_limits<float>::max()), plane_inlier_threshold_(0.02f), min_plane_inliers_(2000),
-    skip_segmentation_(false), skip_plane_extraction_(false), remove_planes_(false), remove_selected_plane_(true),
-    remove_points_below_selected_plane_(true), use_highest_plane_(false),
-    cosinus_angle_for_planes_to_be_parallel_(0.95f), min_distance_to_plane_(0.f) {}
+  SegmentationType segmentation_method_ = v4r::SegmentationType::ORGANIZED_CONNECTED_COMPONENTS;
+  PlaneExtractionType plane_extraction_method_ = v4r::PlaneExtractionType::TILE;
+  NormalEstimatorType normal_computation_method_ = v4r::NormalEstimatorType::PCL_INTEGRAL_NORMAL;
 
   /**
    * @brief init parameters
    * @param command_line_arguments (according to Boost program options library)
-   * @return unused parameters (given parameters that were not used in this initialization call)
+   * @param section_name section name of program options
    */
-  std::vector<std::string> init(int argc, char **argv) {
-    std::vector<std::string> arguments(argv + 1, argv + argc);
-    return init(arguments);
-  }
-
-  /**
-   * @brief init parameters
-   * @param command_line_arguments (according to Boost program options library)
-   * @return unused parameters (given parameters that were not used in this initialization call)
-   */
-  std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
-    po::options_description desc("Cloud Segmentation Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message");
-    desc.add_options()("plane_inlier_threshold",
-                       po::value<float>(&plane_inlier_threshold_)->default_value(plane_inlier_threshold_),
-                       "inlier threshold for plane");
-    desc.add_options()("chop_z,z", po::value<float>(&chop_z_)->default_value(chop_z_), "cut-off threshold in meter");
-    desc.add_options()("min_plane_inliers", po::value<size_t>(&min_plane_inliers_)->default_value(min_plane_inliers_),
-                       "minimum number of inlier points for a plane to be valid");
-    desc.add_options()("skip_segmentation", po::value<bool>(&skip_segmentation_)->default_value(skip_segmentation_),
-                       " if true, skips segmentation");
-    desc.add_options()("remove_planes", po::value<bool>(&remove_planes_)->default_value(remove_planes_),
-                       "if true, removes plane from input cloud only. If false, removes plane and "
-                       "everything below it (i.e. further away from the camera)");
-    desc.add_options()("remove_selected_plane",
-                       po::value<bool>(&remove_selected_plane_)->default_value(remove_selected_plane_),
-                       "if true, removes the selected plane (either dominant or the one parallel and higher)");
-    desc.add_options()(
-        "remove_points_below_selected_plane",
-        po::value<bool>(&remove_points_below_selected_plane_)->default_value(remove_points_below_selected_plane_),
-        "if true, removes only the plane with the largest number of plane inliers");
-    desc.add_options()(
-        "use_highest_plane", po::value<bool>(&use_highest_plane_)->default_value(use_highest_plane_),
-        "if true, removes all points which are not above the highest plane parallel to the dominant plane");
-    desc.add_options()(
-        "cosinus_angle_for_planes_to_be_parallel", po::value<float>(&cosinus_angle_for_planes_to_be_parallel_)
-                                                       ->default_value(cosinus_angle_for_planes_to_be_parallel_),
-        "the minimum cosinus angle of the surface normals of two planes such that the two planes are considered "
-        "parallel (only used if check for higher plane is enabled)");
-    desc.add_options()("min_distance_to_plane",
-                       po::value<float>(&min_distance_to_plane_)->default_value(min_distance_to_plane_),
-                       "minimum distance in meter a point needs to have to be considered above");
-    po::variables_map vm;
-    po::parsed_options parsed =
-        po::command_line_parser(command_line_arguments).options(desc).allow_unregistered().run();
-    std::vector<std::string> to_pass_further = po::collect_unrecognized(parsed.options, po::include_positional);
-    po::store(parsed, vm);
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      to_pass_further.push_back("-h");
-    }
-    try {
-      po::notify(vm);
-    } catch (std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl << std::endl << desc << std::endl;
-    }
-    return to_pass_further;
-  }
+  void init(boost::program_options::options_description &desc, const std::string &section_name = "segmentation");
 };
 
 /**
@@ -205,7 +150,7 @@ class V4R_EXPORTS CloudSegmenter {
 
   /**
    * @brief setNormals sets the normals associated to the input cloud (if not set, they will be computed inside if
-   * neccessary)
+   * necessary)
    * @param normals
    */
   void setNormals(const typename pcl::PointCloud<pcl::Normal>::ConstPtr &normals) {
@@ -241,8 +186,8 @@ class V4R_EXPORTS CloudSegmenter {
     return selected_plane_;
   }
 
-  typedef boost::shared_ptr<CloudSegmenter> Ptr;
-  typedef boost::shared_ptr<CloudSegmenter const> ConstPtr;
+  typedef std::shared_ptr<CloudSegmenter> Ptr;
+  typedef std::shared_ptr<CloudSegmenter const> ConstPtr;
 };
-}
-}
+}  // namespace apps
+}  // namespace v4r

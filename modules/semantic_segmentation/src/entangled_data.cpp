@@ -163,7 +163,7 @@ bool EntangledForestData::LoadTestData(string dataDir, string filename) {
 
               for (unsigned int j = 0; j < mNrOfClusters[0]; ++j) {
                 // ignore unlabeled clusters
-                ClusterIdx c = {0, j};
+                ClusterIdx c = {{0, j}};
                 mClusters.push_back(c);
               }
 
@@ -212,7 +212,7 @@ bool EntangledForestData::LoadTestDataLive(
   // we only have one image
   for (unsigned int c = 0; c < mNrOfClusters[0]; ++c) {
     mClusterNodeIdxs[0].push_back(std::vector<int>());
-    ClusterIdx j = {0, c};
+    ClusterIdx j = {{0, c}};
     mClusters.push_back(j);
   }
 
@@ -820,7 +820,7 @@ void EntangledForestData::LoadBag(int bagidx) {
     for (unsigned int j = 0; j < mNrOfClusters[bag[i]]; ++j) {
       // ignore unlabeled clusters
       if (mClusterLabels[bag[i]][j] > 0) {
-        ClusterIdx c = {bag[i], j};
+        ClusterIdx c = {{bag[i], j}};
         mClusters.push_back(c);
       }
     }
@@ -1269,4 +1269,4 @@ void EntangledForestData::ResetClusterNodeIdxs(int imageIdx) {
     }
   }
 }
-}
+}  // namespace v4r

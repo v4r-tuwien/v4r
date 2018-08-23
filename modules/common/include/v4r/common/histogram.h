@@ -98,6 +98,6 @@ V4R_EXPORTS void shiftHistogram(const Eigen::VectorXi &hist, Eigen::VectorXi &hi
  */
 V4R_EXPORTS Eigen::VectorXf specifyHistogram(const Eigen::VectorXf &input_image, const Eigen::VectorXf &desired_image,
                                              size_t bins = 100, float min = 0.f, float max = 1.f);
-}
+}  // namespace v4r
 
 #endif

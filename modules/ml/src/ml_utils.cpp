@@ -64,4 +64,4 @@ Eigen::MatrixXi computeConfusionMatrix(const Eigen::VectorXi &actual_label, cons
 
   return confusion_matrix;
 }
-}
+}  // namespace v4r

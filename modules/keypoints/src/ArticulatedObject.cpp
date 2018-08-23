@@ -175,4 +175,4 @@ int ArticulatedObject::addCamera(const std::vector<Eigen::VectorXd> &_part_param
   return part_parameter.size() - 1;
 }
 
-}  //--END--
+}  // namespace v4r

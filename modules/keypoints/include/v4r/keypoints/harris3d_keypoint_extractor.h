@@ -138,7 +138,7 @@ class V4R_EXPORTS Harris3DKeypointExtractor : public KeypointExtractor<PointT> {
     return keypoints_;
   }
 
-  typedef boost::shared_ptr<Harris3DKeypointExtractor<PointT>> Ptr;
-  typedef boost::shared_ptr<Harris3DKeypointExtractor<PointT> const> ConstPtr;
+  typedef std::shared_ptr<Harris3DKeypointExtractor<PointT>> Ptr;
+  typedef std::shared_ptr<Harris3DKeypointExtractor<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

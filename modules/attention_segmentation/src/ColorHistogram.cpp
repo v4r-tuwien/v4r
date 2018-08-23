@@ -45,8 +45,10 @@
  * @brief Color histogram class.
  */
 
-#include "v4r/attention_segmentation/ColorHistogram.h"
+#include <glog/logging.h>
 #include <string.h>
+
+#include "v4r/attention_segmentation/ColorHistogram.h"
 
 namespace v4r {
 
@@ -82,8 +84,7 @@ void ColorHistogram::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr _cloud
 
 void ColorHistogram::setIndices(pcl::PointIndices::Ptr _indices) {
   if (!have_input_cloud) {
-    printf("[ColorHistogram::setIndices]: Error: No input cloud available.\n");
-    return;
+    throw std::invalid_argument("[ColorHistogram::setIndices] no input cloud set.");
   }
 
   indices = _indices;
@@ -97,8 +98,7 @@ void ColorHistogram::setIndices(std::vector<int> &_indices) {
 
 void ColorHistogram::setIndices(cv::Rect _rect) {
   if (!have_input_cloud) {
-    printf("[ColorHistogram::setIndices]: Error: No input cloud available.\n");
-    return;
+    throw std::invalid_argument("[ColorHistogram::setIndices]: Error: No input cloud available.\n");
   }
 
   if (_rect.y >= height) {
@@ -117,7 +117,8 @@ void ColorHistogram::setIndices(cv::Rect _rect) {
     _rect.width = width - _rect.x;
   }
 
-  printf("[ColorHistogram] _rect = %d,%d,%d,%d.\n", _rect.x, _rect.y, _rect.x + _rect.width, _rect.y + _rect.height);
+  VLOG(1) << "_rect = " << _rect.x << ", " << _rect.y << ", " << _rect.x + _rect.width << ", "
+          << _rect.y + _rect.height;
 
   indices.reset(new pcl::PointIndices);
   for (int r = _rect.y; r < (_rect.y + _rect.height); r++) {
@@ -148,7 +149,7 @@ bool ColorHistogram::init() {
 void ColorHistogram::getYUV(v4r::RGBValue &color, Color3C &convColor) {
   //@ep: Wikipedia says that transformation matrix is different
   //@ep: why +128???
-  //@ep: where exactly those numbers are comming from?
+  //@ep: where exactly those numbers are coming from?
   //@ep: why yuv and not hsl or hsv???
   //@ep: where is the colors ordering stored???
   convColor.ch1 = (0.257 * color.r) + (0.504 * color.g) + (0.098 * color.b) + 16;
@@ -184,9 +185,7 @@ bool ColorHistogram::getColor(v4r::RGBValue color, Color3C &convColor) {
 
 bool ColorHistogram::buildHistogram3D() {
   if (colorModel != YUV_MODEL) {
-    printf(
-        "[ColorHistogram::compute::buildHistogram3D] Warning: only yuv model is supported for 3D histogram at the "
-        "moment!\n");
+    LOG(ERROR) << "only yuv model is supported for 3D histogram at the moment!";
     return (false);
   }
 
@@ -239,9 +238,7 @@ bool ColorHistogram::buildHistogram3D() {
 
 bool ColorHistogram::buildHistogram2D() {
   if (colorModel != YUV_MODEL) {
-    printf(
-        "[ColorHistogram::compute::buildHistogram2D] Warning: only yuv model is supported for 2D histogram at the "
-        "moment!\n");
+    LOG(ERROR) << "only yuv model is supported for 3D histogram at the moment!";
     return (false);
   }
 
@@ -327,13 +324,12 @@ bool ColorHistogram::buildHistogram() {
 
 void ColorHistogram::compute() {
   if (!init()) {
-    printf("[ColorHistogram::compute::init]: Error: Cannot init histograms. Check histogram type.\n");
-    return;
+    throw std::runtime_error("[ColorHistogram::compute::init]: Error: Cannot init histograms. Check histogram type.");
   }
 
   if (!buildHistogram()) {
-    printf("[ColorHistogram::compute::buildHistogram]: Error: Cannot init histograms. Check histogram type.\n");
-    return;
+    throw std::runtime_error(
+        "[ColorHistogram::compute::buildHistogram]: Error: Cannot build histograms. Check histogram type.");
   }
 
   computed = true;
@@ -373,7 +369,7 @@ double ColorHistogram::compare2D(ColorHistogram::Ptr ch) {
   }
 
   if (overall_sum > 1.) {
-    printf("Warning: ColorHistogram::compare2D: Value larger than 1!!!\n");
+    LOG(WARNING) << "Value larger than 1!";
     printHistogram();
   }
 
@@ -394,33 +390,32 @@ double ColorHistogram::compare3D(ColorHistogram::Ptr ch) {
   }
 
   if (overall_sum > 1.) {
-    printf("Warning: ColorHistogram::compare3D: Value larger than 1!!!\n");
+    LOG(WARNING) << "Value larger than 1!";
     printHistogram();
   }
 
   double fidelity = overall_sum;
-  // double bhattacharyya = -log(overall_sum);
 
   return fidelity;
 }
 
 double ColorHistogram::compare(ColorHistogram::Ptr ch) {
   if (nrBins != ch->getBinNumber()) {
-    printf("[ColorHistogram::compare]: Error: Cannot compare histograms with different bin sizes.\n");
+    LOG(ERROR) << "Cannot compare histograms with different bin sizes.";
     return 0.;
   }
   if (!computed || !ch->getComputed()) {
-    printf("[ColorHistogram::compare]: Error: Color histogram not computed.\n");
+    LOG(ERROR) << "Color histogram not computed.";
     return 0.;
   }
 
   if (colorModel != ch->getColorModel()) {
-    printf("[ColorHistogram::compare]: Error: Different color models.\n");
+    LOG(ERROR) << "Different color models.";
     return 0.;
   }
 
   if (histogramType != ch->getHistogramType()) {
-    printf("[ColorHistogram::compare]: Error: Different histogram types.\n");
+    LOG(ERROR) << "Different histogram types.";
     return 0.;
   }
 
@@ -437,24 +432,24 @@ double ColorHistogram::compare(ColorHistogram::Ptr ch) {
 }
 
 void ColorHistogram::printHistogramAverage() {
-  printf("[ColorHistogram::printHistogram]:\n");
+  LOG(INFO) << "[Histogram Average]:";
 
   switch (colorModel) {
     case YUV_MODEL:
       for (int i = 0; i < nrBins; i++)
-        printf(" y[%u]: %4.3f\n", i, hist.at<double>(i, 0));
+        LOG(INFO) << " y[" << i << "]: " << hist.at<double>(i, 0);
       for (int i = 0; i < nrBins; i++)
-        printf(" u[%u]: %4.3f\n", i, hist.at<double>(i, 1));
+        LOG(INFO) << " u[" << i << "]: " << hist.at<double>(i, 1);
       for (int i = 0; i < nrBins; i++)
-        printf(" v[%u]: %4.3f\n", i, hist.at<double>(i, 2));
+        LOG(INFO) << " v[" << i << "]: " << hist.at<double>(i, 2);
       return;
     case RGB_MODEL:
       for (int i = 0; i < nrBins; i++)
-        printf(" red[%u]: %4.3f\n", i, hist.at<double>(i, 0));
+        LOG(INFO) << " red[" << i << "]: " << hist.at<double>(i, 0);
       for (int i = 0; i < nrBins; i++)
-        printf(" gre[%u]: %4.3f\n", i, hist.at<double>(i, 1));
+        LOG(INFO) << " gre[" << i << "]: " << hist.at<double>(i, 1);
       for (int i = 0; i < nrBins; i++)
-        printf(" blu[%u]: %4.3f\n", i, hist.at<double>(i, 2));
+        LOG(INFO) << " blu[" << i << "]: " << hist.at<double>(i, 2);
       return;
     default:
       return;
@@ -464,13 +459,13 @@ void ColorHistogram::printHistogramAverage() {
 }
 
 void ColorHistogram::printHistogram2D() {
-  printf("[ColorHistogram::printHistogram]:\n");
+  LOG(INFO) << "[Histogram2D]:";
 
   switch (colorModel) {
     case YUV_MODEL:
       for (int i = 0; i < nrBins; i++)
         for (int j = 0; j < nrBins; j++)
-          printf(" yuv[%u][%u]: %4.3f\n", i, j, hist.at<double>(i, j));
+          LOG(INFO) << " yuv[" << i << "][" << j << "]: " << hist.at<double>(i, j);
       return;
     default:
       return;
@@ -480,12 +475,12 @@ void ColorHistogram::printHistogram2D() {
 }
 
 void ColorHistogram::printHistogram3D() {
-  printf("[ColorHistogram::printHistogram]:\n");
+  LOG(INFO) << "[Histogram3D]:";
 
   for (int i = 0; i < nrBins; i++)
     for (int j = 0; j < nrBins; j++)
       for (int k = 0; k < nrBins; k++)
-        printf(" yuv[%u][%u][%u]: %4.3f\n", i, j, k, hist.at<double>(i, j * nrBins + k));
+        LOG(INFO) << " yuv[" << i << "][" << j << "][" << k << "]: " << hist.at<double>(i, j * nrBins + k);
 
   return;
 }
@@ -505,4 +500,4 @@ void ColorHistogram::printHistogram() {
       return;
   }
 }
-}
+}  // namespace v4r

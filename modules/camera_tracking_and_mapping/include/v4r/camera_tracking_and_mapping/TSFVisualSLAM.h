@@ -125,8 +125,8 @@ class V4R_EXPORTS TSFVisualSLAM {
 
   cv::Mat im_lin, im_lin_corr;
 
-  boost::shared_ptr<radical::VignettingResponse> vr;
-  boost::shared_ptr<radical::RadiometricResponse> rr;
+  std::shared_ptr<radical::VignettingResponse> vr;
+  std::shared_ptr<radical::RadiometricResponse> rr;
 
   bool selectFrame(const Eigen::Matrix4f &pose0, const Eigen::Matrix4f &pose1);
   void setScaledCameraParamter(int width, int height);
@@ -156,7 +156,7 @@ class V4R_EXPORTS TSFVisualSLAM {
    * @param conf_tracked_points tracked point ratio
    * @return
    */
-  bool track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const uint64_t &timestamp, Eigen::Matrix4f &pose,
+  bool track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const double &timestamp, Eigen::Matrix4f &pose,
              double &conf_ransac_iter, double &conf_tracked_points);
 
   /**
@@ -171,10 +171,9 @@ class V4R_EXPORTS TSFVisualSLAM {
    * @brief get methodes provide filtered and batch optimized RGB-D frames
    * timestamp referes to the corresponding tracking timestamp. It also indicates if a new smoothed frame is available
    */
-  int getFilteredCloudNormals(pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud, Eigen::Matrix4f &pose,
-                              uint64_t &timestamp);
-  int getFilteredCloud(pcl::PointCloud<pcl::PointXYZRGB> &cloud, Eigen::Matrix4f &pose, uint64_t &timestamp);
-  int getSurfelCloud(v4r::DataMatrix2D<Surfel> &cloud, Eigen::Matrix4f &pose, uint64_t &timestamp);
+  int getFilteredCloudNormals(pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud, Eigen::Matrix4f &pose, double &timestamp);
+  int getFilteredCloud(pcl::PointCloud<pcl::PointXYZRGB> &cloud, Eigen::Matrix4f &pose, double &timestamp);
+  int getSurfelCloud(v4r::DataMatrix2D<Surfel> &cloud, Eigen::Matrix4f &pose, double &timestamp);
 
   /**
    * @brief setCameraParameter
@@ -221,7 +220,7 @@ class V4R_EXPORTS TSFVisualSLAM {
    * @param _intrinsic
    * @param _dist_coeffs
    */
-  void getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs);
+  void getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs) const;
 
   /**
    * @brief getMap
@@ -236,12 +235,12 @@ class V4R_EXPORTS TSFVisualSLAM {
     return tsfMapping.getOptiPoints();
   }
 
-  typedef boost::shared_ptr<::v4r::TSFVisualSLAM> Ptr;
-  typedef boost::shared_ptr<::v4r::TSFVisualSLAM const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TSFVisualSLAM> Ptr;
+  typedef std::shared_ptr<::v4r::TSFVisualSLAM const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -186,7 +186,7 @@ class V4R_EXPORTS SequentialFitter {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-}
-}
+}  // namespace on_nurbs
+}  // namespace pcl
 
 #endif

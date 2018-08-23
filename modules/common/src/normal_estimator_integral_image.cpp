@@ -10,11 +10,7 @@ namespace v4r {
 template <typename PointT>
 pcl::PointCloud<pcl::Normal>::Ptr NormalEstimatorIntegralImage<PointT>::compute() {
   CHECK(input_ && input_->isOrganized());
-
   normal_.reset(new pcl::PointCloud<pcl::Normal>);
-  normal_->points.resize(input_->height * input_->width);
-  normal_->height = input_->height;
-  normal_->width = input_->width;
 
   pcl::IntegralImageNormalEstimation<PointT, pcl::Normal> ne;
   ne.setNormalEstimationMethod(ne.COVARIANCE_MATRIX);
@@ -37,4 +33,4 @@ pcl::PointCloud<pcl::Normal>::Ptr NormalEstimatorIntegralImage<PointT>::compute(
 
 #define PCL_INSTANTIATE_NormalEstimatorIntegralImage(T) template class V4R_EXPORTS NormalEstimatorIntegralImage<T>;
 PCL_INSTANTIATE(NormalEstimatorIntegralImage, PCL_XYZ_POINT_TYPES)
-}
+}  // namespace v4r

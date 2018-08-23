@@ -102,8 +102,7 @@ void Gabor::setInputImage(cv::Mat& _image) {
 
 void Gabor::setIndices(pcl::PointIndices::Ptr _indices) {
   if (!have_image) {
-    printf("[Gabor::setIndices]: Error: No image available.\n");
-    return;
+    throw std::runtime_error("[Gabor::setIndices]: Error: No image available.");
   }
 
   indices = _indices;
@@ -119,8 +118,7 @@ void Gabor::setIndices(std::vector<int>& _indices) {
 
 void Gabor::setIndices(cv::Rect _rect) {
   if (!have_image) {
-    printf("[Gabor::setIndices]: Error: No image available.\n");
-    return;
+    throw std::runtime_error("[Gabor::setIndices]: Error: No image available.");
   }
 
   if (_rect.y >= height) {
@@ -149,18 +147,6 @@ void Gabor::setIndices(cv::Rect _rect) {
   have_indices = true;
 }
 
-// void Gabor::setGaborFilters(std::vector<cv::Mat> _gaborFilters)
-// {
-//   gaborFilters.resize(_gaborFilters.size());
-//
-//   for(int i = 0; i < _gaborFilters.size(); ++i)
-//   {
-//     _gaborFilters.at(i).copyTo(gaborFilters.at(i));
-//   }
-//
-//   have_gabor_filters = true;
-// }
-
 void Gabor::computeGaborFilters() {
   gaborFilters.resize(filtersNumber);
 
@@ -188,13 +174,11 @@ void Gabor::computeGaborFilters() {
 
 void Gabor::compute() {
   if (!have_image) {
-    printf("[Gabor::compute]: Error: No image available.\n");
-    return;
+    throw std::runtime_error("[Gabor::compute]: Error: No image available.");
   }
 
   if (!have_gabor_filters) {
-    printf("[Gabor::compute]: Error: No gabor filters available.\n");
-    return;
+    throw std::runtime_error("[Gabor::compute]: Error: No gabor filters available.");
   }
 
   featureVector.resize(2 * filtersNumber);
@@ -302,4 +286,4 @@ double Gabor::compare(Gabor::Ptr g) {
     return gabor_distance;
   }
 }
-}
+}  // namespace v4r

@@ -37,7 +37,6 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file OcclusionClustering.hh
  * @author Johann Prankl@acin.tuwien.ac.at)
@@ -49,81 +48,71 @@
 #ifndef KP_OCCLUSION_CLUSTERING_HH
 #define KP_OCCLUSION_CLUSTERING_HH
 
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <set>
-#include <opencv2/opencv.hpp>
+#include <v4r/core/macros.h>
 #include <Eigen/Dense>
 #include <boost/shared_ptr.hpp>
-#include <v4r/core/macros.h>
+#include <iostream>
+#include <opencv2/opencv.hpp>
+#include <queue>
+#include <set>
+#include <vector>
 #ifndef Q_MOC_RUN
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #endif
 
-
-namespace v4r
-{
-
-
+namespace v4r {
 
 /**
  * OcclusionClustering
  */
-class V4R_EXPORTS OcclusionClustering
-{
-public:
-
+class V4R_EXPORTS OcclusionClustering {
+ public:
   /**
    * @brief The Parameter class
    */
-  class Parameter
-  {
-  public:
-    double thr_std_dev;   // e.g. 0.05m (for object modelling it can be smaller..)
-    Parameter()
-      : thr_std_dev(0.02) {}
+  class Parameter {
+   public:
+    double thr_std_dev;  // e.g. 0.05m (for object modelling it can be smaller..)
+    Parameter() : thr_std_dev(0.02) {}
   };
 
-
-private:
+ private:
   std::vector<cv::Point> queue;
   std::vector<Eigen::Vector3f> contour;
   std::vector<cv::Point> points;
   std::vector<cv::Point> nbs;
 
-  void clusterNaNs(const cv::Point &_start, const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat_<unsigned char> &_mask, std::vector<Eigen::Vector3f> &_contour, std::vector<cv::Point> &_points);
+  void clusterNaNs(const cv::Point &_start, const pcl::PointCloud<pcl::PointXYZRGB> &_cloud,
+                   cv::Mat_<unsigned char> &_mask, std::vector<Eigen::Vector3f> &_contour,
+                   std::vector<cv::Point> &_points);
   double getDepthVariance(const std::vector<Eigen::Vector3f> &_contour);
 
   inline bool isnan(const pcl::PointXYZRGB &pt);
 
-public:
+ public:
   Parameter param;
-  OcclusionClustering(const Parameter &_p=Parameter());
+  OcclusionClustering(const Parameter &_p = Parameter());
   ~OcclusionClustering();
 
   /** get occlusion mask (occlusion from stereo) **/
   void compute(const pcl::PointCloud<pcl::PointXYZRGB> &_cloud, cv::Mat_<unsigned char> &_mask);
 
-  typedef boost::shared_ptr< ::v4r::OcclusionClustering> Ptr;
-  typedef boost::shared_ptr< ::v4r::OcclusionClustering const> ConstPtr;
+  typedef std::shared_ptr<::v4r::OcclusionClustering> Ptr;
+  typedef std::shared_ptr<::v4r::OcclusionClustering const> ConstPtr;
 };
-
 
 /**
  * @brief OcclusionClustering::isnan
  * @param pt
  * @return
  */
-inline bool OcclusionClustering::isnan(const pcl::PointXYZRGB &pt)
-{
+inline bool OcclusionClustering::isnan(const pcl::PointXYZRGB &pt) {
   if (std::isnan(pt.x) || std::isnan(pt.y) || std::isnan(pt.z))
     return true;
   return false;
 }
 
-}
+}  // namespace v4r
 
 #endif
-

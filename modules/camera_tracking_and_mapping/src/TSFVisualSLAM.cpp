@@ -159,7 +159,7 @@ void TSFVisualSLAM::reset() {
  * @param cloud
  * @param pose
  */
-bool TSFVisualSLAM::track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const uint64_t &timestamp,
+bool TSFVisualSLAM::track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const double &timestamp,
                           Eigen::Matrix4f &pose, double &conf_ransac_iter, double &conf_tracked_points) {
   if (intrinsic.empty())
     throw std::runtime_error("[TSFVisualSLAM::track] Camera parameter not available!");
@@ -184,10 +184,12 @@ bool TSFVisualSLAM::track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const 
   } else
     convertImage(cloud, data.image);
 
-  cv::cvtColor(data.image, data.gray, CV_BGR2GRAY);
+  cv::cvtColor(data.image, data.gray, cv::COLOR_BGR2GRAY);
 
   if (!dbg.empty())
     tsfPoseTracker.dbg = dbg;
+  else if (!tsfPoseTracker.dbg.empty())
+    tsfPoseTracker.dbg = cv::Mat();
 
   // the tracker does not copy data, we need to lock the shared memory
   data.lock();
@@ -215,8 +217,8 @@ bool TSFVisualSLAM::track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const 
       if (tsFilter.getFiltTimestamp() != 0 &&
           (std::isnan(last_pose_map(0, 0)) || selectFrame(last_pose_map, tsFilter.getFiltPose()))) {
         if (tsFilter.getFiltCloud().data.size() > 0) {
-          data.map_frames.push(
-              TSFFrame::Ptr(new TSFFrame(-1, tsFilter.getFiltPose(), tsFilter.getFiltCloud(), !data.lost_track)));
+          data.map_frames.push(TSFFrame::Ptr(new TSFFrame(-1, tsFilter.getFiltTimestamp(), tsFilter.getFiltPose(),
+                                                          tsFilter.getFiltCloud(), !data.lost_track)));
           data.lost_track = false;
           last_pose_map = tsFilter.getFiltPose();
           last_ts_filt = tsFilter.getFiltTimestamp();
@@ -237,10 +239,10 @@ bool TSFVisualSLAM::track(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const 
  * @param timestamp
  */
 int TSFVisualSLAM::getFilteredCloudNormals(pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud, Eigen::Matrix4f &pose,
-                                           uint64_t &timestamp) {
+                                           double &timestamp) {
   double ts;
   int nb = tsFilter.getFilteredCloudNormals(cloud, pose, ts);
-  timestamp = (uint64_t)ts;
+  timestamp = (double)ts;
   return nb;
 }
 
@@ -250,10 +252,10 @@ int TSFVisualSLAM::getFilteredCloudNormals(pcl::PointCloud<pcl::PointXYZRGBNorma
  * @param timestamp
  */
 int TSFVisualSLAM::getFilteredCloud(pcl::PointCloud<pcl::PointXYZRGB> &cloud, Eigen::Matrix4f &pose,
-                                    uint64_t &timestamp) {
+                                    double &timestamp) {
   double ts;
   int nb = tsFilter.getFilteredCloud(cloud, pose, ts);
-  timestamp = (uint64_t)ts;
+  timestamp = (double)ts;
   return nb;
 }
 
@@ -263,10 +265,10 @@ int TSFVisualSLAM::getFilteredCloud(pcl::PointCloud<pcl::PointXYZRGB> &cloud, Ei
  * @param pose
  * @param timestamp
  */
-int TSFVisualSLAM::getSurfelCloud(v4r::DataMatrix2D<Surfel> &cloud, Eigen::Matrix4f &pose, uint64_t &timestamp) {
+int TSFVisualSLAM::getSurfelCloud(v4r::DataMatrix2D<Surfel> &cloud, Eigen::Matrix4f &pose, double &timestamp) {
   double ts;
   int nb = tsFilter.getSurfelCloud(cloud, pose, ts);
-  timestamp = (uint64_t)ts;
+  timestamp = (double)ts;
   return nb;
 }
 
@@ -311,8 +313,8 @@ void TSFVisualSLAM::setVignettingCalibrationFiles(const std::string &vgn_file, c
     rr.reset(new radical::RadiometricResponse(crf_file));
   } else {
     remove_vignetting = false;
-    vr = boost::shared_ptr<radical::VignettingResponse>();
-    rr = boost::shared_ptr<radical::RadiometricResponse>();
+    vr = std::shared_ptr<radical::VignettingResponse>();
+    rr = std::shared_ptr<radical::RadiometricResponse>();
   }
 }
 
@@ -332,7 +334,7 @@ void TSFVisualSLAM::optimizeMap() {
   tsfMapping.optimizeMap();
 }
 
-void TSFVisualSLAM::getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs) {
+void TSFVisualSLAM::getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeffs) const {
   if (param.tsf_mapping) {
     tsfMapping.getCameraParameter(_intrinsic, _dist_coeffs);
   } else {
@@ -340,4 +342,4 @@ void TSFVisualSLAM::getCameraParameter(cv::Mat &_intrinsic, cv::Mat &_dist_coeff
     _dist_coeffs = cv::Mat();
   }
 }
-}
+}  // namespace v4r

@@ -200,6 +200,6 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ChangeDetector<PointT>::clust
 
 template <class PointType>
 const ChangeDetectorParameters ChangeDetector<PointType>::DEFAULT_PARAMETERS;
-}
+}  // namespace v4r
 
 template class V4R_EXPORTS v4r::ChangeDetector<pcl::PointXYZRGB>;

@@ -4,12 +4,44 @@
 namespace v4r {
 
 template <typename PointT>
+void HV_CuesVisualizer<PointT>::keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
+                                                      const HypothesisVerification<PointT> *hv) const {
+  static bool models_are_visualized = true;
+
+  if (event.getKeySym() == "m" && event.keyDown()) {
+    double pt_size;
+    vis_go_cues_->getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pt_size,
+                                                   "smooth labels");
+
+    for (size_t i = 0; i < active_solution_.size(); i++) {
+      if (active_solution_[i]) {
+        HVRecognitionModel<PointT> &rm = *(hv->global_hypotheses_[i]);
+        std::stringstream model_name;
+        model_name << "model_" << i;
+
+        if (models_are_visualized)
+          vis_go_cues_->removePointCloud(model_name.str() + "_smooth", vp_scene_smooth_regions_);
+        else {
+          vis_go_cues_->addPointCloud(rm.visible_cloud_, model_name.str() + "_smooth", vp_scene_smooth_regions_);
+          vis_go_cues_->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pt_size,
+                                                         model_name.str() + "_smooth", vp_scene_smooth_regions_);
+        }
+      }
+    }
+
+    models_are_visualized = !models_are_visualized;
+    vis_go_cues_->spin();
+  }
+}
+
+template <typename PointT>
 void HV_CuesVisualizer<PointT>::visualize(const HypothesisVerification<PointT> *hv,
-                                          const boost::dynamic_bitset<> &active_solution, float cost,
-                                          int times_evaluated) {
+                                          const boost::dynamic_bitset<> &active_solution, float cost) {
   typename pcl::PointCloud<PointT>::Ptr scene_cloud_vis(new pcl::PointCloud<PointT>(*hv->scene_cloud_downsampled_));
   scene_cloud_vis->sensor_orientation_ = Eigen::Quaternionf::Identity();
   scene_cloud_vis->sensor_origin_ = Eigen::Vector4f::Zero(4);
+
+  active_solution_ = active_solution;
 
   if (!vis_go_cues_) {
     vis_go_cues_.reset(new pcl::visualization::PCLVisualizer("visualizeGOCues"));
@@ -20,6 +52,10 @@ void HV_CuesVisualizer<PointT>::visualize(const HypothesisVerification<PointT> *
     vis_go_cues_->createViewPort(0.33, 0.5, 0.66, 1, vp_scene_duplicity_);
     vis_go_cues_->createViewPort(0.66, 0.5, 1, 1, vp_scene_smooth_regions_);
     vis_go_cues_->setBackgroundColor(vis_param_->bg_color_[0], vis_param_->bg_color_[1], vis_param_->bg_color_[2]);
+
+    boost::function<void(const pcl::visualization::KeyboardEvent &)> f =
+        boost::bind(&HV_CuesVisualizer<PointT>::keyboardEventOccurred, this, _1, hv);
+    vis_go_cues_->registerKeyboardCallback(f);
   }
 
   vis_go_cues_->removeAllPointClouds();
@@ -45,7 +81,7 @@ void HV_CuesVisualizer<PointT>::visualize(const HypothesisVerification<PointT> *
 
   std::stringstream out, model_fitness_txt;
   out << "Active Hypotheses: " << active_solution << std::endl
-      << "Cost: " << std::setprecision(5) << cost << " , #Evaluations: " << times_evaluated << std::endl
+      << "Cost: " << std::setprecision(5) << cost << " , #Evaluations: " << hv->num_evaluations_ << std::endl
       << "; pairwise cost: " << pairwise_cost << "; total cost: " << cost << std::endl;
   model_fitness_txt << "model fitness.";
 
@@ -160,16 +196,16 @@ void HV_CuesVisualizer<PointT>::visualize(const HypothesisVerification<PointT> *
   }
 
   // ---- VISUALIZE SMOOTH SEGMENTATION -------
-  {
+  if (hv->param_.check_smooth_clusters_) {
     int max_label = hv->scene_pt_smooth_label_id_.maxCoeff() + 1;
     if (max_label >= 1) {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene_smooth_labels_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
       pcl::copyPointCloud(*scene_cloud_vis, *scene_smooth_labels_rgb);
 
       if (!vis_param_->no_text_)
-        vis_go_cues_->addText("smooth regions", 1, 30, vis_param_->fontsize_, vis_param_->text_color_[0],
-                              vis_param_->text_color_[1], vis_param_->text_color_[2], "smooth seg text",
-                              vp_scene_smooth_regions_);
+        vis_go_cues_->addText("smooth regions (press \"m\" to hide/show hypotheses)", 1, 30, vis_param_->fontsize_,
+                              vis_param_->text_color_[0], vis_param_->text_color_[1], vis_param_->text_color_[2],
+                              "smooth seg text", vp_scene_smooth_regions_);
 
       Eigen::Matrix3Xf label_colors(3, max_label);
       size_t num_smooth_regions_of_interest = 0;
@@ -186,8 +222,9 @@ void HV_CuesVisualizer<PointT>::visualize(const HypothesisVerification<PointT> *
         label_colors(1, i) = g;
         label_colors(2, i) = b;
 
-        auto s_pt_in_region = (hv->scene_pt_smooth_label_id_.array() == i);
-        auto explained_pt_in_region = (s_pt_in_region.array() && scene_pt_is_explained.array());
+        Eigen::Array<bool, Eigen::Dynamic, 1> s_pt_in_region = (hv->scene_pt_smooth_label_id_.array() == i);
+        Eigen::Array<bool, Eigen::Dynamic, 1> explained_pt_in_region =
+            (s_pt_in_region.array() && scene_pt_is_explained.array());
         size_t num_explained_pts_in_region = explained_pt_in_region.count();
         size_t num_pts_in_smooth_regions = s_pt_in_region.count();
 
@@ -568,4 +605,4 @@ void HV_PairwiseVisualizer<PointT>::visualize(const HypothesisVerification<Point
 template class V4R_EXPORTS HV_CuesVisualizer<pcl::PointXYZRGB>;
 template class V4R_EXPORTS HV_ModelVisualizer<pcl::PointXYZRGB>;
 template class V4R_EXPORTS HV_PairwiseVisualizer<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

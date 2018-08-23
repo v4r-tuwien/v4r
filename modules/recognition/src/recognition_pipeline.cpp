@@ -16,7 +16,7 @@ RecognitionPipeline<PointT>::StopWatch::~StopWatch() {
 }
 
 template <typename PointT>
-void RecognitionPipeline<PointT>::recognize() {
+void RecognitionPipeline<PointT>::recognize(const std::vector<std::string> &model_ids_to_search) {
   elapsed_time_.clear();
   obj_hypotheses_.clear();
   CHECK(scene_) << "Input scene is not set!";
@@ -25,9 +25,9 @@ void RecognitionPipeline<PointT>::recognize() {
     CHECK(scene_normals_ && scene_->points.size() == scene_normals_->points.size())
         << "Recognizer needs normals but they are not set!";
 
-  do_recognize();
+  do_recognize(model_ids_to_search);
 }
 
 #define PCL_INSTANTIATE_RecognitionPipeline(T) template class V4R_EXPORTS RecognitionPipeline<T>;
 PCL_INSTANTIATE(RecognitionPipeline, (pcl::PointXYZRGB))
-}
+}  // namespace v4r

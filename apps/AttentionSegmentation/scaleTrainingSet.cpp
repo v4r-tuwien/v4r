@@ -39,10 +39,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
+#include <glog/logging.h>
+
 #include "v4r/attention_segmentation/SVMScale.h"
 
-void printUsage(char *);
-
+namespace {
 void printUsage(char *av) {
   printf(
       "Usage: %s training_data.txt lower upper\n"
@@ -54,12 +55,16 @@ void printUsage(char *av) {
       av);
   std::cout << " Example: " << av << " training_data.txt -1 1" << std::endl;
 }
+}  // namespace
 
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     printUsage(argv[0]);
     exit(0);
   }
+
+  // init logging
+  google::InitGoogleLogging(argv[0]);
 
   std::string train_ST_file_name = argv[1];
   std::string train_ST_file_name_scaled = train_ST_file_name + ".scaled";

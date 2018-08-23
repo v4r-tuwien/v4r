@@ -10,20 +10,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${PCL_INCLUDE_DIRS})
 
 set(SOURCES
   uniform_sampling.cpp
-  conditional_euclidean_clustering.cpp
   organized_edge_detection.cpp
   convolution_2d.cpp
 )
 
 set(HEADERS
   pcl_1_8/keypoints/impl/uniform_sampling.hpp
-  pcl_1_8/segmentation/impl/conditional_euclidean_clustering.hpp
   pcl_1_8/features/impl/organized_edge_detection.hpp
   pcl_1_8/2d/impl/convolution.hpp
   pcl_1_8/2d/impl/kernel.hpp
   pcl_1_8/2d/impl/edge.hpp
   pcl_1_8/keypoints/uniform_sampling.h
-  pcl_1_8/segmentation/conditional_euclidean_clustering.h
   pcl_1_8/features/organized_edge_detection.h
   pcl_1_8/2d/edge.h
   pcl_1_8/2d/convolution.h

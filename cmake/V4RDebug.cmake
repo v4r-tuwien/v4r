@@ -27,6 +27,23 @@ macro(v4r_print_cache_variables _string)
 endmacro()
 
 
+# Clear all cache variables matching a given string
+macro(v4r_clear_cache_variables _string)
+  if(NOT ${_string} STREQUAL "")
+    message(STATUS "")
+    message(STATUS "Clearing cache variables matching ${_string}")
+    message(STATUS "")
+    get_cmake_property(_vars VARIABLES)
+    foreach(_var ${_vars})
+      if(_var MATCHES ${_string})
+        message(STATUS "${_var}")
+        v4r_clear_vars(${_var})
+      endif()
+    endforeach()
+  endif()
+endmacro()
+
+
 # Get all propreties that CMake supports
 execute_process(COMMAND ${CMAKE_COMMAND} --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
 # Convert command output into a CMake list

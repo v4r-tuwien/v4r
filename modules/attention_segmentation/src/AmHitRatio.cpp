@@ -274,4 +274,4 @@ bool AttentionPointsEvaluation::writeToFile(std::string file_name) {
   return (true);
 }
 
-}  // namespace EPEvaluation
+}  // namespace v4r

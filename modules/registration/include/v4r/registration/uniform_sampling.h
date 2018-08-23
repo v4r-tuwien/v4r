@@ -5,13 +5,10 @@
  *      Author: aitor
  */
 
-#ifndef FAAT_PCL_UNIFORM_SAMPLING_H_
-#define FAAT_PCL_UNIFORM_SAMPLING_H_
+#pragma once
 
 #include <pcl/common/common.h>
-#include <pcl/common/common.h>
 #include <pcl/keypoints/keypoint.h>
-#include <v4r/core/macros.h>
 #include <v4r/core/macros.h>
 
 namespace v4r {
@@ -46,8 +43,8 @@ class V4R_EXPORTS UniformSamplingSharedVoxelGrid : public pcl::Keypoint<PointInT
   Eigen::Vector4i min_b_, max_b_, div_b_, divb_mul_;
 
   /** \brief Downsample a Point Cloud using a voxelized grid approach
-    * \param output the resultant point cloud message
-    */
+   * \param output the resultant point cloud message
+   */
   void detectKeypoints(PointCloudOut& output) {
     // Has the input dataset been set already?
     if (!input_) {
@@ -95,11 +92,10 @@ class V4R_EXPORTS UniformSamplingSharedVoxelGrid : public pcl::Keypoint<PointInT
     divb_mul_ = Eigen::Vector4i(1, div_b_[0], div_b_[0] * div_b_[1], 0);
 
     // First pass: build a set of leaves with the point index closest to the leaf center
-    for (size_t cp = 0; cp < indices_->size(); ++cp) {
+    for (size_t cp = 0; cp < indices_->size(); cp++) {
       if (!input_->is_dense)
         // Check if the point is invalid
-        if (!pcl_isfinite(input_->points[(*indices_)[cp]].x) || !pcl_isfinite(input_->points[(*indices_)[cp]].y) ||
-            !pcl_isfinite(input_->points[(*indices_)[cp]].z))
+        if (!pcl::isFinite(input_->points[(*indices_)[cp]]))
           continue;
 
       Eigen::Vector4i ijk = Eigen::Vector4i::Zero();
@@ -141,8 +137,10 @@ class V4R_EXPORTS UniformSamplingSharedVoxelGrid : public pcl::Keypoint<PointInT
   Eigen::Vector4f min_p, max_p;
 
  public:
-  typedef boost::shared_ptr<UniformSamplingSharedVoxelGrid<PointInT>> Ptr;
-  typedef boost::shared_ptr<const UniformSamplingSharedVoxelGrid<PointInT>> ConstPtr;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  typedef std::shared_ptr<UniformSamplingSharedVoxelGrid<PointInT>> Ptr;
+  typedef std::shared_ptr<const UniformSamplingSharedVoxelGrid<PointInT>> ConstPtr;
 
   /** \brief Empty constructor. */
   UniformSamplingSharedVoxelGrid()
@@ -159,14 +157,11 @@ class V4R_EXPORTS UniformSamplingSharedVoxelGrid : public pcl::Keypoint<PointInT
   }
 
   /** \brief Set the 3D grid leaf size.
-    * \param radius the 3D grid leaf size
-    */
+   * \param radius the 3D grid leaf size
+   */
   virtual inline void setRadiusSearch(double radius) {
-    leaf_size_[0] = leaf_size_[1] = leaf_size_[2] = static_cast<float>(radius);
-    // Avoid division errors
-    if (leaf_size_[3] == 0)
-      leaf_size_[3] = 1;
-    // Use multiplications instead of divisions
+    leaf_size_ = Eigen::Vector4f(radius, radius, radius, 1.f);
+    // Use multiplications instead of divisions for speed-up
     inverse_leaf_size_ = Eigen::Array4f::Ones() / leaf_size_.array();
     search_radius_ = radius;
   }
@@ -205,6 +200,4 @@ class V4R_EXPORTS UniformSamplingSharedVoxelGrid : public pcl::Keypoint<PointInT
     share_voxel_grid_ = true;
   }
 };
-}
-
-#endif /* FAAT_PCL_UNIFORM_SAMPLING_H_ */
+}  // namespace v4r

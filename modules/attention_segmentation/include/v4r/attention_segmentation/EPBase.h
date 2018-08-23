@@ -56,7 +56,7 @@ namespace v4r {
  */
 class V4R_EXPORTS EPBase {
  public:
-  typedef boost::shared_ptr<EPBase> Ptr;
+  typedef std::shared_ptr<EPBase> Ptr;
 
  protected:
   bool computed;
@@ -137,6 +137,6 @@ inline int EPBase::Y(int idx) {
 inline pcl::PointCloud<pcl::Normal>::Ptr EPBase::getNormals() {
   return normals;
 }
-}
+}  // namespace v4r
 
 #endif  // BASE_HH

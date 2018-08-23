@@ -73,8 +73,8 @@ class V4R_EXPORTS SurfaceHeightSaliencyMap : public BaseMap {
   int getHeightType();
 
   /**
-  * calculates single surface height map
-  * */
+   * calculates single surface height map
+   * */
 
   virtual int calculate();
 

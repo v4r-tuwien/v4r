@@ -92,12 +92,13 @@ class V4R_EXPORTS GlobalRecognitionPipeline : public RecognitionPipeline<PointT>
   /**
    * @brief recognize
    */
-  void do_recognize();
+  void do_recognize(const std::vector<std::string> &model_ids_to_search) override;
 
   void doInit(const bf::path &trained_dir, bool force_retrain,
-              const std::vector<std::string> &object_instances_to_load);
+              const std::vector<std::string> &object_instances_to_load) override;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GlobalRecognitionPipeline() : visualize_clusters_(false) {}
 
   /**
@@ -112,7 +113,7 @@ class V4R_EXPORTS GlobalRecognitionPipeline : public RecognitionPipeline<PointT>
    * @brief needNormals
    * @return
    */
-  bool needNormals() const {
+  bool needNormals() const override {
     for (size_t r_id = 0; r_id < global_recognizers_.size(); r_id++) {
       if (global_recognizers_[r_id]->needNormals())
         return true;
@@ -133,7 +134,7 @@ class V4R_EXPORTS GlobalRecognitionPipeline : public RecognitionPipeline<PointT>
    * @brief getFeatureType
    * @return
    */
-  size_t getFeatureType() const {
+  size_t getFeatureType() const override {
     size_t feat_type = 0;
     for (size_t r_id = 0; r_id < global_recognizers_.size(); r_id++)
       feat_type += global_recognizers_[r_id]->getFeatureType();
@@ -145,7 +146,7 @@ class V4R_EXPORTS GlobalRecognitionPipeline : public RecognitionPipeline<PointT>
    * @brief requiresSegmentation
    * @return
    */
-  bool requiresSegmentation() const {
+  bool requiresSegmentation() const override {
     return true;
   }
 
@@ -157,7 +158,7 @@ class V4R_EXPORTS GlobalRecognitionPipeline : public RecognitionPipeline<PointT>
     visualize_clusters_ = visualize;
   }
 
-  typedef boost::shared_ptr<GlobalRecognitionPipeline<PointT>> Ptr;
-  typedef boost::shared_ptr<GlobalRecognitionPipeline<PointT> const> ConstPtr;
+  typedef std::shared_ptr<GlobalRecognitionPipeline<PointT>> Ptr;
+  typedef std::shared_ptr<GlobalRecognitionPipeline<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -71,8 +71,8 @@ class V4R_EXPORTS PartRotation1D : public Part {
   PartRotation1D();
   ~PartRotation1D();
 
-  typedef SmartPtr<::v4r::PartRotation1D> Ptr;
-  typedef SmartPtr<::v4r::PartRotation1D const> ConstPtr;
+  typedef std::shared_ptr<::v4r::PartRotation1D> Ptr;
+  typedef std::shared_ptr<::v4r::PartRotation1D const> ConstPtr;
 
   virtual void setParameter(const Eigen::VectorXd &_param);
   virtual Eigen::VectorXd getParameter();
@@ -88,6 +88,6 @@ class V4R_EXPORTS PartRotation1D : public Part {
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

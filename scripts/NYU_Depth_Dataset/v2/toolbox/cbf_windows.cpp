@@ -92,7 +92,7 @@ void upsample_cpu(float* depth_dst,
   
 	int num_threads = height_dst * width_dst;
   
-  // Dont bother if the upsampled one isnt missing.
+  // Don't bother if the upsampled one isn't missing.
   if (!mask_dst[dst_img_ind]) {
     return;
   }
@@ -129,7 +129,7 @@ void upsample_cpu(float* depth_dst,
 //              need filtering.
 //   offsets - vector of offsets from the current abs_ind to be used for
 //             filtering.
-//   guassian - the values (weights) of the gaussian filter corresponding
+//   gaussian - the values (weights) of the gaussian filter corresponding
 //              to the offset matrix.
 void cbf_cpu(const float* depth, const float* intensity, bool* is_missing,
              bool* valid_in, bool* valid_out, float* result,
@@ -238,7 +238,7 @@ void create_spatial_gaussian(float sigma_s, float* gaussian_h) {
 // MUST already be in the appropriate offset location.
 // 
 // Args:
-//   height - the heigh of the image at the current scale.
+//   height - the height of the image at the current scale.
 //   width - the width of the image at the current scale.
 //   mask - pointer into the mask_ms_d matrix. The offset has already been
 //          calculated.

@@ -37,4 +37,4 @@ cv::Mat cropImage(const cv::Mat &img, const cv::Rect &roi_original, size_t margi
 
   return cv::Mat(img(roi));
 }
-}
+}  // namespace v4r

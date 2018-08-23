@@ -37,61 +37,53 @@
 **
 ****************************************************************************/
 
-
 /**
  * @file main.cpp
  * @author Johann Prankl (prankl@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
- */ 
+ */
 
 #ifndef KP_GLOBAL_CLOUD_FILTERING_HH
 #define KP_GLOBAL_CLOUD_FILTERING_HH
 
-#include <iostream>
-#include <fstream>
 #include <float.h>
-#include <Eigen/Dense>
-#include <opencv2/core/core.hpp>
-#include "opencv2/video/tracking.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl/io/io.h>
-#include <pcl/octree/octree_pointcloud_voxelcentroid.h>
 #include <pcl/octree/octree.h>
 #include <pcl/octree/octree_impl.h>
 #include <pcl/octree/octree_pointcloud.h>
-#include <v4r/camera_tracking_and_mapping/OctreeVoxelCentroidContainerXYZRGBNormal.hpp>
-#include <boost/smart_ptr.hpp>
-#include <v4r/keypoints/impl/triple.hpp>
-#include <v4r/common/impl/DataMatrix2D.hpp>
+#include <pcl/octree/octree_pointcloud_voxelcentroid.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 #include <v4r/camera_tracking_and_mapping/TSFData.h>
-#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
 #include <v4r/core/macros.h>
+#include <Eigen/Dense>
+#include <boost/smart_ptr.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <fstream>
+#include <iostream>
+#include <opencv2/core/core.hpp>
+#include <v4r/camera_tracking_and_mapping/OctreeVoxelCentroidContainerXYZRGBNormal.hpp>
+#include <v4r/camera_tracking_and_mapping/TSFFrame.hh>
+#include <v4r/common/impl/DataMatrix2D.hpp>
+#include <v4r/keypoints/impl/triple.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/video/tracking.hpp"
 
-
-namespace v4r
-{
-
-
+namespace v4r {
 
 /**
  * TSFGlobalCloudFiltering
  */
-class V4R_EXPORTS TSFGlobalCloudFiltering 
-{
-public:
-
+class V4R_EXPORTS TSFGlobalCloudFiltering {
+ public:
   /**
    * Parameter
    */
-  class Parameter
-  {
-  public:
+  class Parameter {
+   public:
     float thr_angle;
     float max_weight;
     float sigma_pts;
@@ -100,12 +92,11 @@ public:
     float voxel_size;
     float max_dist_integration;
     Parameter()
-      : thr_angle(80), max_weight(20), sigma_pts(10), sigma_depth(0.008), z_cut_off_integration(0.02), voxel_size(0.001), max_dist_integration(7.) {}
+    : thr_angle(80), max_weight(20), sigma_pts(10), sigma_depth(0.008), z_cut_off_integration(0.02), voxel_size(0.001),
+      max_dist_integration(7.) {}
   };
 
- 
-
-private:
+ private:
   Parameter param;
 
   float cos_thr_angle;
@@ -116,25 +107,32 @@ private:
   std::vector<cv::Vec4i> npat;
   std::vector<float> exp_error_lookup;
 
-  std::vector< cv::Mat_<float> > reliability;
+  std::vector<cv::Mat_<float>> reliability;
 
-  pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZRGBNormal,pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal> >::Ptr octree;
-  typedef pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZRGBNormal,pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal> >::AlignedPointTVector AlignedPointXYZRGBNormalVector;
-  boost::shared_ptr< AlignedPointXYZRGBNormalVector > oc_cloud;
+  pcl::octree::OctreePointCloudVoxelCentroid<
+      pcl::PointXYZRGBNormal, pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>::Ptr
+      octree;
+  typedef pcl::octree::OctreePointCloudVoxelCentroid<
+      pcl::PointXYZRGBNormal,
+      pcl::octree::OctreeVoxelCentroidContainerXYZRGBNormal<pcl::PointXYZRGBNormal>>::AlignedPointTVector
+      AlignedPointXYZRGBNormalVector;
+  std::shared_ptr<AlignedPointXYZRGBNormalVector> oc_cloud;
 
-//  void integrateData(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const Eigen::Matrix4f &pose, const Eigen::Matrix4f &filt_pose, v4r::DataMatrix2D<TSFData::Surfel> &filt_cloud);
+  //  void integrateData(const pcl::PointCloud<pcl::PointXYZRGB> &cloud, const Eigen::Matrix4f &pose, const
+  //  Eigen::Matrix4f &filt_pose, v4r::DataMatrix2D<TSFData::Surfel> &filt_cloud);
   void computeReliability(const std::vector<TSFFrame::Ptr> &frames);
   void maxReliabilityIndexing(const std::vector<TSFFrame::Ptr> &frames);
   void getMaxPoints(const std::vector<TSFFrame::Ptr> &frames, pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud);
   void computeNormals(v4r::DataMatrix2D<v4r::Surfel> &sf_cloud);
 
-  inline float sqr(const float &d) {return d*d;}
+  inline float sqr(const float &d) {
+    return d * d;
+  }
 
-
-public:
+ public:
   cv::Mat dbg;
 
-  TSFGlobalCloudFiltering(const Parameter &p=Parameter());
+  TSFGlobalCloudFiltering(const Parameter &p = Parameter());
   ~TSFGlobalCloudFiltering();
 
   void start();
@@ -147,16 +145,12 @@ public:
   void setCameraParameter(const cv::Mat &_intrinsic);
   void setParameter(const Parameter &p);
 
-  typedef boost::shared_ptr< ::v4r::TSFGlobalCloudFiltering> Ptr;
-  typedef boost::shared_ptr< ::v4r::TSFGlobalCloudFiltering const> ConstPtr;
+  typedef std::shared_ptr<::v4r::TSFGlobalCloudFiltering> Ptr;
+  typedef std::shared_ptr<::v4r::TSFGlobalCloudFiltering const> ConstPtr;
 };
-
-
 
 /*************************** INLINE METHODES **************************/
 
-
-} //--END--
+}  // namespace v4r
 
 #endif
-

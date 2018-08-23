@@ -111,4 +111,4 @@ void ObjectView::clear() {
   part_indices.clear();
 }
 
-}  //--END--
+}  // namespace v4r

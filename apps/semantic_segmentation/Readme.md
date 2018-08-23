@@ -3,7 +3,7 @@ This tutorial first describes how to learn a new 3D Entangled Forest classifier 
 
 # Learning of a new 3DEF classifier
 ## 1. Preparation of NYU Depth Datasets
-To get and convert the NYU Depth Datasets from their original MATLAB format to PCL point clouds and create the necessary auxilary files for training, you can use the scripts provided in [v4r/scripts/NYU_Depth_Dataset](../../scripts/NYU_Depth_Dataset).
+To get and convert the NYU Depth Datasets from their original MATLAB format to PCL point clouds and create the necessary auxiliary files for training, you can use the scripts provided in [v4r/scripts/NYU_Depth_Dataset](../../scripts/NYU_Depth_Dataset).
 
 ## 2. Create training data
 To learn a new classifier, first the training data needs to be extracted from a dataset. This is done with the tool `create_3DEF_trainingdata`:
@@ -74,7 +74,7 @@ To get reasonable results, the camera pose w.r.t. ground plane also needs to be 
 To get a list of all parameters simply start the tool without any command line arguments or use `--help`.
 
 # Learned classifiers ready to use
-For the NYU Depth Datasets, we provide already learned classifier files you can directly use with the demo tool, such that you do not need to run the entire training pipeline before. The files can be found [here](https://repo.acin.tuwien.ac.at/tmp/permanent/daniel_wolf_3DEF) and are grouped by the dataset and label set they have been trained on:
+For the NYU Depth Datasets, we provide already learned classifier files you can directly use with the demo tool, such that you do not need to run the entire training pipeline before. The files can be found [here](https://data.acin.tuwien.ac.at/index.php/s/ispD5VN2ag0ehlY/download) (~2GB) and are grouped by the dataset and label set they have been trained on:
 * `v1_13_labels`: NYU v1 Dataset, using 13 labels bed, blind, bookshelf, cabinet, ceiling, floor, picture, sofa, table, tv, wall, window, background (label set from [2])
 * `v2_13_labels`: NYU v2 Dataset, using 13 labels bed, object, chair, furniture, ceiling, floor, wall deco, sofa, table, wall, window, bookshelf, tv (label set from [3])
 * `v2_4_labels`: NYU v2 Dataset, using 4 structural labels ground, struct, furniture, props (label set from [4])

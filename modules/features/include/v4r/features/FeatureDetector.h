@@ -39,27 +39,25 @@
 
 /**
  * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
+ * @author Johann Prankl (prankl@acin.tuwien.ac.at), Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2017
- * @brief
+ * @brief Class which extract keypoints and/or compute features from 2D images
  *
  */
 
-#ifndef KP_FEATURE_DETECTOR_HH
-#define KP_FEATURE_DETECTOR_HH
-
-#include <iostream>
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
+#pragma once
 
 #include <v4r/core/macros.h>
-#include <v4r/common/impl/SmartPtr.hpp>
+#include <iostream>
+#include <memory>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 
 namespace v4r {
 
 class V4R_EXPORTS FeatureDetector {
  public:
-  enum Type {
+  enum class Type {
     K_MSER,
     K_HARRIS,
     KD_CVSURF,
@@ -79,44 +77,96 @@ class V4R_EXPORTS FeatureDetector {
     KD_CVSURF_IMGD,
     KD_FAST_CVSURF,
     KD_SIFTGPU_IMGD,
-    MAX_TYPE,
-    UNDEF = MAX_TYPE
+    KD_AKAZE,
+    KD_BRISK,
+    KD_SURF
   };
 
  private:
   Type type;
 
+ protected:
+  std::string descr_name_;
+  std::vector<int> keypoint_indices_;  ///< extracted keypoint indices
+
+  /**
+   * @brief compute keypoint indices for a given set of keypoints extracted from an image. The indices correspond to the
+   * pixel values stacked into row-major order
+   * @param image input image
+   * @param keys keypoints
+   */
+  void computeKeypointIndices(const cv::Mat &image, const std::vector<cv::KeyPoint> &keys);
+
  public:
-  FeatureDetector(Type _type = UNDEF) : type(_type) {}
+  FeatureDetector(Type _type) : type(_type) {}
   virtual ~FeatureDetector() {}
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+  /**
+   * @brief Extracts keypoints of an image and computes a feature descriptor for each of them
+   * @param image Input image from which to extract features
+   * @param keys extracted keypoints (points of interest) from the image
+   * @param descriptors feature descriptors for each keypoint
+   * @param object_mask object mask (pixels of the image for which extracted keypoints are accepted). If empty, all
+   * extracted keypoints are valid.
+   */
+  virtual void detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors,
+                                const cv::Mat &object_mask = cv::Mat()) {
     (void)image;
     (void)keys;
     (void)descriptors;
-    std::cout << "[FeatureDetector::detect] Not implemented!]" << std::endl;
+    (void)object_mask;
+    std::cout << "[FeatureDetector::detectAndCompute] Not implemented!]" << std::endl;
   };
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys) {
+  /**
+   * @brief Extracts keypoints of an image
+   * @param image Input image from which to extract features
+   * @param keys extracted keypoints (points of interest) from the image
+   * @param object_mask object mask (pixels of the image for which extracted keypoints are accepted). If empty, all
+   * extracted keypoints are valid.
+   */
+  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, const cv::Mat &object_mask = cv::Mat()) {
     (void)image;
     (void)keys;
+    (void)object_mask;
     std::cout << "[FeatureDetector::detect] Not implemented!]" << std::endl;
   }
 
-  virtual void extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
+  /**
+   * @brief Computes a feature descriptor for a given set of keypoints
+   * @param image Input image
+   * @param keys keypoints for which to compute features (keypoints for which no valid descriptor can be computed, will
+   * be removed from the vector)
+   * @param descriptors feature descriptors for each keypoint
+   */
+  virtual void compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors) {
     (void)image;
     (void)keys;
     (void)descriptors;
-    std::cout << "[FeatureDetector::extract] Not implemented!]" << std::endl;
+    std::cout << "[FeatureDetector::compute] Not implemented!]" << std::endl;
   }
 
-  Type getType() {
+  Type getType() const {
     return type;
   }
 
-  typedef SmartPtr<::v4r::FeatureDetector> Ptr;
-  typedef SmartPtr<::v4r::FeatureDetector const> ConstPtr;
-};
-}
+  /**
+   * query keypoint indices with respect to input cloud
+   * @return indices of the input cloud that indicate the keypoints
+   */
+  const std::vector<int> &getKeypointIndices() const {
+    return keypoint_indices_;
+  }
 
-#endif
+  const std::string &getDescriptorName() const {
+    return descr_name_;
+  }
+
+  typedef std::shared_ptr<FeatureDetector> Ptr;
+  typedef std::shared_ptr<FeatureDetector const> ConstPtr;
+};
+
+V4R_EXPORTS std::istream &operator>>(std::istream &in, FeatureDetector::Type &t);
+V4R_EXPORTS std::ostream &operator<<(std::ostream &out, const FeatureDetector::Type &t);
+
+}  // namespace v4r

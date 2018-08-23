@@ -13,4 +13,4 @@ View<PointT>::View() {
 }
 
 template class V4R_EXPORTS View<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

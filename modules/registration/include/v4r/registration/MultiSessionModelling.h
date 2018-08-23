@@ -61,7 +61,7 @@ struct numeric_limits<myEdge> {
     return myEdge(numeric_limits<float>::max());
   }
 };
-}
+}  // namespace std
 
 namespace v4r {
 namespace Registration {
@@ -98,7 +98,7 @@ class V4R_EXPORTS MultiSessionModelling {
   // basically, a concatenation of output_session_poses_ and poses_
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> output_cloud_poses_;
 
-  std::vector<boost::shared_ptr<PartialModelRegistrationBase<PointT>>> reg_algos_;
+  std::vector<std::shared_ptr<PartialModelRegistrationBase<PointT>>> reg_algos_;
 
   void computeCost(EdgeBetweenPartialModels& edge);
 
@@ -184,7 +184,7 @@ class V4R_EXPORTS MultiSessionModelling {
     normals_ = normals;
   }
 
-  void addRegAlgorithm(typename boost::shared_ptr<PartialModelRegistrationBase<PointT>>& alg) {
+  void addRegAlgorithm(typename std::shared_ptr<PartialModelRegistrationBase<PointT>>& alg) {
     reg_algos_.push_back(alg);
   }
 
@@ -215,7 +215,7 @@ class V4R_EXPORTS MultiSessionModelling {
 
   void compute();
 };
-}
-}
+}  // namespace Registration
+}  // namespace v4r
 
 #endif

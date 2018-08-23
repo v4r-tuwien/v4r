@@ -233,7 +233,7 @@ double KeypointObjectRecognizerR2::detect(const cv::Mat &image, Eigen::Matrix4f 
     throw std::runtime_error("[KeypointObjectRecognizerR2::detect] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -241,7 +241,7 @@ double KeypointObjectRecognizerR2::detect(const cv::Mat &image, Eigen::Matrix4f 
 
   // get matches
   detector->detect(im_gray, keys);
-  descEstimator->extract(im_gray, keys, descs);
+  descEstimator->compute(im_gray, keys, descs);
 
   cbMatcher->queryMatches(descs, matches);
 
@@ -338,4 +338,4 @@ void KeypointObjectRecognizerR2::setCameraParameter(const cv::Mat &_intrinsic, c
       dist_coeffs(0, i) = _dist_coeffs.at<double>(0, i);
   }
 }
-}
+}  // namespace v4r

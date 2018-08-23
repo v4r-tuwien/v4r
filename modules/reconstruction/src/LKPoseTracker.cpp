@@ -221,11 +221,12 @@ void LKPoseTracker::ransacSolvePnP(const std::vector<cv::Point3f> &points, const
  */
 void LKPoseTracker::setLastFrame(const cv::Mat &image, const Eigen::Matrix4f &pose) {
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_last, CV_RGB2GRAY);
+    cv::cvtColor(image, im_last, cv::COLOR_RGB2GRAY);
   else
     image.copyTo(im_last);
 
-  last_pose = pose;
+  memcpy(last_pose.data(), pose.data(), sizeof(float) * 16);
+
   have_im_last = true;
 }
 
@@ -239,7 +240,7 @@ double LKPoseTracker::detectIncremental(const cv::Mat &image, Eigen::Matrix4f &p
     throw std::runtime_error("[LKPoseTracker::detect] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -318,7 +319,7 @@ double LKPoseTracker::detect(const cv::Mat &image, Eigen::Matrix4f &pose) {
     throw std::runtime_error("[LKPoseTracker::detect] Intrinsic camera parameter not set!");
 
   if (image.type() != CV_8U)
-    cv::cvtColor(image, im_gray, CV_RGB2GRAY);
+    cv::cvtColor(image, im_gray, cv::COLOR_RGB2GRAY);
   else
     im_gray = image;
 
@@ -423,4 +424,4 @@ void LKPoseTracker::setCameraParameter(const cv::Mat &_intrinsic, const cv::Mat 
       dist_coeffs(0, i) = _dist_coeffs.at<double>(0, i);
   }
 }
-}
+}  // namespace v4r

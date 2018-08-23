@@ -59,7 +59,6 @@
 #include <fstream>
 #include <iostream>
 #include <opencv2/core/core.hpp>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <v4r/keypoints/impl/Object.hpp>
 
 namespace v4r {
@@ -145,12 +144,12 @@ class V4R_EXPORTS ObjectTrackerMono {
     return *model;
   }
 
-  typedef SmartPtr<::v4r::ObjectTrackerMono> Ptr;
-  typedef SmartPtr<::v4r::ObjectTrackerMono const> ConstPtr;
+  typedef std::shared_ptr<::v4r::ObjectTrackerMono> Ptr;
+  typedef std::shared_ptr<::v4r::ObjectTrackerMono const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

@@ -38,6 +38,7 @@
 ****************************************************************************/
 
 #include "v4r/attention_segmentation/algo.h"
+#include "v4r/attention_segmentation/AttentionModuleErrors.h"
 
 #include <Eigen/Dense>
 
@@ -129,12 +130,16 @@ void buildDepthPyramid(cv::Mat &image, std::vector<cv::Mat> &pyramid, cv::Mat &m
   }
 }
 
-void createPointCloudPyramid(std::vector<cv::Mat> &pyramidX, std::vector<cv::Mat> &pyramidY,
-                             std::vector<cv::Mat> &pyramidZ, std::vector<cv::Mat> &pyramidIndices,
-                             std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &pyramidCloud) {
+int createPointCloudPyramid(std::vector<cv::Mat> &pyramidX, std::vector<cv::Mat> &pyramidY,
+                            std::vector<cv::Mat> &pyramidZ, std::vector<cv::Mat> &pyramidIndices,
+                            std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &pyramidCloud) {
   assert(pyramidX.size() == pyramidY.size());
   assert(pyramidX.size() == pyramidZ.size());
   assert(pyramidX.size() == pyramidIndices.size());
+
+  if (pyramidX.size() != pyramidY.size() && pyramidX.size() != pyramidZ.size() &&
+      pyramidX.size() != pyramidIndices.size())
+    return AM_DIFFERENTSIZES;
 
   unsigned int num_levels = pyramidX.size();
 
@@ -157,39 +162,20 @@ void createPointCloudPyramid(std::vector<cv::Mat> &pyramidX, std::vector<cv::Mat
     pyramidCloud.at(idx)->width = cur_width;
     pyramidCloud.at(idx)->height = cur_height;
 
-    //     cv::imshow("pyramidZ.at(idx)",pyramidZ.at(idx));
-    //     cv::waitKey(-1);
-
     for (unsigned int i = 0; i < cur_height; ++i) {
       for (unsigned int j = 0; j < cur_width; ++j) {
         pcl::PointXYZRGB p_cur;
-
-        // std::cerr << "(" << pyramidIndices.at(idx).at<float>(i,j) << "-- " << pyramidX.at(idx).at<float>(i,j) << ","
-        // << pyramidY.at(idx).at<float>(i,j) << "," << pyramidZ.at(idx).at<float>(i,j) << ") ";
-
-        // if(pyramidIndices.at(idx).at<float>(i,j) > 0)
-        //{
         p_cur.x = pyramidX.at(idx).at<float>(i, j);
         p_cur.y = pyramidY.at(idx).at<float>(i, j);
         p_cur.z = pyramidZ.at(idx).at<float>(i, j);
-        //}
-        // else
-        // 	{
-        // 	  p_cur.x = std::numeric_limits<float>::quiet_NaN();
-        // 	  p_cur.y = std::numeric_limits<float>::quiet_NaN();
-        // 	  p_cur.z = std::numeric_limits<float>::quiet_NaN();
-        // 	}
 
         int p_idx = i * cur_width + j;
         pyramidCloud.at(idx)->points.at(p_idx) = p_cur;
       }
     }
-
-    // std::cerr <<  std::endl << std::endl;
-
-    //   cv::imshow("output",output);
-    //   cv::waitKey(-1);
   }
+
+  return AM_OK;
 }
 
 void createNormalPyramid(std::vector<cv::Mat> &pyramidNx, std::vector<cv::Mat> &pyramidNy,
@@ -272,9 +258,6 @@ void upscaleImage(cv::Mat &input, cv::Mat &output, unsigned int width, unsigned 
       output.at<float>(2 * i, 2 * j) = input.at<float>(i, j);
     }
   }
-
-  // cv::imshow("output",output);
-  // cv::waitKey(-1);
 
   for (unsigned int i = 0; i < (unsigned int)output.rows; i = i + 2) {
     for (unsigned int j = 1; j < (unsigned int)output.cols - 1; j = j + 2) {
@@ -402,10 +385,6 @@ float normPDF(std::vector<float> x, std::vector<float> mean, cv::Mat stddev) {
     }
   }
 
-  // std::cerr << "_x.transpose() = " << _x.transpose() << std::endl;
-  // std::cerr << "_stddev = " << _stddev << std::endl;
-  // std::cerr << "_x = " << _x << std::endl;
-
   float value = (_x.transpose()) * _stddev * _x;
   value /= -2;
   value = exp(value);
@@ -489,7 +468,6 @@ long commulativeFunctionArgValue(float x, std::vector<float> &A) {
 }
 
 void createContoursFromMasks(std::vector<cv::Mat> &masks, std::vector<std::vector<cv::Point>> &contours) {
-  // to extract contours
   contours.clear();
   contours.resize(masks.size());
 
@@ -551,8 +529,6 @@ void MConnectivity(cv::Mat &s, uchar *element) {
   for (int i = 1; i < s.rows - 1; ++i) {
     for (int j = 1; j < s.cols - 1; ++j) {
       if (s.at<uchar>(i, j) > 0) {
-        // s.at<uchar>(i,j) = 0;
-
         bool remove = true;
         for (int p = 0; p < 8; ++p) {
           int new_x = j + dx8[p];
@@ -783,10 +759,6 @@ void calculateObjectCenter(std::vector<cv::Point> contour, cv::Mat mask, cv::Poi
 void get2DNeighbors(const cv::Mat &patches, cv::Mat &neighbors, int patchesNumber) {
   neighbors = cv::Mat_<bool>(patchesNumber, patchesNumber);
   neighbors.setTo(false);
-
-  //@ep TODO: uncomment?
-  //   int dr[4] = {-1,-1, 0, 1};
-  //   int dc[4] = { 0,-1,-1,-1};
 
   int dr[4] = {-1, 0, -1};
   int dc[4] = {0, -1, -1};

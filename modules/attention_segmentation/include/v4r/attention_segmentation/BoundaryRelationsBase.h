@@ -85,7 +85,7 @@ class V4R_EXPORTS BoundaryRelationsBase {
   }
 
  public:
-  typedef boost::shared_ptr<BoundaryRelationsBase> Ptr;
+  typedef std::shared_ptr<BoundaryRelationsBase> Ptr;
 
   BoundaryRelationsBase();
   ~BoundaryRelationsBase();
@@ -101,6 +101,6 @@ class V4R_EXPORTS BoundaryRelationsBase {
   /** Compare patches **/
   virtual v4r::meanVal compute();
 };
-}
+}  // namespace v4r
 
 #endif  // BOUNDARY_RELATIONS_BASE_H

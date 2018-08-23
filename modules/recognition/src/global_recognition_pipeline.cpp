@@ -21,7 +21,7 @@ void GlobalRecognitionPipeline<PointT>::doInit(const bf::path &trained_dir, bool
 }
 
 template <typename PointT>
-void GlobalRecognitionPipeline<PointT>::do_recognize() {
+void GlobalRecognitionPipeline<PointT>::do_recognize(const std::vector<std::string> &model_ids_to_search) {
   CHECK(seg_);
   planes_.clear();
   clusters_.clear();
@@ -59,12 +59,12 @@ void GlobalRecognitionPipeline<PointT>::do_recognize() {
       r->setInputCloud(scene_);
       r->setSceneNormals(scene_normals_);
       r->setCluster(cluster);
-      r->recognize();
-      std::vector<typename ObjectHypothesis::Ptr> ohs = r->getFilteredHypotheses();
+      r->recognize(model_ids_to_search);
+      std::vector<ObjectHypothesis::Ptr> ohs = r->getFilteredHypotheses();
       ohg.ohs_.insert(ohg.ohs_.end(), ohs.begin(), ohs.end());
 
       if (visualize_clusters_) {
-        std::vector<typename ObjectHypothesis::Ptr> ohs_unfiltered = r->getAllHypotheses();
+        std::vector<ObjectHypothesis::Ptr> ohs_unfiltered = r->getAllHypotheses();
         obj_hypotheses_wo_elongation_check_[i].ohs_.insert(obj_hypotheses_wo_elongation_check_[i].ohs_.end(),
                                                            ohs_unfiltered.begin(), ohs_unfiltered.end());
         obj_hypotheses_wo_elongation_check_[i].global_hypotheses_ = true;
@@ -245,4 +245,4 @@ void GlobalRecognitionPipeline<PointT>::visualize() {
 }
 
 template class V4R_EXPORTS GlobalRecognitionPipeline<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

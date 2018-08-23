@@ -73,8 +73,8 @@ void CNN_Feat_Extractor<PointT, Dtype>::Preprocess(const cv::Mat& img, std::vect
   cv::subtract(sample_float, mean_, sample_normalized);
 
   /* This operation will write the separate BGR planes directly to the
- * input layer of the network because it is wrapped by the cv::Mat
- * objects in input_channels. */
+   * input layer of the network because it is wrapped by the cv::Mat
+   * objects in input_channels. */
   cv::split(sample_normalized, *input_channels);
 
   CHECK(reinterpret_cast<Dtype*>(input_channels->at(0).data) == net_->input_blobs()[0]->cpu_data())
@@ -107,7 +107,7 @@ void CNN_Feat_Extractor<PointT, Dtype>::SetMean(const std::string& mean_file) {
   cv::merge(channels, mean);
 
   /* Compute the global mean pixel value and create a mean image
- * filled with this value. */
+   * filled with this value. */
   cv::Scalar channel_mean = cv::mean(mean);
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
 }
@@ -154,7 +154,7 @@ bool CNN_Feat_Extractor<PointT, Dtype>::compute(const cv::Mat& img, Eigen::Matri
 
   /* Copy the output layer to a std::vector */
   //    Blob<float>* output_layer = net_->output_blobs()[0];
-  boost::shared_ptr<Blob<Dtype>> output_layer = net_->blob_by_name(param_.output_layer_name_);
+  std::shared_ptr<Blob<Dtype>> output_layer = net_->blob_by_name(param_.output_layer_name_);
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
   std::vector<float> sign_f = std::vector<float>(begin, end);
@@ -190,4 +190,4 @@ bool CNN_Feat_Extractor<PointT, Dtype>::compute(Eigen::MatrixXf& signature) {
   return true;
 }
 template class V4R_EXPORTS CNN_Feat_Extractor<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

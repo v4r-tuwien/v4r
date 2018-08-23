@@ -39,56 +39,78 @@
 
 /**
  * @file main.cpp
- * @author Johann Prankl (prankl@acin.tuwien.ac.at)
+ * @author Johann Prankl (prankl@acin.tuwien.ac.at), Thomas Faeulhammer (faeulhammer@acin.tuwien.ac.at)
  * @date 2017
  * @brief
  *
  */
 
-#ifndef KP_FEATURE_DETECTOR_SIFTGPU_HH
-#define KP_FEATURE_DETECTOR_SIFTGPU_HH
+#pragma once
 
-#include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <SiftGPU/SiftGPU.h>
 #include <v4r/features/FeatureDetector.h>
-#include <v4r/features/PSiftGPU.h>
 
 namespace v4r {
 
 class V4R_EXPORTS FeatureDetector_KD_SIFTGPU : public FeatureDetector {
  public:
-  class Parameter {
-   public:
-    float distmax;          // absolute descriptor distance (e.g. = 0.6)
-    float ratiomax;         // compare best match with second best (e.g. =0.8)
-    int mutual_best_match;  // compare forward/backward matches (1)
-    bool computeRootSIFT;   // L1 norm and square root => euc dist = hellinger dist
-    Parameter(float d = FLT_MAX, float r = 1., int m = 0, bool _computeRootSIFT = true)
-    : distmax(d), ratiomax(r), mutual_best_match(m), computeRootSIFT(_computeRootSIFT) {}
+  struct V4R_EXPORTS Parameter {
+    float distmax = FLT_MAX;      // absolute descriptor distance (e.g. = 0.6)
+    float ratiomax = 1.f;         // compare best match with second best (e.g. =0.8)
+    int mutual_best_match = 0;    // compare forward/backward matches (1)
+    bool computeRootSIFT = true;  // L1 norm and square root => euc dist = hellinger dist
+    Parameter() {}
   };
 
  private:
-  PSiftGPU::Parameter param;
-  cv::Mat_<unsigned char> im_gray;
+  using FeatureDetector::descr_name_;
+  Parameter param;
 
-  cv::Ptr<v4r::PSiftGPU> sift;
+  cv::Ptr<SiftGPU> sift;
+  cv::Mat_<unsigned char> im_gray_;
+
+  /**
+   * @brief TransformToRootSIFT computes the square root of the L1 normalized SIFT vectors. Then the Euclidean distance
+   * is equivalent to using the Hellinger kernel to compare the original SIFT vectors
+   * @param descriptors feature descriptors
+   */
+  void transformToRootSIFT(cv::Mat &descriptors) const;
+
+  inline float distance128(float d1[128], float d2[128]);
+  inline float sqr(const float &a);
 
  public:
-  FeatureDetector_KD_SIFTGPU(const Parameter &_p = Parameter());
+  FeatureDetector_KD_SIFTGPU(const Parameter &_p = Parameter(), const cv::Ptr<SiftGPU> &_sift = cv::Ptr<SiftGPU>());
   ~FeatureDetector_KD_SIFTGPU();
 
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
-  virtual void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keys);
-  virtual void extract(const cv::Mat &image, std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
+  void detectAndCompute(const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors,
+                        const cv::Mat &object_mask = cv::Mat()) override final;
+  void detect(const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints,
+              const cv::Mat &object_mask = cv::Mat()) override final;
+  void compute(const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints, cv::Mat &descriptors) override final;
 
-  typedef boost::shared_ptr<::v4r::FeatureDetector_KD_SIFTGPU> Ptr;
-  typedef boost::shared_ptr<::v4r::FeatureDetector_KD_SIFTGPU const> ConstPtr;
+  static std::vector<std::pair<int, int>> matchSIFT(const cv::Mat &desc1, const cv::Mat &desc2);
+
+  typedef std::shared_ptr<FeatureDetector_KD_SIFTGPU> Ptr;
+  typedef std::shared_ptr<FeatureDetector_KD_SIFTGPU const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+inline float FeatureDetector_KD_SIFTGPU::distance128(float d1[128], float d2[128]) {
+  float sqrDist = 0.;
 
-#endif
+  for (unsigned i = 0; i < 128; i++)
+    sqrDist += sqr(d1[i] - d2[i]);
+
+  return sqrt(sqrDist);
+}
+
+inline float FeatureDetector_KD_SIFTGPU::sqr(const float &a) {
+  return a * a;
+}
+
+}  // namespace v4r

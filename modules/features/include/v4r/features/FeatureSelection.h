@@ -57,7 +57,6 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdexcept>
-#include <v4r/common/impl/SmartPtr.hpp>
 #include <vector>
 
 namespace v4r {
@@ -87,12 +86,12 @@ class V4R_EXPORTS FeatureSelection {
 
   void compute(std::vector<cv::KeyPoint> &keys, cv::Mat &descriptors);
 
-  typedef SmartPtr<::v4r::FeatureSelection> Ptr;
-  typedef SmartPtr<::v4r::FeatureSelection const> ConstPtr;
+  typedef std::shared_ptr<::v4r::FeatureSelection> Ptr;
+  typedef std::shared_ptr<::v4r::FeatureSelection const> ConstPtr;
 };
 
 /*************************** INLINE METHODES **************************/
 
-}  //--END--
+}  // namespace v4r
 
 #endif

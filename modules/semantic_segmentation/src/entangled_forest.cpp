@@ -304,4 +304,4 @@ EntangledForest::~EntangledForest() {
     delete mTrees[i];
   }
 }
-}
+}  // namespace v4r

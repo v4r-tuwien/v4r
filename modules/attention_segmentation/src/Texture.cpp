@@ -62,11 +62,15 @@ Texture::Texture() {
 Texture::~Texture() {}
 
 void Texture::setInputEdges(cv::Mat &_edges) {
-  if ((_edges.cols <= 0) || (_edges.rows <= 0))
-    throw std::runtime_error("[ColorHistogram::setInputEdges] Invalid image (height|width must be > 1)");
+  if ((_edges.cols <= 0) || (_edges.rows <= 0)) {
+    LOG(ERROR) << "Invalid image (height|width must be > 1";
+    throw std::runtime_error("[Texture::setInputEdges] Invalid image (height|width must be > 1)");
+  }
 
-  if (_edges.type() != CV_8UC1)
-    throw std::runtime_error("[ColorHistogram::setInputEdges] Invalid image type (must be 8UC1)");
+  if (_edges.type() != CV_8UC1) {
+    LOG(ERROR) << "Invalid image type (must be 8UC1)";
+    throw std::runtime_error("[Texture::setInputEdges] Invalid image type (must be 8UC1)");
+  }
 
   edges = _edges;
   width = edges.cols;
@@ -83,8 +87,8 @@ void Texture::setInputEdges(cv::Mat &_edges) {
 
 void Texture::setIndices(pcl::PointIndices::Ptr _indices) {
   if (!have_edges) {
-    printf("[ColorHistogram::setIndices]: Error: No edges available.\n");
-    return;
+    LOG(ERROR) << "No edges available.";
+    throw std::runtime_error("[Texture::setIndices]: Error: No edges available.");
   }
 
   indices = _indices;
@@ -98,8 +102,8 @@ void Texture::setIndices(std::vector<int> &_indices) {
 
 void Texture::setIndices(cv::Rect _rect) {
   if (!have_edges) {
-    printf("[ColorHistogram::setIndices]: Error: No edges available.\n");
-    return;
+    LOG(ERROR) << "No edges available.";
+    throw std::runtime_error("[Texture::setIndices]: Error: No edges available.");
   }
 
   if (_rect.y >= height) {
@@ -118,7 +122,8 @@ void Texture::setIndices(cv::Rect _rect) {
     _rect.width = width - _rect.x;
   }
 
-  printf("[ColorHistogram] _rect = %d,%d,%d,%d.\n", _rect.x, _rect.y, _rect.x + _rect.width, _rect.y + _rect.height);
+  VLOG(1) << "_rect = " << _rect.x << ", " << _rect.y << ", " << _rect.x + _rect.width << ", "
+          << _rect.y + _rect.height;
 
   indices.reset(new pcl::PointIndices);
   for (int r = _rect.y; r < (_rect.y + _rect.height); r++) {
@@ -132,8 +137,8 @@ void Texture::setIndices(cv::Rect _rect) {
 
 void Texture::compute() {
   if (!have_edges) {
-    printf("[Texture::compute] Error: No edges set.\n");
-    return;
+    LOG(ERROR) << "No edges available.";
+    throw std::runtime_error("[Texture::compute]: Error: No edges available.");
   }
 
   textureRate = 0.0;
@@ -158,11 +163,11 @@ void Texture::compute() {
 
 double Texture::compare(Texture::Ptr t) {
   if (!computed || !(t->getComputed())) {
-    printf("[Texture::compare]: Error: Texture is not computed.\n");
+    LOG(ERROR) << "Texture is not computed.";
     return 0.;
   }
 
   return 1. - fabs(textureRate - t->getTextureRate());
 }
 
-}  // end surface
+}  // namespace v4r

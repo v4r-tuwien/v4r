@@ -69,13 +69,13 @@ class V4R_EXPORTS SimpleShapeEstimator : public GlobalEstimator<PointT> {
  public:
   SimpleShapeEstimator() : GlobalEstimator<PointT>("simple_shape", FeatureType::SIMPLE_SHAPE, 3) {}
 
-  bool compute(Eigen::MatrixXf &signature);
+  bool compute(Eigen::MatrixXf &signature) override;
 
-  bool needNormals() const {
+  bool needNormals() const override {
     return false;
   }
 
-  typedef boost::shared_ptr<SimpleShapeEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<SimpleShapeEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<SimpleShapeEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<SimpleShapeEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

@@ -117,8 +117,9 @@ void evolveLeakyIntFire(LIF& lif, float t, cv::Mat& spikes) {
       }
       lif.V.at<float>(i, j) =
           lif.V.at<float>(i, j) +
-          dt / lif.C * (lif.I.at<float>(i, j) - lif.Gleak * (lif.V.at<float>(i, j) - lif.Eleak) -
-                        lif.Gexc * (lif.V.at<float>(i, j) - lif.Eexc) - ginh * (lif.V.at<float>(i, j) - lif.Einh));
+          dt / lif.C *
+              (lif.I.at<float>(i, j) - lif.Gleak * (lif.V.at<float>(i, j) - lif.Eleak) -
+               lif.Gexc * (lif.V.at<float>(i, j) - lif.Eexc) - ginh * (lif.V.at<float>(i, j) - lif.Einh));
     }
   }
 
@@ -549,7 +550,7 @@ bool SecondRound(cv::Point winner, cv::Mat& existing_points) {
   return (false);
 }
 
-void plotSalientLocation(cv::Point& win2, cv::Point& lastWinner, cv::Mat& img, Params& params, int pointNumber) {
+void plotSalientLocation(cv::Point& win2, cv::Point& lastWinner, cv::Mat& img, int pointNumber) {
   int y2 = lastWinner.y;
   cv::circle(img, win2, 3, cv::Scalar(255, 0, 0), -1);
   // put text
@@ -671,7 +672,7 @@ int CalculateWTA(cv::Mat& img, cv::Mat& _salmap, std::vector<cv::Point>& attente
   bool done = false;
   cv::Point win2;
   // number of iterations
-  int Ammount = 0;
+  int Amount = 0;
 
   while (!done) {
     cv::Point winner(-1, -1);
@@ -699,12 +700,12 @@ int CalculateWTA(cv::Mat& img, cv::Mat& _salmap, std::vector<cv::Point>& attente
       break;
     }
 
-    plotSalientLocation(win2, lastWinner, img, params, Ammount);
+    plotSalientLocation(win2, lastWinner, img, Amount);
     lastWinner = win2;
 
-    Ammount++;
+    Amount++;
 
-    if ((AttentionPointsNumber > 0) && (Ammount >= AttentionPointsNumber)) {
+    if ((AttentionPointsNumber > 0) && (Amount >= AttentionPointsNumber)) {
       done = true;
     }
     attented_points.push_back(cv::Point(win2));  // x - col, y - row

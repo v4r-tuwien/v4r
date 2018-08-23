@@ -333,7 +333,7 @@ void SupervoxelSegmentation<PointInT>::CalculateFeatures(
     f[3] = -pWH(1);  // avg. height
 
     // AVERAGE NORMAL //////////
-    Eigen::Vector3f svnormal = eigenVectors.col(0);  // eigenvector with smalles eigenvalue = normal
+    Eigen::Vector3f svnormal = eigenVectors.col(0);  // eigenvector with smallest eigenvalue = normal
 
     // rotate by camera angle
     Eigen::Vector3f normalVectorW = rotationMatrix * svnormal;
@@ -520,7 +520,7 @@ void SupervoxelSegmentation<PointInT>::CalculateFeatures2(
     //        f[3] = height-xyzCentroid(1);                          // avg. height
 
     // AVERAGE NORMAL //////////
-    //        Eigen::Vector3f svnormal = eigenVectors.col(0); // eigenvector with smalles eigenvalue = normal
+    //        Eigen::Vector3f svnormal = eigenVectors.col(0); // eigenvector with smallest eigenvalue = normal
 
     //        flipNormalTowardsViewpoint(centroid, 0, 0, 0, svnormal);
     //        float dotp1 = std::max(-1.0f, std::min(1.0f, svnormal.dot(hor)));
@@ -774,8 +774,6 @@ void SupervoxelSegmentation<PointInT>::RunSupervoxelClustering(typename pcl::Poi
 
   mSVLabeledCloud = super.getLabeledCloud();
   mSVLabeledVoxelCloud = super.getLabeledVoxelCloud();
-  mSVColoredCloud = super.getColoredCloud();
-  mSVColoredVoxelCloud = super.getColoredVoxelCloud();
   mSVVoxelCentroidCloud = super.getVoxelCentroidCloud();
   super.getSupervoxelAdjacency(mSVAdjacency);
 
@@ -1207,10 +1205,5 @@ pcl::PointCloud<pcl::PointXYZL>::Ptr SupervoxelSegmentation<PointInT>::getSVlabe
   return mSVLabeledCloud;
 }
 
-template <typename PointInT>
-pcl::PointCloud<pcl::PointXYZRGBA>::Ptr SupervoxelSegmentation<PointInT>::getSVColoredCloud() {
-  return mSVColoredCloud;
-}
-
 #define PCL_INSTANTIATE_SupervoxelSegmentation(T) template class PCL_EXPORTS SupervoxelSegmentation<T>;
-}
+}  // namespace v4r

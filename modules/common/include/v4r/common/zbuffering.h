@@ -44,67 +44,92 @@
  * @brief
  *
  */
-#ifndef V4R_ZBUFFERING_H_
-#define V4R_ZBUFFERING_H_
+#pragma once
 
 #include <pcl/common/common.h>
 #include <pcl/common/io.h>
 #include <pcl/common/transforms.h>
-#include <v4r/common/camera.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/core/macros.h>
 #include <boost/dynamic_bitset.hpp>
 
 namespace v4r {
 
-class ZBufferingParameter {
- public:
-  int u_margin_, v_margin_;
-  bool compute_focal_length_;
-  bool do_smoothing_;  ///< tries to fill holes by dilating points over neighboring pixel
-  bool do_noise_filtering_;
-  float inlier_threshold_;
-  int smoothing_radius_;
-  bool force_unorganized_;  ///< re-projects points by given camera intrinsics even if point cloud is already organized
-  bool use_normals_;        ///< if true, rejects points that do not point towards view point.
-  ZBufferingParameter()
-  : u_margin_(0), v_margin_(0), compute_focal_length_(false), do_smoothing_(true), do_noise_filtering_(false),
-    inlier_threshold_(0.01f), smoothing_radius_(1), force_unorganized_(false), use_normals_(false) {}
+struct V4R_EXPORTS ZBufferingParameter {
+  bool do_smoothing_ = true;  ///< tries to fill holes by dilating points over neighboring pixel
+  bool do_noise_filtering_ = false;
+  float inlier_threshold_ = 0.01f;
+  size_t smoothing_radius_ = 1;
+  bool use_normals_ = false;     ///< if true, rejects points that do not point towards view point.
+  bool extract_indices_ = true;  ///< if true, computes the indices of the
+  ///< original input clouds that are associated
+  ///< to the rendered point cloud
 };
 
 /**
-     * \brief Class to reason about occlusions
-     * \author Thomas Faeulhammer, Aitor Aldoma
-     */
+ * \brief Class to reason about occlusions
+ * \author Thomas Faeulhammer, Aitor Aldoma
+ */
 template <typename PointT>
 class V4R_EXPORTS ZBuffering {
  private:
   ZBufferingParameter param_;
-  std::vector<float> depth_;
   std::vector<int> kept_indices_;
-  Camera::ConstPtr cam_;       ///< camera parameters
-  Eigen::MatrixXi index_map_;  ///< saves for each pixel which indices of the input cloud it represents. Non-occupied
-                               /// pixels are labelled with index -1.
-  pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;
+  Intrinsics cam_;             ///< camera parameters
+  Eigen::MatrixXi index_map_;  ///< saves for each pixel which indices of the
+  ///< input cloud it represents. Non-occupied
+  /// pixels are labelled with index -1.
+  typename pcl::PointCloud<PointT>::Ptr rendered_view_;
+  pcl::PointCloud<pcl::Normal>::ConstPtr cloud_normals_;  ///< surface normals for input cloud
+
+  /**
+   * @brief depthBuffering does depth buffering on input cloud
+   * @param cloud input point cloud
+   * @param subsample subsampling step size n. If greater 1, will only use every
+   * n-th point for rendering
+   */
+  void depthBuffering(const typename pcl::PointCloud<PointT> &cloud, size_t subsample);
+
+  /**
+   * @brief smoothing of rendered cloud to avoid looking through "holes"
+   */
+  void doSmoothing();
+
+  /**
+   * @brief smoothing of rendered cloud to avoid accidentally rendering noisy points
+   */
+  void doNoiseFiltering();
 
  public:
-  ZBuffering(const Camera::ConstPtr cam, const ZBufferingParameter &p = ZBufferingParameter()) : param_(p), cam_(cam) {}
+  ZBuffering(const Intrinsics &cam, const ZBufferingParameter &p = ZBufferingParameter()) : param_(p), cam_(cam) {}
 
-  void setCamera(const Camera::ConstPtr cam) {
+  /**
+   * @brief sets the camera intrinsic parameters
+   * @param cam RGB camera intrinsic parameters
+   */
+  void setCameraIntrinsics(const Intrinsics &cam) {
     cam_ = cam;
   }
 
+  /**
+   * @brief setCloudNormals sets the surface normals of the input cloud
+   * @param normals surface normals to each point (must have same size as input
+   * cloud)
+   */
   void setCloudNormals(const pcl::PointCloud<pcl::Normal>::ConstPtr &normals) {
     cloud_normals_ = normals;
   }
 
   /**
-   * @brief renderPointCloud renders a point cloud using the given camera parameters
+   * @brief renderPointCloud renders a point cloud using the given camera
+   * parameters
    * @param cloud input point cloud
    * @param rendered_view[out] rendered point cloud
-   * @param subsample subsampling step size n. If greater 1, will only use every n-th point for rendering
+   * @param subsample subsampling step size n. If greater 1, will only use every
+   * n-th point for rendering
    */
   void renderPointCloud(const typename pcl::PointCloud<PointT> &cloud, typename pcl::PointCloud<PointT> &rendered_view,
-                        int subsample = 1);
+                        size_t subsample = 1);
 
   std::vector<int> getKeptIndices() const {
     return kept_indices_;
@@ -112,16 +137,15 @@ class V4R_EXPORTS ZBuffering {
 
   /**
    * @brief getIndexMap
-   * @return each pixel indicates which point of the input cloud it represents. Non-occupied pixels are labelled with
-   * index -1.
+   * @return each pixel indicates which point of the input cloud it represents.
+   * Non-occupied pixels are labelled with index -1.
    */
   Eigen::MatrixXi getIndexMap() const {
     return index_map_;
   }
 
-  typedef boost::shared_ptr<ZBuffering<PointT>> Ptr;
-  typedef boost::shared_ptr<const ZBuffering<PointT>> ConstPtr;
+  typedef std::shared_ptr<ZBuffering<PointT>> Ptr;
+  typedef std::shared_ptr<const ZBuffering<PointT>> ConstPtr;
 };
-}
 
-#endif
+}  // namespace v4r

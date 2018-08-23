@@ -111,4 +111,4 @@ void PartMotion6D::getDeltaPose(Eigen::Matrix4f &delta_pose) {
   delta_pose.topLeftCorner<3, 3>() = R.cast<float>();
   delta_pose.block<3, 1>(0, 3) = rt.tail<3>().cast<float>();
 }
-}
+}  // namespace v4r

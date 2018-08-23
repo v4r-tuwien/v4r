@@ -1,6 +1,6 @@
 # Prepare NYU Depth Datasets for 3D Entangled Forest
 
-The scripts in this directory provide a convenient way to download and convert the NYU Depth Datasets [1,2] by Silberman et al. into a form that can be processed by a 3D Entangled Forest, i.e. point clouds readable by PCL. The scripts further create auxilary data, such as a file with the camera pitch and roll angles obtained from the accelerometer values, required by the training procedure. Overall, the following data is created:
+The scripts in this directory provide a convenient way to download and convert the NYU Depth Datasets [1,2] by Silberman et al. into a form that can be processed by a 3D Entangled Forest, i.e. point clouds readable by PCL. The scripts further create auxiliary data, such as a file with the camera pitch and roll angles obtained from the accelerometer values, required by the training procedure. Overall, the following data is created:
 
 * XYZRGB pointclouds
 * XYZL pointclouds containing groundtruth (already with the >800 labels mapped down to 13 labels bed, blind, bookshelf, cabinet, ceiling, floor, picture, sofa, table, tv, wall, window, background for version 1, and the 13 labels bed, object, chair, furniture, ceiling, floor, wall deco, sofa, table, wall, window, bookshelf, tv for version 2 of the dataset)

@@ -151,8 +151,8 @@ int main(int argc, char *argv[]) {
 
     if (ts_filt != ts_last) {
       if ((int)ts_filt >= 0 && (int)ts_filt < (int)cloud_files.size()) {
-        pcl::io::savePCDFileBinary(out_dir + std::string("/") + cloud_files[(int)ts_filt] + std::string("-filt.pcd"),
-                                   cloud_filt);
+        pcl::io::savePCDFileBinaryCompressed(
+            out_dir + std::string("/") + cloud_files[(int)ts_filt] + std::string("-filt.pcd"), cloud_filt);
         convertImage(cloud_filt, image);
         cv::imwrite(out_dir + std::string("/") + cloud_files[(int)ts_filt] + std::string("-filt.jpg"), image);
       }

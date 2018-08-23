@@ -127,7 +127,7 @@ bool MultiSession::isRunning() {
  */
 void MultiSession::addSequences(
     const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &_cameras,
-    const boost::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
+    const std::shared_ptr<std::vector<std::pair<int, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>> &_clouds,
     const std::vector<std::vector<int>> &_object_indices, const Eigen::Matrix4f &_object_base_transform) {
   if (_clouds.get() == 0 || _clouds->size() == 0) {
     emit printStatus("No segmented point clouds available!");
@@ -199,7 +199,7 @@ bool MultiSession::savePointClouds(const std::string &_folder, const std::string
   char filename[PATH_MAX];
   boost::filesystem::create_directories(_folder + "/models/" + _modelname + "/views");
 
-  pcl::io::savePCDFileBinary(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
+  pcl::io::savePCDFileBinaryCompressed(_folder + "/models/" + _modelname + "/3D_model.pcd", *ncloud_filt);
 
   // store data
   cv::Mat image;
@@ -223,7 +223,7 @@ bool MultiSession::savePointClouds(const std::string &_folder, const std::string
 
     // store cloud
     snprintf(filename, PATH_MAX, cloud_names.c_str(), i);
-    pcl::io::savePCDFileBinary(filename, *clouds->at(i).second);
+    pcl::io::savePCDFileBinaryCompressed(filename, *clouds->at(i).second);
 
     // store image
     v4r::convertImage(*clouds->at(i).second, image);
@@ -276,7 +276,7 @@ void MultiSession::run() {
 
         // define registration algorithms
         if (use_features_) {
-          boost::shared_ptr<v4r::Registration::FeatureBasedRegistration<pcl::PointXYZRGB>> fbr;
+          std::shared_ptr<v4r::Registration::FeatureBasedRegistration<pcl::PointXYZRGB>> fbr;
           fbr.reset(new v4r::Registration::FeatureBasedRegistration<pcl::PointXYZRGB>);
 
           // TODO: extract parameters
@@ -284,17 +284,17 @@ void MultiSession::run() {
           fbr->setGCThreshold(15);
           fbr->setInlierThreshold(0.015);
 
-          boost::shared_ptr<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>> cast_alg;
-          cast_alg = boost::static_pointer_cast<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>>(fbr);
+          std::shared_ptr<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>> cast_alg =
+              std::static_pointer_cast<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>>(fbr);
 
           msm.addRegAlgorithm(cast_alg);
         }
 
         if (use_stable_planes_) {
-          boost::shared_ptr<v4r::Registration::StablePlanesRegistration<pcl::PointXYZRGB>> fbr;
+          std::shared_ptr<v4r::Registration::StablePlanesRegistration<pcl::PointXYZRGB>> fbr;
           fbr.reset(new v4r::Registration::StablePlanesRegistration<pcl::PointXYZRGB>);
-          boost::shared_ptr<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>> cast_alg;
-          cast_alg = boost::static_pointer_cast<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>>(fbr);
+          std::shared_ptr<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>> cast_alg =
+              std::static_pointer_cast<v4r::Registration::PartialModelRegistrationBase<pcl::PointXYZRGB>>(fbr);
 
           msm.addRegAlgorithm(cast_alg);
         }

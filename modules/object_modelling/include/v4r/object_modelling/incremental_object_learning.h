@@ -45,16 +45,16 @@
  *
  */
 
-#ifndef V4R_INCREMENTAL_OBJECT_LEARNING_H_
-#define V4R_INCREMENTAL_OBJECT_LEARNING_H_
+#pragma once
 #include <pcl/common/common.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/search/octree.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <v4r_config.h>
+#include <v4r/config.h>
 
 #include <v4r/common/PointTypes.h>
-#include <v4r/common/camera.h>
+#include <v4r/common/intrinsics.h>
+#include <v4r/common/normals.h>
 #include <v4r/core/macros.h>
 #include <v4r/keypoints/ClusterNormalsToPlanes.h>
 #include <v4r/object_modelling/model_view.h>
@@ -103,8 +103,7 @@ struct CamConnect {
  */
 class V4R_EXPORTS IOL {
  public:
-  class Parameter {
-   public:
+  struct Parameter {
     double radius_;
     double eps_angle_;
     double dist_threshold_growing_;
@@ -115,22 +114,16 @@ class V4R_EXPORTS IOL {
     bool do_erosion_;
     bool transfer_indices_from_latest_frame_only_;
     size_t min_points_for_transferring_;
-    int normal_method_;
+    NormalEstimatorType normal_method_;
     bool do_mst_refinement_;
     double ratio_cluster_obj_supported_;
     double ratio_cluster_occluded_;
-    Parameter(double radius = 0.005f, double eps_angle = 0.95f, double dist_threshold_growing = 0.05f,
-              double voxel_resolution = 0.005f, double seed_resolution = 0.03f, double ratio = 0.25f,
-              double chop_z = std::numeric_limits<double>::quiet_NaN(), bool do_erosion = true,
-              bool transfer_indices_from_latest_frame_only = false, size_t min_points_for_transferring = 10,
-              int normal_method = 0, bool do_mst_refinement = true, double ratio_cluster_obj_supported = 0.25,
-              double ratio_cluster_occluded = 0.75)
-    : radius_(radius), eps_angle_(eps_angle), dist_threshold_growing_(dist_threshold_growing),
-      voxel_resolution_(voxel_resolution), seed_resolution_(seed_resolution), ratio_supervoxel_(ratio), chop_z_(chop_z),
-      do_erosion_(do_erosion), transfer_indices_from_latest_frame_only_(transfer_indices_from_latest_frame_only),
-      min_points_for_transferring_(min_points_for_transferring), normal_method_(normal_method),
-      do_mst_refinement_(do_mst_refinement), ratio_cluster_obj_supported_(ratio_cluster_obj_supported),
-      ratio_cluster_occluded_(ratio_cluster_occluded) {}
+    Parameter()
+    : radius_(0.005f), eps_angle_(0.95f), dist_threshold_growing_(0.05f), voxel_resolution_(0.005f),
+      seed_resolution_(0.03f), ratio_supervoxel_(0.25f), chop_z_(std::numeric_limits<double>::quiet_NaN()),
+      do_erosion_(true), transfer_indices_from_latest_frame_only_(false), min_points_for_transferring_(10),
+      normal_method_(NormalEstimatorType::PCL_DEFAULT), do_mst_refinement_(true), ratio_cluster_obj_supported_(0.25),
+      ratio_cluster_occluded_(0.75) {}
 
   } param_;
 
@@ -164,12 +157,12 @@ class V4R_EXPORTS IOL {
   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_normals_oriented_;
 
   Graph gs_;
-  Camera::Ptr cam_;
+  Intrinsics cam_;
 
   pcl::PointCloud<PointT>::Ptr big_cloud_;
   pcl::PointCloud<PointT>::Ptr big_cloud_segmented_;
   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr big_cloud_segmented_refined_;
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> vis_, vis_reconstructed_, vis_seg_;
+  pcl::visualization::PCLVisualizer::Ptr vis_, vis_reconstructed_, vis_seg_;
   std::vector<int> vis_reconstructed_viewpoint_;
   std::vector<int> vis_viewpoint_;
 
@@ -295,11 +288,12 @@ class V4R_EXPORTS IOL {
 
   void updatePointNormalsFromSuperVoxels(const pcl::PointCloud<PointT>::Ptr &cloud,
                                          pcl::PointCloud<pcl::Normal>::Ptr &normals_,
-                                         const boost::dynamic_bitset<> &obj_mask, boost::dynamic_bitset<> &obj_mask_out,
-                                         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &supervoxel_cloud,
-                                         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &supervoxel_cloud_organized);
+                                         const boost::dynamic_bitset<> &obj_mask,
+                                         boost::dynamic_bitset<> &obj_mask_out);
 
   boost::dynamic_bitset<> erodeIndices(const boost::dynamic_bitset<> &obj_mask, const pcl::PointCloud<PointT> &cloud);
+
+  typename v4r::NormalEstimator<PointT>::Ptr ne_;  //< Normal estimator
 
  public:
   IOL(const Parameter &p = Parameter()) : octree_(0.005f) {
@@ -318,7 +312,7 @@ class V4R_EXPORTS IOL {
     nm_int_param_.octree_resolution_ = 0.002f;
     nm_int_param_.average_ = false;
 
-    cam_.reset(new Camera);
+    cam_ = Intrinsics::PrimeSense();
 
     big_cloud_.reset(new pcl::PointCloud<PointT>);
     big_cloud_segmented_.reset(new pcl::PointCloud<PointT>);
@@ -326,6 +320,9 @@ class V4R_EXPORTS IOL {
     vis_.reset();
     vis_reconstructed_.reset();
     cloud_normals_oriented_.reset(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+
+    std::vector<std::string> dummy_params = {};
+    ne_ = v4r::initNormalEstimator<PointT>(param_.normal_method_, dummy_params);
   }
 
   /**
@@ -386,7 +383,5 @@ class V4R_EXPORTS IOL {
    */
   void printParams(std::ostream &ostr = std::cout) const;
 };
-}
-}
-
-#endif  // DO_LEARNING_H_
+}  // namespace object_modelling
+}  // namespace v4r

@@ -65,21 +65,19 @@ class V4R_EXPORTS ObjectHypothesis {
  private:
   friend class boost::serialization::access;
 
- private:
-  friend class boost::serialization::access;
   template <class Archive>
   V4R_EXPORTS void serialize(Archive& ar, const unsigned int version) {
     (void)version;
     ar& class_id_& model_id_& transform_& pose_refinement_& confidence_& is_verified_& unique_id_;
   }
 
-  static size_t s_counter_;  /// unique identifier to avoid transfering hypotheses multiple times when using multi-view
+  static size_t s_counter_;  /// unique identifier to avoid transferring hypotheses multiple times when using multi-view
                              /// recognition
 
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef boost::shared_ptr<ObjectHypothesis> Ptr;
-  typedef boost::shared_ptr<ObjectHypothesis const> ConstPtr;
+  typedef std::shared_ptr<ObjectHypothesis> Ptr;
+  typedef std::shared_ptr<ObjectHypothesis const> ConstPtr;
 
   pcl::Correspondences corr_;  ///< local feature matches / keypoint correspondences between model and scene (only for
                                /// visualization purposes)
@@ -108,6 +106,7 @@ class V4R_EXPORTS ModelSceneCorrespondence {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int file_version) {
+    (void)file_version;
     ar& scene_id_& model_id_& dist_3D_& color_distance_& normals_dotp_& fitness_;
   }
 
@@ -124,27 +123,25 @@ class V4R_EXPORTS ModelSceneCorrespondence {
   }
 
   /** \brief Constructor. */
-  ModelSceneCorrespondence()
-  : scene_id_(-1), model_id_(-1), dist_3D_(std::numeric_limits<float>::quiet_NaN()),
-    color_distance_(std::numeric_limits<float>::quiet_NaN()), normals_dotp_(M_PI / 2), fitness_(0.f) {}
+  ModelSceneCorrespondence(size_t scene_id, size_t model_id)
+  : scene_id_(scene_id), model_id_(model_id), dist_3D_(std::numeric_limits<float>::quiet_NaN()),
+    color_distance_(std::numeric_limits<float>::quiet_NaN()), normals_dotp_(M_PI / 2.f), fitness_(0.f) {}
 };
 
 template <typename PointT>
 class V4R_EXPORTS HVRecognitionModel {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  typedef boost::shared_ptr<HVRecognitionModel> Ptr;
-  typedef boost::shared_ptr<HVRecognitionModel const> ConstPtr;
+  typedef std::shared_ptr<HVRecognitionModel> Ptr;
+  typedef std::shared_ptr<HVRecognitionModel const> ConstPtr;
 
-  typename ObjectHypothesis::Ptr oh_;  ///< object hypothesis
-                                       //    typename pcl::PointCloud<PointT>::Ptr complete_cloud_;
+  ObjectHypothesis::Ptr oh_;  ///< object hypothesis
   size_t num_pts_full_model_;
   typename pcl::PointCloud<PointT>::Ptr visible_cloud_;
   pcl::PointCloud<pcl::Normal>::Ptr visible_cloud_normals_;
   std::vector<boost::dynamic_bitset<>> image_mask_;  ///< image mask per view (in single-view case, there will be only
                                                      /// one element in outer vector). Used to compute pairwise
   /// intersection
-  //    pcl::PointCloud<pcl::Normal>::Ptr complete_cloud_normals_;
   std::vector<int> visible_indices_;  ///< visible indices computed by z-Buffering (for model self-occlusion) and
                                       /// occlusion reasoning with scene cloud
   std::vector<int> visible_indices_by_octree_;  ///< visible indices computed by creating an octree for the model and
@@ -172,10 +169,21 @@ class V4R_EXPORTS HVRecognitionModel {
   bool rejected_due_to_better_hypothesis_in_group_;  ///< true if there is any other object model in the same hypotheses
                                                      /// group which explains the scene better
   bool rejected_globally_;
+  bool rejected_due_to_similar_hypothesis_exists_;  ///< true if there is another hypothesis that is very similar in
+  ///< terms of object pose
 
-  HVRecognitionModel(typename ObjectHypothesis::Ptr& oh)
+  boost::dynamic_bitset<> on_smooth_cluster_;  ///< each bit represents whether or not hypotheses lies on the smooth
+                                               ///< cluster with the id corresponding to the bit id
+
+  bool violates_smooth_cluster_check_;            ///< true if the visible hypotheses violates the smooth cluster check
+  bool rejected_due_to_smooth_cluster_violation;  ///< true if the hypotheses is the only one describing a cluster that
+                                                  ///< it violates
+
+  explicit HVRecognitionModel(ObjectHypothesis::Ptr& oh)
   : num_pts_full_model_(0), L_value_offset_(0.f), rejected_due_to_low_visibility_(false), is_outlier_(false),
-    rejected_due_to_better_hypothesis_in_group_(false), rejected_globally_(false) {
+    rejected_due_to_better_hypothesis_in_group_(false), rejected_globally_(false),
+    rejected_due_to_similar_hypothesis_exists_(false), violates_smooth_cluster_check_(false),
+    rejected_due_to_smooth_cluster_violation(false) {
     oh_ = oh;
   }
 
@@ -191,17 +199,18 @@ class V4R_EXPORTS HVRecognitionModel {
 
   bool isRejected() const {
     return is_outlier_ || rejected_due_to_low_visibility_ || rejected_globally_ ||
-           rejected_due_to_better_hypothesis_in_group_;
+           rejected_due_to_better_hypothesis_in_group_ || rejected_due_to_similar_hypothesis_exists_ ||
+           rejected_due_to_smooth_cluster_violation;
   }
 
   /**
-       * @brief does dilation and erosion on the occupancy image of the rendered point cloud
-       * @param do_smoothing
-       * @param smoothing_radius
-       * @param do_erosion
-       * @param erosion_radius
-       * @param img_width
-       */
+   * @brief does dilation and erosion on the occupancy image of the rendered point cloud
+   * @param do_smoothing
+   * @param smoothing_radius
+   * @param do_erosion
+   * @param erosion_radius
+   * @param img_width
+   */
   void processSilhouette(bool do_smoothing = true, int smoothing_radius = 2, bool do_erosion = true,
                          int erosion_radius = 4, int img_width = 640);
 
@@ -224,17 +233,17 @@ class V4R_EXPORTS ObjectHypothesesGroup {
   }
 
  public:
-  typedef boost::shared_ptr<ObjectHypothesesGroup> Ptr;
-  typedef boost::shared_ptr<ObjectHypothesesGroup const> ConstPtr;
+  typedef std::shared_ptr<ObjectHypothesesGroup> Ptr;
+  typedef std::shared_ptr<ObjectHypothesesGroup const> ConstPtr;
 
   ObjectHypothesesGroup() {}
   //    ObjectHypothesesGroup(const std::string &filename, const Source<PointT> &src);
   //    void save(const std::string &filename) const;
 
-  std::vector<typename ObjectHypothesis::Ptr> ohs_;  ///< Each hypothesis can have several object model (e.g. global
-                                                     /// recognizer tries to macht several object instances for a
+  std::vector<ObjectHypothesis::Ptr> ohs_;  ///< Each hypothesis can have several object model (e.g. global
+                                            /// recognizer tries to macht several object instances for a
   /// clustered point cloud segment).
   bool global_hypotheses_;  ///< if true, hypothesis was generated by global recognition pipeline. Otherwise, from local
                             /// feature matches-
 };
-}
+}  // namespace v4r

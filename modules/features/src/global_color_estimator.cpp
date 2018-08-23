@@ -93,4 +93,4 @@ bool GlobalColorEstimator<PointT>::compute(Eigen::MatrixXf &signature) {
 
 // template class V4R_EXPORTS GlobalColorEstimator<pcl::PointXYZ>;
 template class V4R_EXPORTS GlobalColorEstimator<pcl::PointXYZRGB>;
-}
+}  // namespace v4r

@@ -1,6 +1,6 @@
 #include <pcl/io/pcd_io.h>
-#include <v4r/common/camera.h>
 #include <v4r/common/img_utils.h>
+#include <v4r/common/intrinsics.h>
 #include <v4r/common/pcl_opencv.h>
 #include <v4r/io/filesystem.h>
 #include <fstream>
@@ -90,8 +90,7 @@ int main(int argc, char** argv) {
       cloud->height = 1;
       img_conv.setInputCloud(cloud);
       if (!cloud->isOrganized()) {
-        v4r::Camera::Ptr kinect(new v4r::Camera(525.f, 525.f, 640, 480, 319.5f, 239.5f));
-        img_conv.setCamera(kinect);
+        img_conv.setCameraIntrinsics(v4r::Intrinsics::PrimeSense());
       }
 
       img_conv.setIndices(indices);

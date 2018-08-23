@@ -46,6 +46,8 @@
  */
 
 #include <v4r/features/ImGradientDescriptor.h>
+#include <Eigen/Dense>
+#include <opencv2/imgproc/imgproc.hpp>
 
 //#define IMGD_INTERPOLATED
 
@@ -350,4 +352,4 @@ void ImGradientDescriptor::compute(const cv::Mat_<unsigned char> &im, const cv::
     eig_desc.array() = eig_desc.array().sqrt();
   }
 }
-}
+}  // namespace v4r

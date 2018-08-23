@@ -46,11 +46,11 @@
  */
 #pragma once
 
+#include <v4r/config.h>
 #include <v4r/core/macros.h>
 #include <v4r/features/global_estimator.h>
 #include <v4r/io/filesystem.h>
-#include <v4r_config.h>
-#ifdef HAVE_CAFFE
+#if HAVE_CAFFE
 #include <v4r/features/global_alexnet_cnn_estimator.h>
 #endif
 #include <v4r/features/esf_estimator.h>
@@ -119,7 +119,8 @@ class V4R_EXPORTS GlobalConcatEstimatorParameter {
    */
   std::vector<std::string> init(const std::vector<std::string> &command_line_arguments) {
     po::options_description desc("Global Concatenate Feature Estimator Parameter\n=====================\n");
-    desc.add_options()("help,h", "produce help message")(
+    desc.add_options()("help,h", "produce help message");
+    desc.add_options()(
         "global_concat_feature_types", po::value<int>(&feature_type)->default_value(feature_type),
         "Concatenate all feature descriptors which corresponding feature type bit id (v4r/features/types.h) is set in "
         "this variable.");
@@ -164,23 +165,24 @@ class V4R_EXPORTS GlobalConcatEstimator : public GlobalEstimator<PointT> {
   typename SimpleShapeEstimator<PointT>::Ptr simple_shape_estimator_;
   typename GlobalColorEstimator<PointT>::Ptr color_estimator_;
   typename OURCVFHEstimator<PointT>::Ptr ourcvfh_estimator_;
-#ifdef HAVE_CAFFE
+#if HAVE_CAFFE
   typename CNN_Feat_Extractor<PointT>::Ptr cnn_feat_estimator_;
 #endif
 
   GlobalConcatEstimatorParameter param_;
 
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   GlobalConcatEstimator(std::vector<std::string> &boost_command_line_arguments,
                         const GlobalConcatEstimatorParameter &p = GlobalConcatEstimatorParameter());
 
-  bool compute(Eigen::MatrixXf &signature);
+  bool compute(Eigen::MatrixXf &signature) override;
 
-  bool needNormals() const {
+  bool needNormals() const override {
     return need_normals_;
   }
 
-  typedef boost::shared_ptr<GlobalConcatEstimator<PointT>> Ptr;
-  typedef boost::shared_ptr<GlobalConcatEstimator<PointT> const> ConstPtr;
+  typedef std::shared_ptr<GlobalConcatEstimator<PointT>> Ptr;
+  typedef std::shared_ptr<GlobalConcatEstimator<PointT> const> ConstPtr;
 };
-}
+}  // namespace v4r

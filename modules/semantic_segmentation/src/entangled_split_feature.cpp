@@ -919,7 +919,7 @@ bool EntangledForestNodeDescendantFeature::evaluateInference(EntangledForestData
            result);
   return result;
 }
-}
+}  // namespace v4r
 
 BOOST_CLASS_EXPORT_GUID(v4r::EntangledForestSplitFeature, "featurebase")
 BOOST_CLASS_EXPORT_GUID(v4r::EntangledForestUnaryFeature, "unary")
